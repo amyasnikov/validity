@@ -17,13 +17,13 @@ class ComplianceTestListView(generic.ObjectListView):
 
 @register_model_view(models.ComplianceTest)
 class ComplianceTestView(generic.ObjectView):
-    queryset = models.ComplianceTest.objects.pf_latest_results()
+    queryset = models.ComplianceTest.objects.prefetch_related("namesets")
 
     def get_extra_context(self, request, instance):
-        table = tables.ComplianceResultTable(instance.results.all())
-        table.exclude += ("test",)
+        global_namesets = models.NameSet.objects.filter(_global=True)
+        table = tables.NameSetTable(instance.namesets.all() | global_namesets)
         table.configure(request)
-        return {"result_table": table}
+        return {"nameset_table": table}
 
 
 @register_model_view(models.ComplianceTest, "test_results", "results")
