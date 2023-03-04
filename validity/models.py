@@ -38,6 +38,7 @@ class BaseModel(NetBoxModel):
 
 class ComplianceTest(BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
+    description = models.TextField(_("Description"))
     expression = models.TextField(_("Expression"))
     selectors = models.ManyToManyField(to="ComplianceSelector", related_name="tests", verbose_name=_("Selectors"))
 
@@ -257,6 +258,9 @@ class ConfigSerializer(BaseModel):
     clone_fields = ("ttp_template",)
     json_fields = ("id", "name", "ttp_template")
 
+    class Meta:
+        ordering = ("name",)
+
     def __str__(self) -> str:
         return self.name
 
@@ -274,3 +278,35 @@ class ConfigSerializer(BaseModel):
         Returns a var appropriate for feeding into ttp() API: a filepath to template or template itself
         """
         return self.ttp_template
+
+
+class NameSet(BaseModel):
+    name = models.CharField(_("Name"), max_length=255, unique=True)
+    description = models.TextField()
+    _global = models.BooleanField(_("Global"), blank=True, default=False)
+    serializers = models.ManyToManyField(
+        ConfigSerializer, verbose_name=_("Config Serializers"), blank=True, related_name="namesets"
+    )
+    definitions = models.TextField(help_text=_("Here you can write python functions or imports"))
+
+    clone_fields = ("description", "_global", "serializers", "definitions")
+
+    class Meta:
+        ordering = ("name",)
+
+    def __str__(self) -> str:
+        return self.name
+
+    def clean(self):
+        try:
+            definitions = ast.parse(self.definitions)
+        except SyntaxError as e:
+            raise ValidationError({"definitions": "Invalid python syntax"}) from e
+        for obj in definitions.body:
+            if isinstance(obj, ast.Assign):
+                if len(obj.targets) != 1 or obj.targets[0].id != "__all__":
+                    raise ValidationError({"definitions": "Assignments besides '__all__' are not allowed"})
+            if not isinstance(obj, (ast.Import, ast.ImportFrom, ast.FunctionDef)):
+                raise ValidationError(
+                    {"definitions": "Only 'import' and 'def' statements are allowed on the top level"}
+                )

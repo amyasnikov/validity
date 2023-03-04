@@ -63,6 +63,7 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
+            "description",
             "expression",
             "selectors",
             "tags",

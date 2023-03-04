@@ -35,7 +35,7 @@ class ComplianceTestFilterSet(SearchMixin, NetBoxModelFilterSet):
     class Meta:
         model = models.ComplianceTest
         fields = ("id", "name", "selector_id")
-        search_fields = ("name", "expression")
+        search_fields = ("name", "description", "expression")
 
 
 class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):

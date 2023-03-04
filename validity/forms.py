@@ -13,7 +13,7 @@ class ComplianceTestForm(NetBoxModelForm):
 
     class Meta:
         model = models.ComplianceTest
-        fields = ("name", "expression", "selectors", "tags")
+        fields = ("name", "description", "expression", "selectors", "tags")
 
 
 class ComplianceSelectorForm(NetBoxModelForm):
