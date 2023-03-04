@@ -73,7 +73,7 @@ class GitRepoForm(NetBoxModelForm):
 class ConfigSerializerForm(NetBoxModelForm):
     class Meta:
         model = models.ConfigSerializer
-        fields = ("name", "ttp_template", "tags")
+        fields = ("name", "extraction_method", "ttp_template", "tags")
 
 
 class NameSetForm(NetBoxModelForm):

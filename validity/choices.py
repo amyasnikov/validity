@@ -47,3 +47,9 @@ class SeverityChoices(TextChoices, metaclass=ColoredChoiceMeta):
     LOW = "LOW", _("LOW"), "green"
     MIDDLE = "MIDDLE", _("MIDDLE"), "yellow"
     HIGH = "HIGH", _("HIGH"), "red"
+
+
+class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
+    TTP = "TTP", "TTP", "purple"
+    JSON = "JSON", "JSON", "orange"
+    YAML = "YAML", "YAML", "info"

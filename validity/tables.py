@@ -81,11 +81,12 @@ class GitRepoTable(NetBoxTable):
 
 class ConfigSerializerTable(NetBoxTable):
     name = Column(linkify=True)
+    extraction_method = ChoiceFieldColumn()
     total_devices = Column(empty_values=())
 
     class Meta(NetBoxTable.Meta):
         model = models.ConfigSerializer
-        fields = ("name", "total_devices")
+        fields = ("name", "extraction_method", "total_devices")
         default_columns = fields
 
     def __init__(self, *args, extra_columns=None, **kwargs):

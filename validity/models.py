@@ -28,7 +28,7 @@ from netbox.models import (
 from validity import settings
 from validity.managers import ComplianceTestQS, ComplianceTestResultQS, ConfigSerializerQS, GitRepoQS, NameSetQS
 from validity.utils.password import EncryptedString, PasswordField
-from .choices import BoolOperationChoices, DynamicPairsChoices, SeverityChoices
+from .choices import BoolOperationChoices, ConfigExtractionChoices, DynamicPairsChoices, SeverityChoices
 from .config_compliance.dynamic_pairs import DynamicNamePairFilter, dpf_factory
 from .queries import DeviceQS
 
@@ -57,7 +57,7 @@ class ComplianceTest(BaseModel):
     expression = models.TextField(_("Expression"))
     selectors = models.ManyToManyField(to="ComplianceSelector", related_name="tests", verbose_name=_("Selectors"))
 
-    clone_fields = ("expression", "selectors")
+    clone_fields = ("expression", "selectors", "severity")
 
     objects = ComplianceTestQS.as_manager()
 
@@ -301,18 +301,30 @@ class GitRepo(BaseModel):
 
 class ConfigSerializer(BaseModel):
     name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
-    ttp_template = models.TextField(_("TTP Template"))
+    extraction_method = models.CharField(
+        _("Config Extraction Method"), max_length=10, choices=ConfigExtractionChoices.choices, default="TTP"
+    )
+    ttp_template = models.TextField(_("TTP Template"), blank=True)
 
     objects = ConfigSerializerQS.as_manager()
 
-    clone_fields = ("ttp_template",)
-    json_fields = ("id", "name", "ttp_template")
+    clone_fields = ("ttp_template", "extraction_method")
+    json_fields = ("id", "name", "ttp_template", "extraction_method")
 
     class Meta:
         ordering = ("name",)
 
     def __str__(self) -> str:
         return self.name
+
+    def get_extraction_method_color(self):
+        return ConfigExtractionChoices.colors.get(self.extraction_method)
+
+    def clean(self) -> None:
+        if self.extraction_method != "TTP" and self.ttp_template:
+            raise ValidationError({"ttp_template": _("TTP Template must be empty if extraction method is not TTP")})
+        if self.extraction_method == "TTP" and not self.ttp_template:
+            raise ValidationError({"ttp_template": _("TTP Template must be defined if extraction method is TTP")})
 
     def bound_devices(self) -> models.QuerySet[Device]:
         return (

@@ -135,7 +135,18 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
 
     class Meta:
         model = models.ConfigSerializer
-        fields = ("id", "url", "display", "name", "ttp_template", "tags", "custom_fields", "created", "last_updated")
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "extraction_method",
+            "ttp_template",
+            "tags",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )
 
 
 NestedConfigSerializerSerializer = nested_factory(ConfigSerializerSerializer, ("id", "url", "display", "name"))

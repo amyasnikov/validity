@@ -30,7 +30,6 @@ class DeviceSerializedConfigView(generic.ObjectView):
     def get_extra_context(self, request, instance):
         try:
             config = DeviceConfig.from_device(self.object)
-            config.serialize()
             return {"config": config}
         except DeviceConfigError as e:
             logger.info("Cannot render serialized config, %s", e)

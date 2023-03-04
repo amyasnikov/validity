@@ -1,4 +1,5 @@
 {% extends 'generic/object.html' %}
+{% load validity %}
 {% load render_table from django_tables2 %}
 {% block content %}
   <div class="row mb-3">
@@ -11,6 +12,10 @@
               <tr>
                 <th scope="row">Name</th>
                 <td>{{ object.name }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Config Extraction Method</th>
+                <td>{{ object | colored_choice:"extraction_method" }}</td>
               </tr>
             </table>
           </div>

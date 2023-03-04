@@ -1,9 +1,11 @@
-from collections import defaultdict
-from dataclasses import dataclass
+import json
+from abc import abstractmethod
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Iterable
+from typing import ClassVar
 
+import yaml
 from dcim.models import Device
 from django.utils.timezone import make_aware
 from ttp import ttp
@@ -23,9 +25,9 @@ class DeviceConfig:
     device: Device
     config_path: Path
     last_modified: datetime | None = None
-    template: TTPTemplate | None = None
     serialized: dict | list | None = None
     _git_folder: ClassVar[Path] = settings.git_folder
+    _config_classes: ClassVar[dict[str, type]] = {}
 
     @classmethod
     def _full_config_path(cls, device: Device) -> Path:
@@ -40,36 +42,72 @@ class DeviceConfig:
         """
         assert hasattr(device, "repo"), "Device must be annotated with .repo"
         assert hasattr(device, "serializer"), "Device must be annotated with .serializer"
+        return cls._config_classes[device.serializer.extraction_method]._from_device(device)
+
+    @classmethod
+    def _from_device(cls, device: Device) -> "DeviceConfig":
         try:
             device_path = cls._full_config_path(device)
             last_modified = None
             if device_path.is_file():
                 lm_timestamp = device_path.stat().st_mtime
                 last_modified = make_aware(datetime.fromtimestamp(lm_timestamp))
-            template = TTPTemplate(name=device.serializer.name, template=device.serializer.effective_template)
-            return cls(device, device_path, last_modified, template)
+            cfg_cls = cls(device, device_path, last_modified)
+            cfg_cls.serialize()
+            return cfg_cls
         except AttributeError as e:
             raise DeviceConfigError(str(e)) from e
 
-    def serialize(self) -> None:
-        serialize_configs([self], override=True)
+    @abstractmethod
+    def serialize(self, override: bool = False) -> None:
+        pass
 
 
-def serialize_configs(configs: Iterable[DeviceConfig | None], override: bool = False) -> None:
-    parser = ttp()
-    configs_by_template = defaultdict(list)
-    templates = {}
-    for config in configs:
-        if config and config.template:
-            configs_by_template[config.template.name].append(config)
-            templates.setdefault(config.template.name, config.template.template)
-    for template_name, config_group in configs_by_template.items():
-        parser.add_template(template=templates[template_name], template_name=template_name)
-        for config in config_group:
-            parser.add_input(data=str(config.config_path.absolute()), template_name=template_name)
-    parser.parse()
-    for template_name, config_group in configs_by_template.items():
-        result = parser.result(templates=[template_name])[0]
-        for config, serialized in zip(config_group, result):
-            if override or config.serialized is None:
-                config.serialized = serialized
+class DeviceConfigMeta(type):
+    def __init__(cls, name, bases, dct):
+        DeviceConfig._config_classes[dct["extract_method"]] = cls
+        super().__init__(name, bases, dct)
+
+
+@dataclass
+class TTPDeviceConfig(DeviceConfig, metaclass=DeviceConfigMeta):
+    extract_method: ClassVar[str] = "TTP"
+    _template: TTPTemplate = field(init=False)
+
+    def __post_init__(self):
+        self._template = TTPTemplate(
+            name=self.device.serializer.name, template=self.device.serializer.effective_template
+        )
+
+    def serialize(self, override: bool = False) -> None:
+        if not self.serialized or override:
+            parser = ttp(data=str(self.config_path), template=self._template.template)
+            parser.parse()
+            try:
+                self.serialized = parser.result()[0][0]
+            except IndexError as e:
+                raise DeviceConfigError(f"Invalid parsed config for {self.device}: {parser.result()}") from e
+
+
+class JSONDeviceConfig(DeviceConfig, metaclass=DeviceConfigMeta):
+    extract_method: ClassVar[str] = "JSON"
+
+    def serialize(self, override: bool = False) -> None:
+        if not self.serialized or override:
+            with self.config_path.open("r") as cfg_file:
+                try:
+                    self.serialized = json.load(cfg_file)
+                except json.JSONDecodeError as e:
+                    raise DeviceConfigError(f"Trying to parse invalid JSON as device config for {self.device}") from e
+
+
+class YAMLDeviceConfig(DeviceConfig, metaclass=DeviceConfigMeta):
+    extract_method: ClassVar[str] = "YAML"
+
+    def serialize(self, override: bool = False) -> None:
+        if not self.serialized or override:
+            with self.config_path.open("r") as cfg_file:
+                try:
+                    self.serialized = yaml.safe_load(cfg_file)
+                except yaml.YAMLError as e:
+                    raise DeviceConfigError(f"Trying to parse invalid YAML as device config for {self.device}") from e
