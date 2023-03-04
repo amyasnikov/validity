@@ -19,7 +19,7 @@ class ConfigSerializerView(generic.ObjectView):
     queryset = models.ConfigSerializer.objects.all()
 
     def get_extra_context(self, request, instance):
-        table = DeviceTable(instance.devices())
+        table = DeviceTable(instance.bound_devices())
         table.configure(request)
         return {"device_table": table}
 

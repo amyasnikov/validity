@@ -73,10 +73,7 @@ class GitRepoTable(NetBoxTable):
         self.total_devices_map = count_devices_per_repo()
 
     def render_total_devices(self, record):
-        result = self.total_devices_map.get(record.id, 0)
-        if record.default:
-            result += self.total_devices_map.get(None, 0)
-        return result
+        return self.total_devices_map.get(record.id, 0)
 
 
 class ConfigSerializerTable(NetBoxTable):

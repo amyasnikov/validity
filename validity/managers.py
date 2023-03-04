@@ -1,10 +1,8 @@
 from typing import TYPE_CHECKING, Optional
 
 from dcim.models import Device
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import BigIntegerField, Case, Count, F, OuterRef, Prefetch, Sum, When
-from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast
+from django.db.models import Prefetch
+from django.db.models.functions import JSONObject
 from netbox.models import RestrictedQuerySet
 
 
@@ -12,7 +10,12 @@ if TYPE_CHECKING:
     from validity.models import ConfigSerializer, GitRepo
 
 
-class GitRepoQS(RestrictedQuerySet):
+class JSONObjMixin:
+    def as_json(self):
+        return self.values(json=JSONObject(**{f: f for f in self.model.json_fields}))
+
+
+class GitRepoQS(JSONObjMixin, RestrictedQuerySet):
     def from_device(self, device: Device) -> Optional["GitRepo"]:
         if device.tenant and (git_repo := device.tenant.cf.get("git_repo")):
             return git_repo
@@ -28,7 +31,7 @@ class ComplianceTestQS(RestrictedQuerySet):
         )
 
 
-class ConfigSerializerQS(RestrictedQuerySet):
+class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
     def from_device(self, device: Device) -> Optional["ConfigSerializer"]:
         if ser := device.cf.get("config_serializer"):
             return ser

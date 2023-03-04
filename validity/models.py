@@ -19,13 +19,15 @@ from validity import settings
 from validity.managers import ComplianceTestQS, ConfigSerializerQS, GitRepoQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
-from .queries import annotate_bound_git_repos
+from .queries import annotate_git_repo_id, annotate_serializer_id
 
 
 logger = logging.getLogger(__name__)
 
 
 class BaseModel(NetBoxModel):
+    json_fields: tuple[str, ...] = ('id',)
+
     def get_absolute_url(self):
         return reverse(f"plugins:validity:{self._meta.model_name}", kwargs={"pk": self.pk})
 
@@ -159,6 +161,7 @@ class GitRepo(BaseModel):
 
     objects = GitRepoQS.as_manager()
     clone_fields = ("repo_url", "device_config_path", "username", "branch")
+    json_fields = ('id', 'repo_url', 'device_config_path', 'default', 'username', 'encrypted_password', 'branch', 'head_hash')
 
     def __str__(self) -> str:
         return self.name
@@ -174,11 +177,10 @@ class GitRepo(BaseModel):
         return super().save(**kwargs)
 
     def bound_devices(self) -> models.QuerySet[Device]:
-        devices_with_repo = annotate_bound_git_repos(Device.objects)
-        filter_ = models.Q(repo=self.pk)
-        if self.default:
-            filter_ |= models.Q(repo__isnull=True)
-        return devices_with_repo.filter(filter_).select_related("site", "device_role", "device_type__manufacturer")
+        devices_with_repo = annotate_git_repo_id(Device.objects)
+        return devices_with_repo.filter(repo_id=self.pk).select_related(
+            "site", "device_role", "device_type__manufacturer"
+        )
 
     @property
     def password(self):
@@ -215,21 +217,16 @@ class ConfigSerializer(BaseModel):
     objects = ConfigSerializerQS.as_manager()
 
     clone_fields = ("ttp_template",)
+    json_fields = ('id', 'name', 'ttp_template')
 
     def __str__(self) -> str:
         return self.name
 
-    def devices(self) -> models.QuerySet[Device]:
-        filter_ = models.Q(custom_field_data__config_serializer=self.pk)
-        filter_ |= models.Q(
-            custom_field_data__config_serializer=None, device_type__custom_field_data__config_serializer=self.pk
+    def bound_devices(self) -> models.QuerySet[Device]:
+        devices_with_ser = annotate_serializer_id(Device.objects)
+        return devices_with_ser.filter(serializer_id=self.pk).select_related(
+            "site", "device_role", "device_type__manufacturer"
         )
-        filter_ |= models.Q(
-            custom_field_data__config_serializer=None,
-            device_type__custom_field_data__config_serializer=None,
-            device_type__manufacturer__custom_field_data__config_serializer=self.pk,
-        )
-        return Device.objects.filter(filter_)
 
     @property
     def effective_template(self) -> str:
