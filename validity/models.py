@@ -14,8 +14,8 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.models import NetBoxModel
-
 from validity.managers import ComplianceTestQS, GitRepoQS, ConfigSerializerQS
+from .queries import annotate_bound_git_repos
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
 from validity import settings
@@ -171,6 +171,13 @@ class GitRepo(BaseModel):
         if not self.name:
             self.name = self.repo_url.split("://")[-1]
         return super().save(**kwargs)
+
+    def bound_devices(self) -> models.QuerySet[Device]:
+        devices_with_repo = annotate_bound_git_repos(Device.objects)
+        filter_ = models.Q(repo=self.pk)
+        if self.default:
+            filter_ |= models.Q(repo__isnull=True)
+        return devices_with_repo.filter(filter_).select_related('site', 'device_role', 'device_type__manufacturer')
 
     @property
     def password(self):

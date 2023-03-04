@@ -6,17 +6,17 @@ from validity import filtersets, forms, models, tables
 
 
 class GitRepoListView(generic.ObjectListView):
-    queryset = models.GitRepo.objects.annotate_total_devices()
+    queryset = models.GitRepo.objects.all()
     table = tables.GitRepoTable
     filterset = filtersets.GitRepoFilterSet
 
 
 @register_model_view(models.GitRepo)
 class GitRepoView(generic.ObjectView):
-    queryset = models.GitRepo.objects.all()
+    queryset = models.GitRepo.objects.prefetch_related('tags')
 
     def get_extra_context(self, request, instance):
-        table = DeviceTable(Device.objects.filter(custom_field_data__git_repo=instance.pk))
+        table = DeviceTable(instance.bound_devices())
         table.configure(request)
         return {"device_table": table}
 
@@ -27,7 +27,7 @@ class GitRepoDeleteView(generic.ObjectDeleteView):
 
 
 class GitRepoBulkDeleteView(generic.BulkDeleteView):
-    queryset = models.GitRepo.objects.annotate_total_devices()
+    queryset = models.GitRepo.objects.all()
     filterset = filtersets.GitRepoFilterSet
     table = tables.GitRepoTable
 

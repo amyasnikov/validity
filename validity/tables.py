@@ -3,6 +3,7 @@ from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
 
 from validity import models
+from .queries import count_devices_per_repo
 
 
 class SelectorTable(NetBoxTable):
@@ -60,11 +61,22 @@ class ComplianceResultTable(NetBoxTable):
 
 class GitRepoTable(NetBoxTable):
     name = Column(linkify=True)
+    total_devices = Column(empty_values=())
 
     class Meta(NetBoxTable.Meta):
         model = models.GitRepo
         fields = ("name", "default", "total_devices")
         default_columns = fields
+
+    def __init__(self, *args, extra_columns=None, **kwargs):
+        super().__init__(*args, extra_columns=extra_columns, **kwargs)
+        self.total_devices_map = count_devices_per_repo()
+
+    def render_total_devices(self, record):
+        result = self.total_devices_map.get(record.id, 0)
+        if record.default:
+            result += self.total_devices_map.get(None, 0)
+        return result
 
 
 class ConfigSerializerTable(NetBoxTable):
