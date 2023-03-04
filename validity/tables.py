@@ -42,10 +42,11 @@ class SelectorTable(NetBoxTable):
 class ComplianceTestTable(NetBoxTable):
     name = Column(linkify=True)
     selectors = ManyToManyColumn(linkify_item=True)
+    severity = ChoiceFieldColumn()
 
     class Meta(NetBoxTable.Meta):
         model = models.ComplianceTest
-        fields = ("name", "selectors", "passed", "failed")
+        fields = ("name", "severity", "selectors", "passed", "failed")
         default_columns = fields
 
 

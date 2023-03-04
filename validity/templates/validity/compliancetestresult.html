@@ -20,6 +20,10 @@
             <td>{{ object.test | linkify }}</td>
           </tr>
           <tr>
+            <th scope="row">Test Severity</th>
+            <td>{{ object.test | colored_choice:"severity" }}</td>
+          </tr>
+          <tr>
             <th scope="row">Device</th>
             <td>{{ object.device | linkify }}</td>
           </tr>

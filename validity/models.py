@@ -28,7 +28,7 @@ from netbox.models import (
 from validity import settings
 from validity.managers import ComplianceTestQS, ComplianceTestResultQS, ConfigSerializerQS, GitRepoQS, NameSetQS
 from validity.utils.password import EncryptedString, PasswordField
-from .choices import BoolOperationChoices, DynamicPairsChoices
+from .choices import BoolOperationChoices, DynamicPairsChoices, SeverityChoices
 from .config_compliance.dynamic_pairs import DynamicNamePairFilter, dpf_factory
 from .queries import DeviceQS
 
@@ -51,6 +51,9 @@ class BaseModel(URLMixin, NetBoxModel):
 class ComplianceTest(BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     description = models.TextField(_("Description"))
+    severity = models.CharField(
+        _("Severity"), max_length=10, choices=SeverityChoices.choices, default=SeverityChoices.MIDDLE
+    )
     expression = models.TextField(_("Expression"))
     selectors = models.ManyToManyField(to="ComplianceSelector", related_name="tests", verbose_name=_("Selectors"))
 
@@ -66,6 +69,9 @@ class ComplianceTest(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+    def get_severity_color(self):
+        return SeverityChoices.colors.get(self.severity)
 
     @property
     def effective_expression(self):

@@ -13,6 +13,10 @@
               <td>{{ object.name }}</td>
             </tr>
             <tr>
+              <th scope="row">Severity</th>
+              <td>{{ object | colored_choice:"severity" }}</td>
+            </tr>
+            <tr>
               <th scope="row">Selectors</th>
               <td>{{ object.selectors.all | linkify_list }}</td>
             </tr>

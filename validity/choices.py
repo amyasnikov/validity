@@ -41,3 +41,9 @@ class BoolOperationChoices(TextChoices, metaclass=ColoredChoiceMeta):
 class DynamicPairsChoices(TextChoices, metaclass=ColoredChoiceMeta):
     NO = "NO", _("NO"), "red"
     NAME = "NAME", _("By name regex group"), "blue"
+
+
+class SeverityChoices(TextChoices, metaclass=ColoredChoiceMeta):
+    LOW = "LOW", _("LOW"), "green"
+    MIDDLE = "MIDDLE", _("MIDDLE"), "yellow"
+    HIGH = "HIGH", _("HIGH"), "red"

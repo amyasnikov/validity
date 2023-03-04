@@ -47,9 +47,7 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
         )
 
 
-NestedComplianceSelectorSerializer = nested_factory(
-    ComplianceSelectorSerializer, ("id", "url", "display", "name", "created", "last_updated")
-)
+NestedComplianceSelectorSerializer = nested_factory(ComplianceSelectorSerializer, ("id", "url", "display", "name"))
 
 
 class ComplianceTestSerializer(NetBoxModelSerializer):
@@ -63,6 +61,7 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
+            "severity",
             "description",
             "expression",
             "selectors",
@@ -73,9 +72,7 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
         )
 
 
-NestedComplianceTestSerializer = nested_factory(
-    ComplianceTestSerializer, ("id", "url", "display", "name", "created", "last_updated")
-)
+NestedComplianceTestSerializer = nested_factory(ComplianceTestSerializer, ("id", "url", "display", "name", "severity"))
 
 
 class ComplianceTestResultSerializer(NetBoxModelSerializer):
@@ -100,7 +97,7 @@ class ComplianceTestResultSerializer(NetBoxModelSerializer):
 
 
 NestedComplianceTestResultSerializer = nested_factory(
-    ComplianceTestResultSerializer, ("id", "url", "display", "passed", "created", "last_updated")
+    ComplianceTestResultSerializer, ("id", "url", "display", "passed")
 )
 
 
@@ -130,9 +127,7 @@ class GitRepoSerializer(NetBoxModelSerializer):
         )
 
 
-NestedGitRepoSerializer = nested_factory(
-    GitRepoSerializer, ("id", "url", "display", "name", "default", "created", "last_updated")
-)
+NestedGitRepoSerializer = nested_factory(GitRepoSerializer, ("id", "url", "display", "name", "default"))
 
 
 class ConfigSerializerSerializer(NetBoxModelSerializer):
@@ -143,9 +138,7 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
         fields = ("id", "url", "display", "name", "ttp_template", "tags", "custom_fields", "created", "last_updated")
 
 
-NestedConfigSerializerSerializer = nested_factory(
-    ConfigSerializerSerializer, ("id", "url", "display", "name", "ttp_template", "created", "last_updated")
-)
+NestedConfigSerializerSerializer = nested_factory(ConfigSerializerSerializer, ("id", "url", "display", "name"))
 
 
 class NameSetSerializer(NetBoxModelSerializer):
@@ -179,4 +172,4 @@ class NameSetSerializer(NetBoxModelSerializer):
         return super().run_validation(data)
 
 
-NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "display", "name", "created", "last_updated"))
+NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "display", "name"))
