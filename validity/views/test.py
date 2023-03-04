@@ -1,6 +1,5 @@
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
-from django.views.generic import ListView
 from django_filters.views import FilterView
 from django_tables2 import SingleTableMixin
 from netbox.views import generic

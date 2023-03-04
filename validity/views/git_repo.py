@@ -1,4 +1,3 @@
-from dcim.models import Device
 from dcim.tables import DeviceTable
 from netbox.views import generic
 from utilities.views import register_model_view

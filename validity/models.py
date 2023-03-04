@@ -19,14 +19,14 @@ from validity import settings
 from validity.managers import ComplianceTestQS, ConfigSerializerQS, GitRepoQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
-from .queries import annotate_git_repo_id, annotate_serializer_id
+from .queries import DeviceQS
 
 
 logger = logging.getLogger(__name__)
 
 
 class BaseModel(NetBoxModel):
-    json_fields: tuple[str, ...] = ('id',)
+    json_fields: tuple[str, ...] = ("id",)
 
     def get_absolute_url(self):
         return reverse(f"plugins:validity:{self._meta.model_name}", kwargs={"pk": self.pk})
@@ -161,7 +161,17 @@ class GitRepo(BaseModel):
 
     objects = GitRepoQS.as_manager()
     clone_fields = ("repo_url", "device_config_path", "username", "branch")
-    json_fields = ('id', 'repo_url', 'device_config_path', 'default', 'username', 'encrypted_password', 'branch', 'head_hash')
+    json_fields = (
+        "id",
+        "name",
+        "repo_url",
+        "device_config_path",
+        "default",
+        "username",
+        "encrypted_password",
+        "branch",
+        "head_hash",
+    )
 
     def __str__(self) -> str:
         return self.name
@@ -177,9 +187,11 @@ class GitRepo(BaseModel):
         return super().save(**kwargs)
 
     def bound_devices(self) -> models.QuerySet[Device]:
-        devices_with_repo = annotate_git_repo_id(Device.objects)
-        return devices_with_repo.filter(repo_id=self.pk).select_related(
-            "site", "device_role", "device_type__manufacturer"
+        return (
+            DeviceQS()
+            .annotate_git_repo_id()
+            .filter(repo_id=self.pk)
+            .select_related("site", "device_role", "device_type__manufacturer")
         )
 
     @property
@@ -217,15 +229,17 @@ class ConfigSerializer(BaseModel):
     objects = ConfigSerializerQS.as_manager()
 
     clone_fields = ("ttp_template",)
-    json_fields = ('id', 'name', 'ttp_template')
+    json_fields = ("id", "name", "ttp_template")
 
     def __str__(self) -> str:
         return self.name
 
     def bound_devices(self) -> models.QuerySet[Device]:
-        devices_with_ser = annotate_serializer_id(Device.objects)
-        return devices_with_ser.filter(serializer_id=self.pk).select_related(
-            "site", "device_role", "device_type__manufacturer"
+        return (
+            DeviceQS()
+            .annotate_serializer_id()
+            .filter(serializer_id=self.pk)
+            .select_related("site", "device_role", "device_type__manufacturer")
         )
 
     @property

@@ -1,7 +1,4 @@
-from dcim.models import Device
 from dcim.tables import DeviceTable
-from django.db.models import BigIntegerField, Count, F
-from django.db.models.functions import Cast
 from netbox.views import generic
 from utilities.views import register_model_view
 
