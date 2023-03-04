@@ -1,6 +1,9 @@
 {% extends 'generic/object.html' %}
 {% load validity %}
 {% load render_table from django_tables2 %}
+{% block controls %}
+<div class="controls"></div>
+{% endblock %}
 {% block content %}
   <div class="row mb-3">
     <div class="col col-md-6">
@@ -15,6 +18,10 @@
             <tr>
               <th scope="row">Device</th>
               <td>{{ object.device | linkify }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Created</th>
+              <td>{{ object.created | date:"Y-m-d G:i:s" }}</td>
             </tr>
           </table>
           <div class="mt-3">
@@ -31,7 +38,7 @@
   <div class="row">
     <div class="col col-md-12">
       <div class="card">
-        <h5 class="card-header">Historical Results</h5>
+        <h5 class="card-header">Other results for the same test and device</h5>
         <div class="card-body">
           <div class="table-responsive">
             {% render_table result_table %}

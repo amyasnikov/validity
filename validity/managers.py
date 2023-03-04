@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from dcim.models import Device
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch, Q
 from django.db.models.functions import JSONObject
 from netbox.models import RestrictedQuerySet
 
@@ -26,9 +26,28 @@ class ComplianceTestQS(RestrictedQuerySet):
     def pf_latest_results(self) -> "ComplianceTestQS":
         from validity.models import ComplianceTestResult
 
-        return self.prefetch_related(
-            Prefetch("results", ComplianceTestResult.objects.order_by("device", "-last_updated").distinct())
+        return self.prefetch_related(Prefetch("results", ComplianceTestResult.objects.only_latest()))
+
+    def annotate_latest_count(self):
+        from validity.models import ComplianceTestResult
+
+        return self.annotate(
+            passed=Count(
+                "results",
+                distinct=True,
+                filter=Q(results__passed=True, results__in=ComplianceTestResult.objects.only_latest()),
+            ),
+            failed=Count(
+                "results",
+                distinct=True,
+                filter=Q(results__passed=False, results__in=ComplianceTestResult.objects.only_latest()),
+            ),
         )
+
+
+class ComplianceTestResultQS(RestrictedQuerySet):
+    def only_latest(self) -> "ComplianceTestResultQS":
+        return self.order_by("test__pk", "device__pk", "-created").distinct("test__pk", "device__pk")
 
 
 class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):

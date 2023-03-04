@@ -9,10 +9,7 @@ from validity import filterset_forms, filtersets, forms, models, tables
 
 
 class ComplianceTestListView(generic.ObjectListView):
-    queryset = models.ComplianceTest.objects.pf_latest_results().annotate(
-        passed=Count("results", filter=Q(results__passed=True)),
-        failed=Count("results", filter=Q(results__passed=False)),
-    )
+    queryset = models.ComplianceTest.objects.annotate_latest_count()
 
     table = tables.ComplianceTestTable
     filterset = filtersets.ComplianceTestFilterSet
@@ -37,6 +34,11 @@ class TestResultView(SingleTableMixin, FilterView):
     filterset_class = filtersets.ComplianceTestResultFilterSet
     filter_form_class = filterset_forms.TestResultFilterForm
     table_class = tables.ComplianceResultTable
+
+    def get_table(self, **kwargs):
+        table = super().get_table(**kwargs)
+        table.exclude = ("test",)
+        return table
 
     def get_queryset(self):
         return models.ComplianceTestResult.objects.select_related("test", "device").filter(test=self.kwargs["pk"])

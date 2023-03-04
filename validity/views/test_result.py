@@ -16,7 +16,9 @@ class ComplianceResultView(generic.ObjectView):
 
     def get_extra_context(self, request, instance):
         table = tables.ComplianceResultTable(
-            models.ComplianceTestResult.objects.filter(test=instance.test, device=instance.device)
+            models.ComplianceTestResult.objects.filter(test=instance.test, device=instance.device).exclude(
+                pk=instance.pk
+            )
         )
         table.exclude += ("test", "device")
         table.order_by = "last_updated"

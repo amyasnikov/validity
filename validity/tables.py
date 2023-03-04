@@ -54,7 +54,7 @@ class ComplianceResultTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = models.ComplianceTestResult
-        fields = ("id", "test", "device", "passed")
+        fields = ("id", "test", "device", "passed", "created")
         exclude = ("actions",)
         default_columns = fields
 

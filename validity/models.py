@@ -17,7 +17,7 @@ from jinja2 import BaseLoader, Environment
 from netbox.models import NetBoxModel
 
 from validity import settings
-from validity.managers import ComplianceTestQS, ConfigSerializerQS, GitRepoQS
+from validity.managers import ComplianceTestQS, ComplianceTestResultQS, ConfigSerializerQS, GitRepoQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
 from .queries import DeviceQS
@@ -61,8 +61,10 @@ class ComplianceTestResult(BaseModel):
     passed = models.BooleanField()
     explanation = models.TextField(blank=True)
 
+    objects = ComplianceTestResultQS.as_manager()
+
     class Meta:
-        ordering = ("last_updated",)
+        ordering = ("-created",)
 
     def __str__(self) -> str:
         passed = "passed" if self.passed else "not passed"

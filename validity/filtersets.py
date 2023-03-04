@@ -3,7 +3,7 @@ from functools import reduce
 from typing import Sequence
 
 from dcim.models import Device
-from django.db.models import F, Max, Q
+from django.db.models import Q
 from django_filters import BooleanFilter, ModelMultipleChoiceFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
@@ -29,7 +29,7 @@ class ComplianceSelectorFilterSet(SearchMixin, NetBoxModelFilterSet):
         search_fields = ("name", "name_filter")
 
 
-class ComplianceTestFilterSet(NetBoxModelFilterSet):
+class ComplianceTestFilterSet(SearchMixin, NetBoxModelFilterSet):
     selector_id = ModelMultipleChoiceFilter(field_name="selectors", queryset=models.ComplianceSelector.objects.all())
 
     class Meta:
@@ -38,7 +38,7 @@ class ComplianceTestFilterSet(NetBoxModelFilterSet):
         search_fields = ("name", "expression")
 
 
-class ComplianceTestResultFilterSet(NetBoxModelFilterSet):
+class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     test_id = ModelMultipleChoiceFilter(field_name="test", queryset=models.ComplianceTest.objects.all())
     device_id = ModelMultipleChoiceFilter(field_name="device", queryset=Device.objects.all())
     latest = BooleanFilter(method="filter_latest")
@@ -49,19 +49,19 @@ class ComplianceTestResultFilterSet(NetBoxModelFilterSet):
         search_fields = ("test__name", "device__name")
 
     def filter_latest(self, queryset, name, value):
-        return queryset.annotate(max_date=Max("last_updated", filter=Q(test=F("test"), device=F("device")))).filter(
-            last_updated=F("max_date")
-        )
+        if value:
+            queryset = queryset.only_latest()
+        return queryset
 
 
-class GitRepoFilterSet(NetBoxModelFilterSet):
+class GitRepoFilterSet(SearchMixin, NetBoxModelFilterSet):
     class Meta:
         model = models.GitRepo
         fields = ("id", "name", "default", "username", "branch", "head_hash")
         search_fields = ("name", "repo_path", "device_config_path")
 
 
-class ConfigSerializerFilterSet(NetBoxModelFilterSet):
+class ConfigSerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
     class Meta:
         model = models.ConfigSerializer
         fields = ("id", "name")
