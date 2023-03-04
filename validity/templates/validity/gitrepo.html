@@ -21,8 +21,12 @@
               <td>{{ object.default | checkmark }}</td>
             </tr>
             <tr>
-              <th scope="row">Repository URL</th>
-              <td>{{ object.repo_url }}</td>
+              <th scope="row">Git URL</th>
+              <td>{{ object.git_url }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Web URL</th>
+              <td>{{ object.web_url | placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Device Config Path</th>

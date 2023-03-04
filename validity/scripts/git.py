@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import ClassVar
 
 import pygit2
-from django.utils.translation import gettext_lazy as __
+from django.utils.translation import gettext as __
 from extras.scripts import MultiObjectVar, Script
 
 from validity import models, settings
@@ -16,7 +16,7 @@ class GitRepo:
     name: str
     remote_url: str
     branch: str
-    _repo: pygit2.Repository | None = field(init=False, default=None)
+    _repo: pygit2.Repository | None = field(init=False, default=None, repr=False)
 
     git_folder: ClassVar[Path] = settings.git_folder
 
@@ -29,7 +29,7 @@ class GitRepo:
 
     @classmethod
     def from_db(cls, db_instance: models.GitRepo) -> "GitRepo":
-        return cls(name=db_instance.name, remote_url=db_instance.full_url, branch=db_instance.branch or "master")
+        return cls(name=db_instance.name, remote_url=db_instance.full_git_url, branch=db_instance.branch)
 
     @property
     def local_path(self) -> Path:
@@ -53,7 +53,7 @@ class GitRepo:
         try:
             remote_master_id = self._repo.lookup_reference(f"refs/remotes/origin/{self.branch}").target
         except KeyError as e:
-            raise pygit2.GitError(f'Unknown branch: {e}') from e
+            raise pygit2.GitError(f"Unknown branch: {e}") from e
         self._repo.head.set_target(remote_master_id)
         merge_result, _ = self._repo.merge_analysis(remote_master_id)
         # Up to date, do nothing
@@ -84,8 +84,8 @@ class SyncGitRepos(Script):
     repos = MultiObjectVar(model=models.GitRepo, label=__("Repositories"), required=False)
 
     class Meta:
-        name = __('Git Repositories Sync')
-        description = __('Pull the updates for all or particular Git Repositories')
+        name = __("Git Repositories Sync")
+        description = __("Pull the updates for all or particular Git Repositories")
 
     @staticmethod
     def update_and_get_hash(db_repo: models.GitRepo) -> tuple[bool, str]:
@@ -99,10 +99,10 @@ class SyncGitRepos(Script):
     @staticmethod
     def format_script_output(hashes_map: dict) -> str:
         if not hashes_map:
-            return ''
-        col_size = max(len(max(hashes_map.keys(), key=len)), len('Repository')) + 2
-        columns = chain([('Repository', 'Hash'), ('', '')], hashes_map.items())
-        return '\n'.join(f'{repo:<{col_size}}{hash_}' for repo, hash_ in columns)
+            return ""
+        col_size = max(len(max(hashes_map.keys(), key=len)), len("Repository")) + 2
+        columns = chain([("Repository", "Hash"), ("", "")], hashes_map.items())
+        return "\n".join(f"{repo:<{col_size}}{hash_}" for repo, hash_ in columns)
 
     def run(self, data, commit):
         all_db_repos = models.GitRepo.objects.order_by("id")
@@ -118,11 +118,13 @@ class SyncGitRepos(Script):
                     successful_repo_ids.append(repo.pk)
                     new_repo_hashes[repo.name] = msg
                 else:
-                    self.log_failure(f'{repo.name}: {msg}')
-            models.GitRepo.objects.bulk_update(all_db_repos.filter(pk__in=successful_repo_ids), ['head_hash'])
+                    self.log_failure(f"{repo.name}: {msg}")
+            models.GitRepo.objects.bulk_update(all_db_repos.filter(pk__in=successful_repo_ids), ["head_hash"])
             if successful_repo_ids:
-                self.log_success(f'Successfully updated {successful_repo_ids} repositories. Check out the table below')
+                self.log_success(
+                    f"Successfully updated {len(successful_repo_ids)} repositories. Check out the table below"
+                )
             return self.format_script_output(new_repo_hashes)
 
 
-name = 'Git'
+name = "Git"

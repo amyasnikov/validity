@@ -1,14 +1,14 @@
+import hashlib
 import logging
 import shutil
 from pathlib import Path
-import hashlib
 
 
 logger = logging.getLogger(__name__)
 
 
 def hashes_equal(src: Path, dst: Path) -> bool:
-    with open(src, 'r') as src_file, open(dst, 'r') as dst_file:
+    with open(src, "r") as src_file, open(dst, "r") as dst_file:
         src_digest = hashlib.md5(src_file.read().encode()).hexdigest()
         dst_digest = hashlib.md5(dst_file.read().encode()).hexdigest()
         return src_digest == dst_digest

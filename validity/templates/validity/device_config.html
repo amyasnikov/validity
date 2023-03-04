@@ -18,7 +18,7 @@
             <th scope="row">Device Config</th>
             <td>
               {% with config_url=object|device_config_url %}
-                {% if config_url %}<a href="{{ config_url }}">{{ config_url }}</a>
+                {% if config_url %}<a href="{{ config_url }}" target="_blank">{{ config_url }}</a>
                 {% else %}{{ "" | placeholder }}{% endif %}
               {% endwith %}
             </td>
@@ -29,7 +29,7 @@
           </tr>
           <tr>
             <th scope="row">Local copy last modified</th>
-            <td>{{ config.last_modified | date | placeholder}}</td>
+            <td>{{ config.last_modified | date:"DATETIME_FORMAT" | placeholder}}</td>
           </tr>
         </table>
       </div>
@@ -40,7 +40,7 @@
   <div class="card">
     <div class="card-body">
       <h5 class="card-title mb-2">Serialized Configuration</h5>
-      <pre class="bg-light">{{ config.serialized | placeholder }}</pre>
+      <pre class="bg-light">{{ config.serialized | yaml}}</pre>
     </div>
 </div>
 {% endblock %}

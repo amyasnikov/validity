@@ -1,11 +1,12 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import ClassVar
 
 from dcim.models import Device
-from ttp import ttp
 from django.utils.timezone import make_aware
+from ttp import ttp
 
 from validity import settings
 from .exceptions import DeviceConfigError
@@ -24,6 +25,11 @@ class DeviceConfig:
     last_modified: datetime | None = None
     template: TTPTemplate | None = None
     serialized: dict | list | None = None
+    _git_folder: ClassVar[Path] = settings.git_folder
+
+    @classmethod
+    def _full_config_path(cls, device: Device) -> Path:
+        return cls._git_folder / device.repo.name / device.repo.rendered_device_path(device)
 
     @classmethod
     def from_device(cls, device: Device) -> "DeviceConfig":
@@ -35,7 +41,7 @@ class DeviceConfig:
         assert hasattr(device, "repo"), "Device must be annotated with .repo"
         assert hasattr(device, "serializer"), "Device must be annotated with .serializer"
         try:
-            device_path: Path = settings.git_folder / device.repo.rendered_device_path(device)
+            device_path = cls._full_config_path(device)
             last_modified = None
             if device_path.is_file():
                 lm_timestamp = device_path.stat().st_mtime
@@ -46,7 +52,7 @@ class DeviceConfig:
             raise DeviceConfigError(str(e)) from e
 
     def serialize(self) -> None:
-        serialize_configs(self)
+        serialize_configs(self, override=True)
 
 
 def serialize_configs(*configs: DeviceConfig, override: bool = False) -> None:
@@ -60,10 +66,10 @@ def serialize_configs(*configs: DeviceConfig, override: bool = False) -> None:
     for template_name, config_group in configs_by_template.items():
         parser.add_template(template=templates[template_name], template_name=template_name)
         for config in config_group:
-            parser.add_input(data=config.config_path, template_name=template_name)
+            parser.add_input(data=str(config.config_path.absolute()), template_name=template_name)
     parser.parse()
     for template_name, config_group in configs_by_template.items():
-        result = parser.result(templates=[template_name])
+        result = parser.result(templates=[template_name])[0]
         for config, serialized in zip(config_group, result):
             if override or config.serialized is not None:
                 config.serialized = serialized

@@ -1,10 +1,10 @@
 from typing import Any
 
+from dcim.models import Device
 from django import template
 from django.db.models import Model
 from django.utils.safestring import mark_safe
 from utilities.templatetags.builtins.filters import linkify, placeholder
-from dcim.models import Device
 
 
 register = template.Library()
@@ -39,7 +39,6 @@ def device_config_url(device: Device) -> str:
     """
     try:
         repo = device.repo
-        file_path = repo.rendered_device_path(device)
-        return repo.repo_url.rstrip('/') + '/' + file_path.lstrip('/')
+        return repo.device_web_path(device)
     except AttributeError:
-        return ''
+        return ""

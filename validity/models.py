@@ -13,8 +13,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
+from jinja2 import BaseLoader, Environment
 from netbox.models import NetBoxModel
-from jinja2 import Environment, BaseLoader
 
 from validity import settings
 from validity.managers import ComplianceTestQS, ConfigSerializerQS, GitRepoQS
@@ -150,22 +150,36 @@ class ComplianceSelector(BaseModel):
 
 class GitRepo(BaseModel):
     name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
-    repo_url = models.CharField(_("Repository URL"), max_length=255, validators=[URLValidator()])
+    git_url = models.CharField(
+        _("Git URL"),
+        max_length=255,
+        validators=[URLValidator()],
+        help_text=_("This URL will be used in Git operations"),
+    )
+    web_url = models.CharField(
+        _("Web URL"),
+        max_length=255,
+        blank=True,
+        help_text=_("This URL will be used to display links to config files. Use {{branch}} if needed"),
+    )
     device_config_path = models.CharField(
         _("Device config path"), max_length=255, help_text=_("Jinja2 syntax allowed. E.g. /devices/{{device.name}}/")
     )
     default = models.BooleanField(_("Default"), default=False)
     username = models.CharField(_("Username"), max_length=255, blank=True)
     encrypted_password = PasswordField(_("Password"), null=True, blank=True, default=None)
-    branch = models.CharField(_("Branch"), max_length=255, blank=True, validators=[RegexValidator(r"[a-zA-Z_-]*")])
+    branch = models.CharField(
+        _("Branch"), max_length=255, blank=True, default="master", validators=[RegexValidator(r"[a-zA-Z_-]*")]
+    )
     head_hash = models.CharField(_("Head Hash"), max_length=40, blank=True)
 
     objects = GitRepoQS.as_manager()
-    clone_fields = ("repo_url", "device_config_path", "username", "branch")
+    clone_fields = ("git_url", "web_url", "device_config_path", "username", "branch")
     json_fields = (
         "id",
         "name",
-        "repo_url",
+        "git_url",
+        "web_url",
         "device_config_path",
         "default",
         "username",
@@ -184,7 +198,7 @@ class GitRepo(BaseModel):
 
     def save(self, **kwargs) -> None:
         if not self.name:
-            self.name = self.repo_url.split("://")[-1]
+            self.name = self.git_url.split("://")[-1]
         return super().save(**kwargs)
 
     def bound_devices(self) -> models.QuerySet[Device]:
@@ -213,18 +227,23 @@ class GitRepo(BaseModel):
         self.encrypted_password = EncryptedString.from_plain_text(value, salt)
 
     @property
-    def full_url(self) -> str:
-        if len(splitted := self.repo_url.split("://")) != 2:
-            logger.warning("Possibly wrong GIT URL '%s' for repository '%s'", self.repo_url, self.name)
-            return self.repo_url
+    def full_git_url(self) -> str:
+        if len(splitted := self.git_url.split("://")) != 2:
+            logger.warning("Possibly wrong GIT URL '%s' for repository '%s'", self.git_url, self.name)
+            return self.git_url
         if not self.username and not self.encrypted_password:
-            return self.repo_url
+            return self.git_url
         schema, rest_of_url = splitted
         return f"{schema}://{self.username}:{self.password}@{rest_of_url}"
 
     def rendered_device_path(self, device: Device) -> str:
         template = Environment(loader=BaseLoader()).from_string(self.device_config_path)
-        return template.render(device=device)
+        return template.render(device=device).lstrip("/")
+
+    def device_web_path(self, device: Device) -> str:
+        device_path = self.rendered_device_path(device)
+        template = Environment(loader=BaseLoader()).from_string(self.web_url)
+        return template.render(branch=self.branch).rstrip("/") + "/" + device_path
 
 
 class ConfigSerializer(BaseModel):

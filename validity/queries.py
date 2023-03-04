@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from validity.models import BaseModel
 
 
-_QS = TypeVar('_QS', bound=QuerySet)
+_QS = TypeVar("_QS", bound=QuerySet)
 
 
 def annotate_json(qs: _QS, field: str, annotate_model: type["BaseModel"]) -> _QS:

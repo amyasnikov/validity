@@ -54,7 +54,8 @@ class GitRepoForm(NetBoxModelForm):
         model = models.GitRepo
         fields = (
             "name",
-            "repo_url",
+            "git_url",
+            "web_url",
             "device_config_path",
             "default",
             "username",
