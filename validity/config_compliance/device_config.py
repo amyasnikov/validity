@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Iterable
 
 from dcim.models import Device
 from django.utils.timezone import make_aware
@@ -52,15 +52,15 @@ class DeviceConfig:
             raise DeviceConfigError(str(e)) from e
 
     def serialize(self) -> None:
-        serialize_configs(self, override=True)
+        serialize_configs([self], override=True)
 
 
-def serialize_configs(*configs: DeviceConfig, override: bool = False) -> None:
+def serialize_configs(configs: Iterable[DeviceConfig | None], override: bool = False) -> None:
     parser = ttp()
     configs_by_template = defaultdict(list)
     templates = {}
     for config in configs:
-        if config.template:
+        if config and config.template:
             configs_by_template[config.template.name].append(config)
             templates.setdefault(config.template.name, config.template.template)
     for template_name, config_group in configs_by_template.items():
@@ -71,5 +71,5 @@ def serialize_configs(*configs: DeviceConfig, override: bool = False) -> None:
     for template_name, config_group in configs_by_template.items():
         result = parser.result(templates=[template_name])[0]
         for config, serialized in zip(config_group, result):
-            if override or config.serialized is not None:
+            if override or config.serialized is None:
                 config.serialized = serialized

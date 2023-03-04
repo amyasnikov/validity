@@ -93,7 +93,6 @@ class ComplianceTestResultSerializer(NetBoxModelSerializer):
             "device",
             "passed",
             "explanation",
-            "tags",
             "custom_fields",
             "created",
             "last_updated",

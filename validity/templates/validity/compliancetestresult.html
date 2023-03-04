@@ -5,47 +5,62 @@
 <div class="controls"></div>
 {% endblock %}
 {% block content %}
-  <div class="row mb-3">
-    <div class="col col-md-6">
-      <div class="card">
-        <h5 class="card-header">Compliance Test Results</h5>
-        <div class="card-body">
-          <table class="table table-hover attr-table">
-            <tr>
-              <th scope="row">Test</th>
-              <td>{{ object.test | linkify }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Device</th>
-              <td>{{ object.device | linkify }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Created</th>
-              <td>{{ object.created | date:"Y-m-d G:i:s" }}</td>
-            </tr>
-          </table>
-          <div class="mt-3">
-            <h5>Explanation</h5>
-            <pre>{{ object.explanation }}</pre>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col col-md-6">
-      {% include 'inc/panels/tags.html' %}
-    </div>
-  </div>
-  <div class="row">
-    <div class="col col-md-12">
-      <div class="card">
-        <h5 class="card-header">Other results for the same test and device</h5>
-        <div class="card-body">
-          <div class="table-responsive">
-            {% render_table result_table %}
-          </div>
-          {%include 'inc/paginator.html' with paginator=result_table.paginator page=result_table.page%}
-        </div>
+<div class="row mb-3">
+  <div class="col col-md-4">
+    <div class="card">
+      <h5 class="card-header">Compliance Test Results</h5>
+      <div class="card-body">
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">ID</th>
+            <td>{{ object.id }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Test</th>
+            <td>{{ object.test | linkify }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Device</th>
+            <td>{{ object.device | linkify }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Result</th>
+            <td>
+              {% if object.passed %}
+              <span class="badge bg-green">PASSED</span>
+              {% else %}
+              <span class="badge bg-red">FAILED</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Created</th>
+            <td>{{ object.created | date:"Y-m-d G:i:s" }}</td>
+          </tr>
+        </table>
       </div>
     </div>
   </div>
+  <div class="col col-md-8">
+    <div class="card">
+      <h5 class="card-header">Explanation</h5>
+      <div class="card-body">
+        <div class="table-responsive">{% render_table explanation_table %}</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col col-md-12">
+    <div class="card">
+      <h5 class="card-header">Other results for the same test and device</h5>
+      <div class="card-body">
+        <div class="table-responsive">
+          {% render_table result_table %}
+        </div>
+        {%include 'inc/paginator.html' with paginator=result_table.paginator page=result_table.page%}
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock content %}

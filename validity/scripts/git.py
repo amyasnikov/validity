@@ -127,4 +127,4 @@ class SyncGitRepos(Script):
             return self.format_script_output(new_repo_hashes)
 
 
-name = "Git"
+name = "Validity Git"

@@ -1,7 +1,9 @@
+from itertools import chain
 from typing import TYPE_CHECKING, Optional
 
 from dcim.models import Device
-from django.db.models import Count, Prefetch, Q
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Count, F, Prefetch, Q
 from django.db.models.functions import JSONObject
 from netbox.models import RestrictedQuerySet
 
@@ -49,6 +51,11 @@ class ComplianceTestResultQS(RestrictedQuerySet):
     def only_latest(self) -> "ComplianceTestResultQS":
         return self.order_by("test__pk", "device__pk", "-created").distinct("test__pk", "device__pk")
 
+    def last_more_than(self, than: int) -> "ComplianceTestResultQS":
+        qs = self.values("device", "test").annotate(ids=ArrayAgg(F("id"), ordering="created"))
+        last_ids = chain.from_iterable(record["ids"][than:] for record in qs.iterator())
+        return self.model.objects.filter(pk__in=last_ids)
+
 
 class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
     def from_device(self, device: Device) -> Optional["ConfigSerializer"]:
@@ -59,3 +66,7 @@ class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
         if ser := device.device_type.manufacturer.cf.get("config_serializer"):
             return ser
         return None
+
+
+class NameSetQS(JSONObjMixin, RestrictedQuerySet):
+    pass

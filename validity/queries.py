@@ -1,8 +1,10 @@
 from functools import partial
+from types import GenericAlias
 from typing import TYPE_CHECKING, Iterator, TypeVar
 
 from dcim.models import Device
-from django.db.models import BigIntegerField, Case, Count, F, OuterRef, QuerySet, When
+from django.contrib.postgres.expressions import ArraySubquery
+from django.db.models import BigIntegerField, Case, Count, F, OuterRef, Q, QuerySet, When
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from netbox.models import RestrictedQuerySet
@@ -56,6 +58,12 @@ class DeviceQS(RestrictedQuerySet):
             )
         )
 
+    def annotate_json_namesets(self: _QS) -> _QS:
+        from validity.models import NameSet
+
+        namesets = NameSet.objects.filter(Q(_global=True) | Q(serializers__pk=OuterRef("serializer_id"))).as_json()
+        return self.annotate_serializer_id().annotate(namesets=ArraySubquery(namesets))
+
     def annotate_json_repo(self: _QS) -> _QS:
         from validity.models import GitRepo
 
@@ -69,17 +77,22 @@ class DeviceQS(RestrictedQuerySet):
         return annotate_json(qs, "serializer", ConfigSerializer)
 
     def json_iterator(self, *fields: str) -> Iterator:
-        from validity.models import ConfigSerializer, GitRepo
+        from validity.models import ConfigSerializer, GitRepo, NameSet
 
-        models = {"repo": GitRepo, "serializer": ConfigSerializer}
-        for obj in self:
+        models = {"repo": GitRepo, "serializer": ConfigSerializer, "namesets": list[NameSet]}
+        for device in self:
             for field in fields:
                 model = models[field]
-                json_dict = getattr(obj, field)
-                if json_dict is not None:
-                    json_obj = model(**json_dict)
-                    setattr(obj, field, json_obj)
-            yield obj
+                json_repr = getattr(device, field, None)
+                if json_repr is None:
+                    continue
+                if isinstance(model, GenericAlias):
+                    model = model.__args__[0]
+                    json_obj = [model(obj) for obj in json_repr]
+                else:
+                    json_obj = model(**json_repr)
+                setattr(device, field, json_obj)
+            yield device
 
 
 def count_devices_per_something(field: str, annotate_method: str) -> dict[int | None, int]:

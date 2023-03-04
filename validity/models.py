@@ -2,6 +2,7 @@ import ast
 import logging
 import operator
 import os
+import re
 from functools import reduce
 from typing import Generator
 
@@ -14,23 +15,34 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from jinja2 import BaseLoader, Environment
-from netbox.models import NetBoxModel
+from netbox.models import (
+    ChangeLoggingMixin,
+    CustomFieldsMixin,
+    CustomLinksMixin,
+    CustomValidationMixin,
+    ExportTemplatesMixin,
+    NetBoxModel,
+    WebhooksMixin,
+)
 
 from validity import settings
-from validity.managers import ComplianceTestQS, ComplianceTestResultQS, ConfigSerializerQS, GitRepoQS
+from validity.managers import ComplianceTestQS, ComplianceTestResultQS, ConfigSerializerQS, GitRepoQS, NameSetQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
+from .config_compliance.dynamic_pairs import DynamicNamePairFilter, dpf_factory
 from .queries import DeviceQS
 
 
 logger = logging.getLogger(__name__)
 
 
-class BaseModel(NetBoxModel):
-    json_fields: tuple[str, ...] = ("id",)
-
+class URLMixin:
     def get_absolute_url(self):
         return reverse(f"plugins:validity:{self._meta.model_name}", kwargs={"pk": self.pk})
+
+
+class BaseModel(URLMixin, NetBoxModel):
+    json_fields: tuple[str, ...] = ("id",)
 
     class Meta:
         abstract = True
@@ -55,12 +67,25 @@ class ComplianceTest(BaseModel):
     def __str__(self) -> str:
         return self.name
 
+    @property
+    def effective_expression(self):
+        return self.expression
 
-class ComplianceTestResult(BaseModel):
+
+class ComplianceTestResult(
+    URLMixin,
+    ChangeLoggingMixin,
+    CustomFieldsMixin,
+    CustomLinksMixin,
+    CustomValidationMixin,
+    ExportTemplatesMixin,
+    WebhooksMixin,
+    models.Model,
+):
     test = models.ForeignKey(ComplianceTest, verbose_name=_("Test"), related_name="results", on_delete=models.CASCADE)
     device = models.ForeignKey(Device, verbose_name=_("Device"), related_name="results", on_delete=models.CASCADE)
-    passed = models.BooleanField()
-    explanation = models.TextField(blank=True)
+    passed = models.BooleanField(_("Passed"))
+    explanation = models.JSONField(_("Explanation"), default=list)
 
     objects = ComplianceTestResultQS.as_manager()
 
@@ -73,9 +98,9 @@ class ComplianceTestResult(BaseModel):
 
     def save(self, **kwargs) -> None:
         super().save(**kwargs)
-        store_results = settings.store_last_results
-        if ComplianceTestResult.objects.filter(device=self.device).count() > store_results:
-            ComplianceTestResult.objects.filter(device=self.device).order_by("last_updated")[store_results:].delete()
+        type(self).objects.filter(device=self.device_id, test=self.test_id).last_more_than(
+            settings.store_last_results
+        ).delete()
 
 
 class ComplianceSelector(BaseModel):
@@ -124,8 +149,20 @@ class ComplianceSelector(BaseModel):
         "location_filter": "location",
     }
 
+    class Meta:
+        ordering = ("name",)
+
     def __str__(self) -> str:
         return self.name
+
+    def clean(self):
+        try:
+            re.compile(self.name_filter)
+        except re.error:
+            raise ValidationError({"name_filter": "Invalid regular expression"})
+        if self.dynamic_pairs == DynamicPairsChoices.NAME:
+            if not DynamicNamePairFilter.extract_first_group(self.name_filter):
+                raise ValidationError({"name_filter": "You must define regexp group if dynamic_pairs is set to NAME"})
 
     def get_filter_operation_color(self):
         return BoolOperationChoices.colors.get(self.filter_operation)
@@ -145,10 +182,16 @@ class ComplianceSelector(BaseModel):
                 yield models.Q(**{filter_name: attr})
 
     @property
-    def devices(self) -> models.QuerySet:
+    def filter(self) -> models.Q:
         op = operator.or_ if self.filter_operation == BoolOperationChoices.OR else operator.and_
-        overall_filter = reduce(op, self._filters_flatten())
-        return Device.objects.filter(overall_filter)
+        return reduce(op, self._filters_flatten())
+
+    @property
+    def devices(self) -> models.QuerySet:
+        return Device.objects.filter(self.filter)
+
+    def dynamic_pair_filter(self, device: Device) -> models.Q | None:
+        return dpf_factory(self, device).filter
 
 
 class GitRepo(BaseModel):
@@ -289,7 +332,10 @@ class NameSet(BaseModel):
     )
     definitions = models.TextField(help_text=_("Here you can write python functions or imports"))
 
+    objects = NameSetQS.as_manager()
+
     clone_fields = ("description", "_global", "serializers", "definitions")
+    json_fields = ("id", "name", "description", "_global", "definitions")
 
     class Meta:
         ordering = ("name",)
@@ -301,12 +347,16 @@ class NameSet(BaseModel):
         try:
             definitions = ast.parse(self.definitions)
         except SyntaxError as e:
-            raise ValidationError({"definitions": "Invalid python syntax"}) from e
+            raise ValidationError({"definitions": _("Invalid python syntax")}) from e
         for obj in definitions.body:
             if isinstance(obj, ast.Assign):
                 if len(obj.targets) != 1 or obj.targets[0].id != "__all__":
-                    raise ValidationError({"definitions": "Assignments besides '__all__' are not allowed"})
+                    raise ValidationError({"definitions": _("Assignments besides '__all__' are not allowed")})
             if not isinstance(obj, (ast.Import, ast.ImportFrom, ast.FunctionDef)):
                 raise ValidationError(
-                    {"definitions": "Only 'import' and 'def' statements are allowed on the top level"}
+                    {"definitions": _("Only 'import' and 'def' statements are allowed on the top level")}
                 )
+
+    @property
+    def effective_definitions(self):
+        return self.definitions

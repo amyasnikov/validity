@@ -1,4 +1,6 @@
-from django_tables2 import Column
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+from django_tables2 import Column, Table
 from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
 
@@ -91,3 +93,16 @@ class ConfigSerializerTable(NetBoxTable):
 
     def render_total_devices(self, record):
         return self.total_devices_map.get(record.id, 0)
+
+
+class ExplanationColumn(Column):
+    def render(self, value):
+        return format_html("<code>{}</code>", value)
+
+
+class ExplanationTable(Table):
+    left = ExplanationColumn(empty_values=(), verbose_name=_("Expression"))
+    right = ExplanationColumn(empty_values=(), verbose_name=_("Value"))
+
+    class Meta:
+        template_name = "django_tables2/bootstrap.html"

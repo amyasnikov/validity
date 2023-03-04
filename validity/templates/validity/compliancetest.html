@@ -3,7 +3,7 @@
 {% load render_table from django_tables2 %}
 {% block content %}
   <div class="row">
-    <div class="col col-md-5">
+    <div class="col col-md-4">
       <div class="card mb-3">
         <h5 class="card-header">Compliance Test</h5>
         <div class="card-body">
@@ -25,11 +25,11 @@
       </div>
       {% include 'inc/panels/tags.html' %}
     </div>
-    <div class="col col-md-7">
+    <div class="col col-md-8">
       <div class="card mb-3">
         <h5 class="card-header">Expression</h5>
         <div class="card-body">
-          <pre class="bg-light">{{ object.expression }}</pre>
+          <code>{{ object.expression }}</code>
         </div>
       </div>
     </div>
