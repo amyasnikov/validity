@@ -191,7 +191,8 @@ class ComplianceSelector(BaseModel):
         return Device.objects.filter(self.filter)
 
     def dynamic_pair_filter(self, device: Device) -> models.Q | None:
-        return dpf_factory(self, device).filter
+        if dp_filter := dpf_factory(self, device).filter:
+            return self.filter & dp_filter & ~models.Q(pk=device.pk)
 
 
 class GitRepo(BaseModel):

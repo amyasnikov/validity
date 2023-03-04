@@ -54,19 +54,7 @@ class GitRepo:
             remote_master_id = self._repo.lookup_reference(f"refs/remotes/origin/{self.branch}").target
         except KeyError as e:
             raise pygit2.GitError(f"Unknown branch: {e}") from e
-        self._repo.head.set_target(remote_master_id)
-        merge_result, _ = self._repo.merge_analysis(remote_master_id)
-        # Up to date, do nothing
-        if merge_result & pygit2.GIT_MERGE_ANALYSIS_UP_TO_DATE:
-            return
-        # We can just fastforward
-        elif merge_result & pygit2.GIT_MERGE_ANALYSIS_FASTFORWARD:
-            self._repo.checkout_tree(self._repo.get(remote_master_id))
-            master_ref = self._repo.lookup_reference("refs/heads/{self.branch}")
-            master_ref.set_target(remote_master_id)
-            self._repo.head.set_target(remote_master_id)
-        else:
-            raise AssertionError(f"Unknown merge analysis result for {self.name}")
+        self._repo.reset(remote_master_id, pygit2.GIT_RESET_HARD)
 
     def clone_or_force_pull(self) -> None:
         if self.exists:

@@ -43,8 +43,15 @@
   </div>
   <div class="col col-md-8">
     <div class="card">
-      <h5 class="card-header">Explanation</h5>
-      <div class="card-body">
+      <div class="row">
+        <div class="col mb-0 pb-0">
+          <h5 class="card-header">Explanation</h5>
+        </div>
+        <div class="col d-flex align-items-center mb-0 pb-0 justify-content-end me-5">
+          <a class="btn btn-sm btn-primary" href="?verbose=true">Verbose</a>
+        </div>
+      </div>
+      <div class="card-body pt-0">
         <div class="table-responsive">{% render_table explanation_table %}</div>
       </div>
     </div>
