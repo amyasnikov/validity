@@ -1,11 +1,11 @@
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
+from django.forms import PasswordInput
+from django.forms.fields import CharField
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from utilities.forms.fields import DynamicModelMultipleChoiceField
-from django.forms.fields import CharField
 
 from validity import models
-from django.forms import PasswordInput
 
 
 class ComplianceTestForm(NetBoxModelForm):
@@ -48,18 +48,28 @@ class GitRepoForm(NetBoxModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            self.fields['password'].disabled = True
+            self.fields["password"].disabled = True
 
     class Meta:
         model = models.GitRepo
-        fields = ("name", "repo_url", "device_config_path", "default", "username", "password", "branch", "tags")
+        fields = (
+            "name",
+            "repo_url",
+            "device_config_path",
+            "default",
+            "username",
+            "password",
+            "branch",
+            "tags",
+        )
 
     def save(self, commit: bool = ...):
-        self.instance.password = self.cleaned_data['password']
+        if password := self.cleaned_data.pop('password', None):
+            self.instance.password = password
         return super().save(commit)
 
 
 class ConfigSerializerForm(NetBoxModelForm):
     class Meta:
         model = models.ConfigSerializer
-        fields = ('name', 'ttp_template', 'tags')
+        fields = ("name", "ttp_template", "tags")

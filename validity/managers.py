@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from dcim.models import Device
-from django.db.models import BigIntegerField, Case, Count, OuterRef, Prefetch, Q, When
+from django.db.models import BigIntegerField, Case, Count, F, OuterRef, Prefetch, When, Sum
 from django.db.models.functions import Cast
 from netbox.models import RestrictedQuerySet
 
@@ -19,14 +19,22 @@ class GitRepoQS(RestrictedQuerySet):
     def annotate_total_devices(self) -> "GitRepoQS":
         total_devices = Case(
             When(
-                default=True, then=Count(Device.objects.filter(~Q(custom_field_data__has_key="git_repo")).values("id"))
+                default=False,
+                then=Count(
+                    Device.objects.annotate(
+                        git_repo=Case(
+                            When(
+                                tenant__custom_field_data__git_repo__isnull=False,
+                                then=Cast(F("tenant__custom_field_data__git_repo"), BigIntegerField()),
+                            ),
+                            default=0,
+                        )
+                    )
+                    .filter(git_repo=OuterRef("id"))
+                    .values("id")
+                ),
             ),
-            default=Count(
-                Device.objects.select_related("tenant")
-                .annotate(git_repo=Cast("tenant__custom_field_data__git_repo", BigIntegerField()))
-                .filter(git_repo=OuterRef("id"))
-                .values("id")
-            ),
+            default=Sum(Device.objects.values('id')),
         )
         return self.annotate(total_devices=total_devices)
 

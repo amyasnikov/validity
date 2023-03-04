@@ -121,6 +121,7 @@ class GitRepoSerializer(NetBoxModelSerializer):
             "username",
             "password",
             "branch",
+            "head_hash",
             "tags",
             "custom_fields",
             "created",

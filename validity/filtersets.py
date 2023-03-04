@@ -57,7 +57,7 @@ class ComplianceTestResultFilterSet(NetBoxModelFilterSet):
 class GitRepoFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.GitRepo
-        fields = ("id", "name", "default", "username", "branch")
+        fields = ("id", "name", "default", "username", "branch", "head_hash")
         search_fields = ("name", "repo_path", "device_config_path")
 
 

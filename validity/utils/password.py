@@ -1,7 +1,7 @@
 import base64
 from functools import partial
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
 from cryptography.fernet import Fernet
@@ -17,7 +17,7 @@ from django import forms
 class EncryptedString:
     cipher: bytes
     salt: bytes
-    _fernet: Fernet | None = None
+    _fernet: Fernet | None = field(default=None, compare=False, repr=False)
 
     secret_key: ClassVar[bytes] = settings.SECRET_KEY.encode()
 
@@ -63,10 +63,12 @@ class PasswordField(CharField):
         return name, path, args, kwargs
 
     def from_db_value(self, value, expression, connection):
+        if value is None:
+            return value
         return EncryptedString.deserialize(value)
 
-    def get_prep_value(self, value: EncryptedString | str) -> str:
-        if isinstance(value, str):
+    def get_prep_value(self, value: EncryptedString | str | None) -> str | None:
+        if value is None or isinstance(value, str):
             return value
         return value.serialize()
 

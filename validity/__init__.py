@@ -1,4 +1,6 @@
 from extras.plugins import PluginConfig
+from pydantic import BaseModel, Field, DirectoryPath
+from django.conf import settings as django_settings
 
 
 class NetBoxValidityConfig(PluginConfig):
@@ -11,3 +13,11 @@ class NetBoxValidityConfig(PluginConfig):
 
 
 config = NetBoxValidityConfig
+
+
+class ValiditySettings(BaseModel):
+    store_last_results: int = Field(default=5, gt=1, lt=1000)
+    git_folder: DirectoryPath = Field(default='/etc/netbox/scripts')
+
+
+settings = ValiditySettings.parse_obj(django_settings.PLUGINS_CONFIG.get("validity", {}))

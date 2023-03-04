@@ -7,7 +7,6 @@ import logging
 
 from dcim.choices import DeviceStatusChoices
 from dcim.models import Device, DeviceType, Location, Manufacturer, Platform
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator, RegexValidator
 from django.db import models
@@ -19,9 +18,7 @@ from netbox.models import NetBoxModel
 from validity.managers import ComplianceTestQS, GitRepoQS, ConfigSerializerQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
-
-
-PLUGIN_CONFIG = settings.PLUGINS_CONFIG.get("validity", {})
+from validity import settings
 
 
 logger = logging.getLogger(__name__)
@@ -60,8 +57,6 @@ class ComplianceTestResult(BaseModel):
     passed = models.BooleanField()
     explanation = models.TextField(blank=True)
 
-    STORE_LAST_RESULTS = 5
-
     class Meta:
         ordering = ("last_updated",)
 
@@ -71,7 +66,7 @@ class ComplianceTestResult(BaseModel):
 
     def save(self, **kwargs) -> None:
         super().save(**kwargs)
-        store_results = PLUGIN_CONFIG.get("STORE_LAST_RESULTS", self.STORE_LAST_RESULTS)
+        store_results = settings.store_last_results
         if ComplianceTestResult.objects.filter(device=self.device).count() > store_results:
             ComplianceTestResult.objects.filter(device=self.device).order_by("last_updated")[store_results:].delete()
 
@@ -153,12 +148,13 @@ class GitRepo(BaseModel):
     name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
     repo_url = models.CharField(_("Repository URL"), max_length=255, validators=[URLValidator()])
     device_config_path = models.CharField(
-        _("Device config path"), max_length=255, help_text=_("Jinja2 syntax allowed")
+        _("Device config path"), max_length=255, help_text=_("Jinja2 syntax allowed. E.g. /devices/{{device.name}}/")
     )
     default = models.BooleanField(_("Default"), default=False)
     username = models.CharField(_("Username"), max_length=255, blank=True)
     encrypted_password = PasswordField(_("Password"), null=True, blank=True, default=None)
     branch = models.CharField(_('Branch'), max_length=255, blank=True, validators=[RegexValidator(r'[a-zA-Z_-]*')])
+    head_hash = models.CharField(_('Head Hash'), max_length=40, blank=True)
 
     objects = GitRepoQS.as_manager()
     clone_fields = ('repo_url', 'device_config_path', 'username', 'branch')
@@ -178,7 +174,9 @@ class GitRepo(BaseModel):
 
     @property
     def password(self):
-        return self.encrypted_password.decrypt()
+        if self.encrypted_password:
+            return self.encrypted_password.decrypt()
+        return ''
 
     @password.setter
     def password(self, value: str | None):
@@ -210,6 +208,9 @@ class ConfigSerializer(BaseModel):
 
     clone_fields = ('ttp_template',)
 
+    def __str__(self) -> str:
+        return self.name
+
     def devices(self) -> models.QuerySet[Device]:
         direct_devices = Device.objects.filter(custom_field_data__config_serializer=self.pk)
         devtype_devices = Device.objects.filter(
@@ -222,5 +223,9 @@ class ConfigSerializer(BaseModel):
         )
         return direct_devices | devtype_devices | manufacturer_devices
 
-    def __str__(self) -> str:
-        return self.name
+    @property
+    def effective_template(self) -> str:
+        """
+        Returns a var appropriate for feeding into ttp() API: a filepath to template or template itself
+        """
+        return self.ttp_template
