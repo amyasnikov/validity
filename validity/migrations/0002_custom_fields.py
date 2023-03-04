@@ -6,9 +6,11 @@ def forward_func(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
     CustomField = apps.get_model("extras", "CustomField")
     Device = apps.get_model("dcim", "Device")
+    Tenant = apps.get_model("dcim", "Tenant")
     DeviceType = apps.get_model("dcim", "DeviceType")
     Manufacturer = apps.get_model("dcim", "Manufacturer")
     ConfigSerializer = apps.get_model("validity", "ConfigSerializer")
+    GitRepo = apps.get_model("validity", "GitRepo")
 
     db_alias = schema_editor.connection.alias
 
@@ -22,10 +24,10 @@ def forward_func(apps, schema_editor):
                 required=False,
             ),
             CustomField(
-                name="config_path",
-                label=_("Config Path"),
-                description=_("Path to configuration file inside git repo (overrides default one)"),
-                type="string",
+                name="git_repo",
+                label=_("Git Repository"),
+                type="object",
+                object_type=ContentType.objects.get_for_model(GitRepo),
                 required=False,
             ),
         ]
@@ -37,6 +39,7 @@ def forward_func(apps, schema_editor):
             ContentType.objects.get_for_model(Manufacturer),
         ]
     )
+    cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])
 
 
 def reverse_func(apps, schema_editor):

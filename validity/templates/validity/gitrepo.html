@@ -21,8 +21,8 @@
               <td>{{ object.repo_url }}</td>
             </tr>
             <tr>
-              <th scope="row">Default Device Path</th>
-              <td><code>{{ object.default_device_path }}</code></td>
+              <th scope="row">Device Config Path</th>
+              <td><code>{{ object.device_config_path }}</code></td>
             </tr>
             <tr>
               <th scope="row">Username</th>
@@ -31,6 +31,10 @@
             <tr>
               <th scope="row">Password</th>
               <td>{% if object.encrypted_password %}$encrypted{% else %}{{ '' | placeholder }}{% endif %}</td>
+            </tr>
+            <tr>
+              <th scope="row">Branch</th>
+              <td>{{ object.branch | placeholder }}</td>
             </tr>
           </table>
         </div>

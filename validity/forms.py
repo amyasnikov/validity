@@ -52,7 +52,7 @@ class GitRepoForm(NetBoxModelForm):
 
     class Meta:
         model = models.GitRepo
-        fields = ("name", "repo_url", "default_device_path", "default", "username", "password", "tags")
+        fields = ("name", "repo_url", "device_config_path", "default", "username", "password", "branch", "tags")
 
     def save(self, commit: bool = ...):
         self.instance.password = self.cleaned_data['password']

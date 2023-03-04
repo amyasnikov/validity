@@ -48,6 +48,7 @@ PLUGINS.append("validity")
 PLUGINS_CONFIG = {
     "validity": {
         "STORE_LAST_RESULTS": 5,
+        "GIT_FOLDER": "/etc/netbox/scripts"
     }
 }
 

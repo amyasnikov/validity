@@ -3,24 +3,28 @@ import operator
 import os
 from functools import reduce
 from typing import Generator
+import logging
 
 from dcim.choices import DeviceStatusChoices
 from dcim.models import Device, DeviceType, Location, Manufacturer, Platform
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
+from django.core.validators import URLValidator, RegexValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.models import NetBoxModel
 
-from validity.managers import ComplianceTestQS, GitRepoQS
+from validity.managers import ComplianceTestQS, GitRepoQS, ConfigSerializerQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
 
 
 PLUGIN_CONFIG = settings.PLUGINS_CONFIG.get("validity", {})
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseModel(NetBoxModel):
@@ -148,15 +152,16 @@ class ComplianceSelector(BaseModel):
 class GitRepo(BaseModel):
     name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
     repo_url = models.CharField(_("Repository URL"), max_length=255, validators=[URLValidator()])
-    default_device_path = models.CharField(
-        _("Default Device Path"), max_length=255, help_text=_("Jinja2 syntax allowed")
+    device_config_path = models.CharField(
+        _("Device config path"), max_length=255, help_text=_("Jinja2 syntax allowed")
     )
     default = models.BooleanField(_("Default"), default=False)
     username = models.CharField(_("Username"), max_length=255, blank=True)
     encrypted_password = PasswordField(_("Password"), null=True, blank=True, default=None)
+    branch = models.CharField(_('Branch'), max_length=255, blank=True, validators=[RegexValidator(r'[a-zA-Z_-]*')])
 
     objects = GitRepoQS.as_manager()
-    clone_fields = ('repo_url', 'default_device_path', 'username')
+    clone_fields = ('repo_url', 'device_config_path', 'username', 'branch')
 
     def __str__(self) -> str:
         return self.name
@@ -186,10 +191,22 @@ class GitRepo(BaseModel):
         salt = os.urandom(16)
         self.encrypted_password = EncryptedString.from_plain_text(value, salt)
 
+    @property
+    def full_url(self) -> str:
+        if len(splitted := self.repo_url.split('://')) != 2:
+            logger.warning("Possibly wrong GIT URL '%s' for repository '%s'", self.repo_url, self.name)
+            return self.repo_url
+        if not self.username and not self.encrypted_password:
+            return self.repo_url
+        schema, rest_of_url = splitted
+        return f'{schema}://{self.username}:{self.password}@{rest_of_url}'
+
 
 class ConfigSerializer(BaseModel):
     name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
     ttp_template = models.TextField(_("TTP Template"))
+
+    objects = ConfigSerializerQS.as_manager()
 
     clone_fields = ('ttp_template',)
 
