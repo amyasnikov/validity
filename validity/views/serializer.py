@@ -1,20 +1,15 @@
 from dcim.models import Device
+from dcim.tables import DeviceTable
 from django.db.models import BigIntegerField, Count, F
 from django.db.models.functions import Cast
 from netbox.views import generic
-from dcim.tables import DeviceTable
-from validity import models, tables, filtersets, forms
 from utilities.views import register_model_view
+
+from validity import filtersets, forms, models, tables
 
 
 class ConfigSerializerListView(generic.ObjectListView):
-    queryset = models.ConfigSerializer.objects.annotate(
-        total_devices=Count(
-            Device.objects.annotate(szr=Cast("custom_field_data__config_serializer", BigIntegerField()))
-            .filter(szr=F("id"))
-            .values("id")
-        )
-    )
+    queryset = models.ConfigSerializer.objects.all()
     table = tables.ConfigSerializerTable
     filterset = filtersets.ConfigSerializerFilterSet
 
@@ -26,7 +21,7 @@ class ConfigSerializerView(generic.ObjectView):
     def get_extra_context(self, request, instance):
         table = DeviceTable(instance.devices())
         table.configure(request)
-        return {'device_table': table}
+        return {"device_table": table}
 
 
 @register_model_view(models.ConfigSerializer, "delete")

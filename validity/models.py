@@ -1,24 +1,25 @@
 import ast
+import logging
 import operator
 import os
 from functools import reduce
 from typing import Generator
-import logging
 
 from dcim.choices import DeviceStatusChoices
 from dcim.models import Device, DeviceType, Location, Manufacturer, Platform
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator, RegexValidator
+from django.core.validators import RegexValidator, URLValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.models import NetBoxModel
-from validity.managers import ComplianceTestQS, GitRepoQS, ConfigSerializerQS
-from .queries import annotate_bound_git_repos
+
+from validity import settings
+from validity.managers import ComplianceTestQS, ConfigSerializerQS, GitRepoQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, DynamicPairsChoices
-from validity import settings
+from .queries import annotate_bound_git_repos
 
 
 logger = logging.getLogger(__name__)
@@ -153,11 +154,11 @@ class GitRepo(BaseModel):
     default = models.BooleanField(_("Default"), default=False)
     username = models.CharField(_("Username"), max_length=255, blank=True)
     encrypted_password = PasswordField(_("Password"), null=True, blank=True, default=None)
-    branch = models.CharField(_('Branch'), max_length=255, blank=True, validators=[RegexValidator(r'[a-zA-Z_-]*')])
-    head_hash = models.CharField(_('Head Hash'), max_length=40, blank=True)
+    branch = models.CharField(_("Branch"), max_length=255, blank=True, validators=[RegexValidator(r"[a-zA-Z_-]*")])
+    head_hash = models.CharField(_("Head Hash"), max_length=40, blank=True)
 
     objects = GitRepoQS.as_manager()
-    clone_fields = ('repo_url', 'device_config_path', 'username', 'branch')
+    clone_fields = ("repo_url", "device_config_path", "username", "branch")
 
     def __str__(self) -> str:
         return self.name
@@ -177,13 +178,13 @@ class GitRepo(BaseModel):
         filter_ = models.Q(repo=self.pk)
         if self.default:
             filter_ |= models.Q(repo__isnull=True)
-        return devices_with_repo.filter(filter_).select_related('site', 'device_role', 'device_type__manufacturer')
+        return devices_with_repo.filter(filter_).select_related("site", "device_role", "device_type__manufacturer")
 
     @property
     def password(self):
         if self.encrypted_password:
             return self.encrypted_password.decrypt()
-        return ''
+        return ""
 
     @password.setter
     def password(self, value: str | None):
@@ -198,13 +199,13 @@ class GitRepo(BaseModel):
 
     @property
     def full_url(self) -> str:
-        if len(splitted := self.repo_url.split('://')) != 2:
+        if len(splitted := self.repo_url.split("://")) != 2:
             logger.warning("Possibly wrong GIT URL '%s' for repository '%s'", self.repo_url, self.name)
             return self.repo_url
         if not self.username and not self.encrypted_password:
             return self.repo_url
         schema, rest_of_url = splitted
-        return f'{schema}://{self.username}:{self.password}@{rest_of_url}'
+        return f"{schema}://{self.username}:{self.password}@{rest_of_url}"
 
 
 class ConfigSerializer(BaseModel):
@@ -213,22 +214,22 @@ class ConfigSerializer(BaseModel):
 
     objects = ConfigSerializerQS.as_manager()
 
-    clone_fields = ('ttp_template',)
+    clone_fields = ("ttp_template",)
 
     def __str__(self) -> str:
         return self.name
 
     def devices(self) -> models.QuerySet[Device]:
-        direct_devices = Device.objects.filter(custom_field_data__config_serializer=self.pk)
-        devtype_devices = Device.objects.filter(
-            custom_field_data__config_serializer__isnull=True, device_type__custom_field_data__config_serializer=self.pk
+        filter_ = models.Q(custom_field_data__config_serializer=self.pk)
+        filter_ |= models.Q(
+            custom_field_data__config_serializer=None, device_type__custom_field_data__config_serializer=self.pk
         )
-        manufacturer_devices = Device.objects.filter(
-            custom_field_data__config_serializer__isnull=True,
-            device_type__custom_field_data__config_serializer__isnull=True,
-            device_type__manufacturer__custom_field_data__config_serializer=self.pk
+        filter_ |= models.Q(
+            custom_field_data__config_serializer=None,
+            device_type__custom_field_data__config_serializer=None,
+            device_type__manufacturer__custom_field_data__config_serializer=self.pk,
         )
-        return direct_devices | devtype_devices | manufacturer_devices
+        return Device.objects.filter(filter_)
 
     @property
     def effective_template(self) -> str:

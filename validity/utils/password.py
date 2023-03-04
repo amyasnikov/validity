@@ -1,16 +1,15 @@
 import base64
-from functools import partial
-
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Any, ClassVar
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from django import forms
 from django.conf import settings
 from django.db.models.fields import CharField
-from django import forms
 
 
 @dataclass
@@ -44,17 +43,17 @@ class EncryptedString:
         return self._fernet.decrypt(self.cipher).decode()
 
     def serialize(self) -> str:
-        return (self.salt + b'$' + self.cipher).decode()
+        return (self.salt + b"$" + self.cipher).decode()
 
     @classmethod
     def deserialize(cls, value: str):
-        salt, cipher = value.split('$')
+        salt, cipher = value.split("$")
         return cls(cipher.encode(), salt.encode())
 
 
 class PasswordField(CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        kwargs['max_length'] = 255
+        kwargs["max_length"] = 255
         super().__init__(*args, **kwargs)
 
     def deconstruct(self) -> Any:
@@ -78,6 +77,6 @@ class PasswordField(CharField):
         return EncryptedString.deserialize(value)
 
     def formfield(self, **kwargs):
-        if kwargs.get('form_class') is None:
-            kwargs['form_class'] = partial(forms.CharField, widget=forms.PasswordInput())
+        if kwargs.get("form_class") is None:
+            kwargs["form_class"] = partial(forms.CharField, widget=forms.PasswordInput())
         return super().formfield(**kwargs)

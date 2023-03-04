@@ -3,7 +3,7 @@ from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
 
 from validity import models
-from .queries import count_devices_per_repo
+from .queries import count_devices_per_repo, count_devices_per_serializer
 
 
 class SelectorTable(NetBoxTable):
@@ -81,8 +81,16 @@ class GitRepoTable(NetBoxTable):
 
 class ConfigSerializerTable(NetBoxTable):
     name = Column(linkify=True)
+    total_devices = Column(empty_values=())
 
     class Meta(NetBoxTable.Meta):
         model = models.ConfigSerializer
         fields = ("name", "total_devices")
         default_columns = fields
+
+    def __init__(self, *args, extra_columns=None, **kwargs):
+        super().__init__(*args, extra_columns=extra_columns, **kwargs)
+        self.total_devices_map = count_devices_per_serializer()
+
+    def render_total_devices(self, record):
+        return self.total_devices_map.get(record.id, 0)

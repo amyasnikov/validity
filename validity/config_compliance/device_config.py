@@ -1,14 +1,13 @@
-from collections import defaultdict
 import logging
+from collections import defaultdict
 from dataclasses import dataclass
-from jinja2 import Environment, BaseLoader
-
+from pathlib import Path
 
 from dcim.models import Device
+from jinja2 import BaseLoader, Environment
 from ttp import ttp
 
 from validity import settings
-from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TTPTemplate:
     name: str
-    template: str = ''  # according to TTP API this may contain a template iteslf or a filepath
+    template: str = ""  # according to TTP API this may contain a template iteslf or a filepath
 
 
 @dataclass
@@ -33,14 +32,14 @@ class DeviceConfig:
         return template.render(device=device)
 
     @classmethod
-    def from_device(cls, device: Device) -> 'DeviceConfig':
+    def from_device(cls, device: Device) -> "DeviceConfig":
         """
         Get DeviceConfig from dcim.models.Device
         Device MUST be annotated with ".git_repo" pointing to a repo with device config file
         Device MUST be annotated with ".serializer" pointing to appropriate config serializer instance
         """
-        assert hasattr(device, 'git_repo'), 'Device must be annotated with .git_repo'
-        assert hasattr(device, 'serializer'), 'Device must be annotated with .serializer'
+        assert hasattr(device, "git_repo"), "Device must be annotated with .git_repo"
+        assert hasattr(device, "serializer"), "Device must be annotated with .serializer"
         device_path = settings.git_folder / cls.eval_device_path(device.git_repo.device_config_path, device)
         template = TTPTemplate(name=device.serializer.name, template=device.serializer.effective_template)
         return cls(device, device_path, template)

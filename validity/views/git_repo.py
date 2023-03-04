@@ -2,6 +2,7 @@ from dcim.models import Device
 from dcim.tables import DeviceTable
 from netbox.views import generic
 from utilities.views import register_model_view
+
 from validity import filtersets, forms, models, tables
 
 
@@ -13,7 +14,7 @@ class GitRepoListView(generic.ObjectListView):
 
 @register_model_view(models.GitRepo)
 class GitRepoView(generic.ObjectView):
-    queryset = models.GitRepo.objects.prefetch_related('tags')
+    queryset = models.GitRepo.objects.prefetch_related("tags")
 
     def get_extra_context(self, request, instance):
         table = DeviceTable(instance.bound_devices())

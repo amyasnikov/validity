@@ -64,7 +64,7 @@ class GitRepoForm(NetBoxModelForm):
         )
 
     def save(self, commit: bool = ...):
-        if password := self.cleaned_data.pop('password', None):
+        if password := self.cleaned_data.pop("password", None):
             self.instance.password = password
         return super().save(commit)
 

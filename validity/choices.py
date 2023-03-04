@@ -1,6 +1,6 @@
+from django.db.models import TextChoices
 from django.db.models.enums import ChoicesMeta
 from django.utils.translation import gettext_lazy as _
-from django.db.models import TextChoices
 
 
 class ColoredChoiceMeta(ChoicesMeta):
@@ -40,4 +40,4 @@ class BoolOperationChoices(TextChoices, metaclass=ColoredChoiceMeta):
 
 class DynamicPairsChoices(TextChoices, metaclass=ColoredChoiceMeta):
     NO = "NO", _("NO"), "red"
-    NAME = "NAME", _("By name regex group"), 'blue'
+    NAME = "NAME", _("By name regex group"), "blue"

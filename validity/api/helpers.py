@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Sequence
 
 from netbox.api.serializers import WritableNestedSerializer
-from rest_framework.serializers import ModelSerializer, CharField
+from rest_framework.serializers import CharField, ModelSerializer
 
 
 def nested_factory(
@@ -25,6 +25,5 @@ def nested_factory(
 
 
 class PasswordField(CharField):
-
     def to_representation(self, value):
-        return '$encrypted'
+        return "$encrypted"

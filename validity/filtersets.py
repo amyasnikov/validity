@@ -64,5 +64,5 @@ class GitRepoFilterSet(NetBoxModelFilterSet):
 class ConfigSerializerFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.ConfigSerializer
-        fields = ('id', 'name')
-        search_fields = ('name',)
+        fields = ("id", "name")
+        search_fields = ("name",)
