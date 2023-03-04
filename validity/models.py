@@ -1,0 +1,209 @@
+import ast
+import operator
+import os
+from functools import reduce
+from typing import Generator
+
+from dcim.choices import DeviceStatusChoices
+from dcim.models import Device, DeviceType, Location, Manufacturer, Platform
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
+from django.db import models
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+from extras.models import Tag
+from netbox.models import NetBoxModel
+
+from validity.managers import ComplianceTestQS, GitRepoQS
+from validity.utils.password import EncryptedString, PasswordField
+from .choices import BoolOperationChoices, DynamicPairsChoices
+
+
+PLUGIN_CONFIG = settings.PLUGINS_CONFIG.get("validity", {})
+
+
+class BaseModel(NetBoxModel):
+    def get_absolute_url(self):
+        return reverse(f"plugins:validity:{self._meta.model_name}", kwargs={"pk": self.pk})
+
+    class Meta:
+        abstract = True
+
+
+class ComplianceTest(BaseModel):
+    name = models.CharField(_("Name"), max_length=255, unique=True)
+    expression = models.TextField(_("Expression"))
+    selectors = models.ManyToManyField(to="ComplianceSelector", related_name="tests", verbose_name=_("Selectors"))
+
+    clone_fields = ("expression", "selectors")
+
+    objects = ComplianceTestQS.as_manager()
+
+    def clean(self):
+        try:
+            ast.parse(self.expression)
+        except SyntaxError as e:
+            raise ValidationError({"expression": "Invalid Python expression"}) from e
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ComplianceTestResult(BaseModel):
+    test = models.ForeignKey(ComplianceTest, verbose_name=_("Test"), related_name="results", on_delete=models.CASCADE)
+    device = models.ForeignKey(Device, verbose_name=_("Device"), related_name="results", on_delete=models.CASCADE)
+    passed = models.BooleanField()
+    explanation = models.TextField(blank=True)
+
+    STORE_LAST_RESULTS = 5
+
+    class Meta:
+        ordering = ("last_updated",)
+
+    def __str__(self) -> str:
+        passed = "passed" if self.passed else "not passed"
+        return f"{self.test.name}:{self.device}:{passed}"
+
+    def save(self, **kwargs) -> None:
+        super().save(**kwargs)
+        store_results = PLUGIN_CONFIG.get("STORE_LAST_RESULTS", self.STORE_LAST_RESULTS)
+        if ComplianceTestResult.objects.filter(device=self.device).count() > store_results:
+            ComplianceTestResult.objects.filter(device=self.device).order_by("last_updated")[store_results:].delete()
+
+
+class ComplianceSelector(BaseModel):
+    name = models.CharField(_("Selector Name"), max_length=255, unique=True)
+    filter_operation = models.CharField(
+        _("Multi-filter operation"),
+        max_length=3,
+        choices=BoolOperationChoices.choices,
+        default="AND",
+    )
+    name_filter = models.CharField(_("Device Name Filter"), max_length=255, blank=True)
+    tag_filter = models.ManyToManyField(Tag, verbose_name=_("Tag Filter"), blank=True, related_name="+")
+    manufacturer_filter = models.ManyToManyField(
+        Manufacturer, verbose_name=_("Manufacturer Filter"), blank=True, related_name="+"
+    )
+    type_filter = models.ManyToManyField(DeviceType, verbose_name=_("Device Type Filter"), blank=True, related_name="+")
+    platform_filter = models.ManyToManyField(Platform, verbose_name=_("Platform Filter"), blank=True, related_name="+")
+    status_filter = models.CharField(max_length=50, choices=DeviceStatusChoices, blank=True)
+    location_filter = models.ManyToManyField(Location, verbose_name=_("Location Filter"), blank=True, related_name="+")
+    site_filter = models.ManyToManyField(Location, verbose_name=_("Site Filter"), blank=True, related_name="+")
+    dynamic_pairs = models.CharField(
+        _("Dynamic Pairs"), max_length=20, choices=DynamicPairsChoices.choices, default="NO"
+    )
+
+    clone_fields = (
+        "filter_operation",
+        "filter_operation",
+        "name_filter",
+        "tag_filter",
+        "manufacturer_filter",
+        "type_filter",
+        "platform_filter",
+        "status_filter",
+        "location_filter",
+        "site_filter",
+        "dynamic_pairs",
+    )
+
+    filters = {
+        "name_filter": "name__regex",
+        "tag_filter": "tags",
+        "manufacturer_filter": "device_type__manufacturer",
+        "type_filter": "device_type",
+        "platform_filter": "platform",
+        "status_filter": "status",
+        "location_filter": "location",
+    }
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_filter_operation_color(self):
+        return BoolOperationChoices.colors.get(self.filter_operation)
+
+    def get_status_filter_color(self):
+        return DeviceStatusChoices.colors.get(self.status_filter)
+
+    def get_dynamic_pairs_color(self):
+        return DynamicPairsChoices.colors.get(self.dynamic_pairs)
+
+    def _filters_flatten(self) -> Generator[models.Q, None, None]:
+        for attr_name, filter_name in self.filters.items():
+            attr = getattr(self, attr_name)
+            if isinstance(attr, models.Manager):
+                yield from (models.Q(**{filter_name: instance}) for instance in attr.all())
+            else:
+                yield models.Q(**{filter_name: attr})
+
+    @property
+    def devices(self) -> models.QuerySet:
+        op = operator.or_ if self.filter_operation == BoolOperationChoices.OR else operator.and_
+        overall_filter = reduce(op, self._filters_flatten())
+        return Device.objects.filter(overall_filter)
+
+
+class GitRepo(BaseModel):
+    name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
+    repo_url = models.CharField(_("Repository URL"), max_length=255, validators=[URLValidator()])
+    default_device_path = models.CharField(
+        _("Default Device Path"), max_length=255, help_text=_("Jinja2 syntax allowed")
+    )
+    default = models.BooleanField(_("Default"), default=False)
+    username = models.CharField(_("Username"), max_length=255, blank=True)
+    encrypted_password = PasswordField(_("Password"), null=True, blank=True, default=None)
+
+    objects = GitRepoQS.as_manager()
+    clone_fields = ('repo_url', 'default_device_path', 'username')
+
+    def __str__(self) -> str:
+        return self.name
+
+    def clean(self):
+        if self.default:
+            if GitRepo.objects.filter(default=True).exists():
+                raise ValidationError({"default": _("Default Repository already exists")})
+
+    def save(self, **kwargs) -> None:
+        if not self.name:
+            self.name = self.repo_url.split("://")[-1]
+        return super().save(**kwargs)
+
+    @property
+    def password(self):
+        return self.encrypted_password.decrypt()
+
+    @password.setter
+    def password(self, value: str | None):
+        if not value:
+            self.encrypted_password = None
+            return
+        #  112 password symbols lead to 273 encrypted symbols which is more than db field can store
+        if len(value) >= 112:
+            raise ValidationError(_("Password must be max 111 symbols long"))
+        salt = os.urandom(16)
+        self.encrypted_password = EncryptedString.from_plain_text(value, salt)
+
+
+class ConfigSerializer(BaseModel):
+    name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
+    ttp_template = models.TextField(_("TTP Template"))
+
+    clone_fields = ('ttp_template',)
+
+    def devices(self) -> models.QuerySet[Device]:
+        direct_devices = Device.objects.filter(custom_field_data__config_serializer=self.pk)
+        devtype_devices = Device.objects.filter(
+            custom_field_data__config_serializer__isnull=True, device_type__custom_field_data__config_serializer=self.pk
+        )
+        manufacturer_devices = Device.objects.filter(
+            custom_field_data__config_serializer__isnull=True,
+            device_type__custom_field_data__config_serializer__isnull=True,
+            device_type__manufacturer__custom_field_data__config_serializer=self.pk
+        )
+        return direct_devices | devtype_devices | manufacturer_devices
+
+    def __str__(self) -> str:
+        return self.name

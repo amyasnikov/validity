@@ -1,0 +1,31 @@
+[project]
+name = "validity"
+version = "0.1.0"
+dynamic = ["dependencies"]
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements/base.txt"]}
+
+
+[tool.black]
+line-length = 120
+skip_glob = ["*/migrations/*"]
+
+
+[tool.isort]
+profile = "black"
+line_length = 120
+no_lines_before = "LOCALFOLDER"
+lines_after_imports = 2
+skip_glob = ["*/migrations/*"]
+skip_gitignore = true
+known_first_party = ["validity"]
+
+
+[tool.flake8]
+max-line-length = 120
+exclude = ["migrations", "__pycache__"]
+per-file-ignores = ["__init__.py:F401"]

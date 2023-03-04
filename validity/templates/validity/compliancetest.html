@@ -1,0 +1,42 @@
+{% extends 'generic/object.html' %}
+{% load validity %}
+{% load render_table from django_tables2 %}
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-6">
+      <div class="card">
+        <h5 class="card-header">Compliance Test</h5>
+        <div class="card-body">
+          <table class="table table-hover attr-table mb-1">
+            <tr>
+              <th scope="row">Name</th>
+              <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Selectors</th>
+              <td>{{ object.selectors.all | linkify_list }}</td>
+            </tr>
+          </table>
+          <p>Expression</p>
+          <pre class="bg-light">{{ object.expression }}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="col col-md-6">
+      {% include 'inc/panels/tags.html' %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col col-md-12">
+      <div class="card">
+        <h5 class="card-header">Latest Results</h5>
+        <div class="card-body">
+          <div class="table-responsive">
+            {% render_table result_table %}
+          </div>
+          {%include 'inc/paginator.html' with paginator=result_table.paginator page=result_table.page%}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

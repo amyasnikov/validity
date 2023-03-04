@@ -1,0 +1,45 @@
+{% extends 'generic/object.html' %}
+{% load render_table from django_tables2 %}
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-4">
+      <div class="row mb-3">
+        <div class="card">
+          <h5 class="card-header">Config Serializer</h5>
+          <div class="card-body">
+            <table class="table table-hover attr-table">
+              <tr>
+                <th scope="row">Name</th>
+                <td>{{ object.name }}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        {% include 'inc/panels/tags.html' %}
+      </div>
+    </div>
+    <div class="col col-md-8">
+      <div class="card">
+        <h5 class="card-header">TTP Template</h5>
+        <div class="card-body">
+          <pre class="bg-light">{{ object.ttp_template }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col col-md-12">
+      <div class="card">
+        <h5 class="card-header">Bound Devices</h5>
+        <div class="card-body">
+          <div class="table-responsive">
+            {% render_table device_table %}
+          </div>
+          {%include 'inc/paginator.html' with paginator=device_table.paginator page=device_table.page%}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

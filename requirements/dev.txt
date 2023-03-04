@@ -1,0 +1,6 @@
+isort==5.10.*
+black==22.12.*
+flake8==6.0.*
+flake8-bugbear==22.12.*
+ipython
+ptvsd

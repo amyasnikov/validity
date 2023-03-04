@@ -1,0 +1,77 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load validity %}
+{% load render_table from django_tables2 %}
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-6">
+      <div class="card">
+        <h5 class="card-header">Compliance Selector</h5>
+        <div class="card-body">
+          <table class="table table-hover attr-table">
+            <tr>
+              <th scope="row">Name</th>
+              <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Multi-filter operation</th>
+              <td>{{ object | colored_choice:"filter_operation" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Device Name Filter</th>
+              <td>{{ object.name_filter | placeholder }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Tag Filter</th>
+              <td><code>{{ object.tag_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Manufacturer Filter</th>
+              <td><code>{{ object.manufacturer_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Device Type Filter</th>
+              <td><code>{{ object.type_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Platform Filter</th>
+              <td><code>{{ object.platform_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Status Filter</th>
+              <td><code>{{ object | colored_choice:"status_filter" | placeholder }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Location Filter</th>
+              <td><code>{{ object.location_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Site Filter</th>
+              <td><code>{{ object.site_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Dynamic Pairs</th>
+              <td><code>{{ object | colored_choice:"dynamic_pairs" }}</code></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col col-md-6">
+      {% include 'inc/panels/tags.html' %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col col-md-12">
+      <div class="card">
+        <h5 class="card-header">Selected Devices</h5>
+        <div class="card-body">
+          <div class="table-responsive">
+            {% render_table device_table %}
+          </div>
+          {%include 'inc/paginator.html' with paginator=device_table.paginator page=device_table.page%}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
