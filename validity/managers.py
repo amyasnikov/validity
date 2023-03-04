@@ -52,7 +52,7 @@ class ComplianceTestResultQS(RestrictedQuerySet):
         return self.order_by("test__pk", "device__pk", "-created").distinct("test__pk", "device__pk")
 
     def last_more_than(self, than: int) -> "ComplianceTestResultQS":
-        qs = self.values("device", "test").annotate(ids=ArrayAgg(F("id"), ordering="created"))
+        qs = self.values("device", "test").annotate(ids=ArrayAgg(F("id"), ordering="-created"))
         last_ids = chain.from_iterable(record["ids"][than:] for record in qs.iterator())
         return self.model.objects.filter(pk__in=last_ids)
 

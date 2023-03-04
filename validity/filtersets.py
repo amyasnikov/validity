@@ -67,3 +67,10 @@ class ConfigSerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
         model = models.ConfigSerializer
         fields = ("id", "name")
         search_fields = ("name",)
+
+
+class NameSetFilterSet(SearchMixin, NetBoxModelFilterSet):
+    class Meta:
+        model = models.NameSet
+        fields = ("id", "name", "_global")
+        search_fields = ("name", "description", "definitions")

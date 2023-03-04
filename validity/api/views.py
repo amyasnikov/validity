@@ -38,3 +38,9 @@ class ConfigSerializerViewSet(NetBoxModelViewSet):
     queryset = models.ConfigSerializer.objects.all()
     serializer_class = serializers.ConfigSerializerSerializer
     filterset_class = filtersets.ConfigSerializerFilterSet
+
+
+class NameSetViewSet(NetBoxModelViewSet):
+    queryset = models.NameSet.objects.prefetch_related("serializers")
+    serializer_class = serializers.NameSetSerializer
+    filterset_class = filtersets.NameSetFilterSet

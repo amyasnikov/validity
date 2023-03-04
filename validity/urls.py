@@ -23,4 +23,8 @@ urlpatterns = [
     path("serializers/add/", views.ConfigSerializerEditView.as_view(), name="configserializer_add"),
     path("serializers/delete/", views.ConfigSerializerBulkDeleteView.as_view(), name="configserializer_bulk_delete"),
     path("serializers/<int:pk>/", include(get_model_urls("validity", "configserializer"))),
+    path("namesets/", views.NameSetListView.as_view(), name="nameset_list"),
+    path("namesets/add/", views.NameSetEditView.as_view(), name="nameset_add"),
+    path("namesets/delete/", views.NameSetBulkDeleteView.as_view(), name="nameset_bulk_delete"),
+    path("namesets/<int:pk>/", include(get_model_urls("validity", "nameset"))),
 ]

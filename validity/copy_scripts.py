@@ -21,4 +21,7 @@ def copy_scripts(src_dir: Path, dst_dir: Path):
         dst_file_path = dst_dir / f"validity_{script_file.name}"
         if not dst_file_path.is_file() or not hashes_equal(script_file, dst_file_path):
             logger.warning("Copying script %s to %s", script_file.name, dst_file_path)
-            shutil.copy(script_file, dst_file_path)
+            try:
+                shutil.copy(script_file, dst_file_path)
+            except shutil.Error as e:
+                logger.error("Unable to copy script to %s, %s: %s", dst_file_path, type(e).__name__, e)

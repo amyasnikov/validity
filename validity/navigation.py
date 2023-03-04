@@ -55,6 +55,18 @@ validity_menu_items = (
             ),
         ],
     ),
+    PluginMenuItem(
+        link="plugins:validity:nameset_list",
+        link_text="Name Sets",
+        buttons=[
+            PluginMenuButton(
+                link="plugins:validity:nameset_add",
+                title="Add",
+                icon_class="mdi mdi-plus-thick",
+                color=ButtonColorChoices.GREEN,
+            ),
+        ],
+    ),
 )
 
 menu = PluginMenu(

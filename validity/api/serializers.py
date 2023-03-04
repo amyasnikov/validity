@@ -146,3 +146,37 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
 NestedConfigSerializerSerializer = nested_factory(
     ConfigSerializerSerializer, ("id", "url", "display", "name", "ttp_template", "created", "last_updated")
 )
+
+
+class NameSetSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:nameset-detail")
+
+    class Meta:
+        model = models.NameSet
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "description",
+            "_global",
+            "tests",
+            "definitions",
+            "tags",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )
+
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        result["global"] = result.pop("_global")
+        return result
+
+    def run_validation(self, data=...):
+        if "global" in data:
+            data["_global"] = data.pop("global")
+        return super().run_validation(data)
+
+
+NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "display", "name", "created", "last_updated"))

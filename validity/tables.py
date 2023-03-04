@@ -106,3 +106,13 @@ class ExplanationTable(Table):
 
     class Meta:
         template_name = "django_tables2/bootstrap.html"
+
+
+class NameSetTable(NetBoxTable):
+    name = Column(linkify=True)
+    tests = ManyToManyColumn(linkify_item=True)
+
+    class Meta(NetBoxTable.Meta):
+        model = models.NameSet
+        fields = ("name", "_global", "tests")
+        default_columns = fields

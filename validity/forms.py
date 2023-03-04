@@ -74,3 +74,11 @@ class ConfigSerializerForm(NetBoxModelForm):
     class Meta:
         model = models.ConfigSerializer
         fields = ("name", "ttp_template", "tags")
+
+
+class NameSetForm(NetBoxModelForm):
+    tests = DynamicModelMultipleChoiceField(queryset=models.ComplianceTest.objects.all(), required=False)
+
+    class Meta:
+        model = models.NameSet
+        fields = ("name", "description", "_global", "tests", "definitions")

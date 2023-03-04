@@ -1,5 +1,6 @@
 from .device import DeviceSerializedConfigView
 from .git_repo import GitRepoBulkDeleteView, GitRepoDeleteView, GitRepoEditView, GitRepoListView, GitRepoView
+from .nameset import NameSetBulkDeleteView, NameSetDeleteView, NameSetEditView, NameSetListView, NameSetView
 from .selector import (
     ComplianceSelectorBulkDeleteView,
     ComplianceSelectorDeleteView,

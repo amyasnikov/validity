@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Any, Callable, Iterable
 
 from dcim.models import Device
@@ -23,19 +24,21 @@ class RunTestsScript(Script):
     def __init__(self):
         super().__init__()
         self._nameset_functions = {}
+        self.global_namesets = NameSet.objects.filter(_global=True)
 
     def nameset_functions(self, namesets: Iterable[NameSet]) -> dict[str, Callable]:
-        def extract_nameset(nameset):
-            __all__ = []
-            exec(nameset.effective_definitions)
-            __all__ = set(__all__)
-            return {k: v for k, v in locals().items() if k in __all__ and isinstance(v, Callable)}
+        def extract_nameset(nameset, globals_):
+            locs = {}
+            exec(nameset.effective_definitions, globals_, locs)
+            __all__ = set(locs["__all__"])
+            return {k: v for k, v in locs.items() if k in __all__ and isinstance(v, Callable)}
 
         result = {name: getattr(default_nameset, name) for name in default_nameset.__all__}
-        for nameset in namesets:
+        globals_ = result.copy()
+        for nameset in chain(namesets, self.global_namesets):
             if nameset.name not in self._nameset_functions:
                 try:
-                    new_functions = extract_nameset(nameset)
+                    new_functions = extract_nameset(nameset, globals_)
                 except Exception as e:
                     self.log_warning(f"Cannot extract code from nameset {nameset}, {type(e).__name__}: {e}")
                     new_functions = {}
@@ -58,7 +61,7 @@ class RunTestsScript(Script):
     def run_test(
         self, device_config: DeviceConfig, pair_config: DeviceConfig | None, test: ComplianceTest
     ) -> tuple[bool, list[tuple[Any, Any]]]:
-        functions = self.nameset_functions(device_config.device.namesets)
+        functions = self.nameset_functions(test.namesets.all())
         device = self.make_device(device_config, pair_config)
         names = DEFAULT_NAMES | {"device": device}
         evaluator = ExplanationalEval(DEFAULT_OPERATORS, functions, names)
@@ -66,30 +69,27 @@ class RunTestsScript(Script):
         return passed, evaluator.explanation
 
     @staticmethod
-    def device_iterator(filter_: Q | None, namesets: bool = False):
+    def device_iterator(filter_: Q | None):
         if not filter_:
-            yield None
             return
         fields = {"serializer", "repo"}
         devices = DeviceQS().filter(filter_).annotate_json_serializer().annotate_json_repo()
-        if namesets:
-            fields.add("namesets")
-            devices = devices.annotate_json_namesets()
         yield from devices.json_iterator(*fields)
 
     def run(self, data, commit):
-        selectors = ComplianceSelector.objects.prefetch_related("tests")
+        selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
         results = []
         for selector in selectors:
-            for device in self.device_iterator(selector.filter, namesets=True):
+            for device in self.device_iterator(selector.filter):
                 config = DeviceConfig.from_device(device)
-                dynamic_pair = next(self.device_iterator(selector.dynamic_pair_filter(device)))
+                dynamic_pair = next(self.device_iterator(selector.dynamic_pair_filter(device)), None)
                 pair_config = DeviceConfig.from_device(dynamic_pair) if dynamic_pair else None
                 serialize_configs([config, pair_config])
                 for test in selector.tests.all():
+                    explanation = []
                     try:
                         passed, explanation = self.run_test(config, pair_config, test)
-                    except InvalidExpression as e:
+                    except (InvalidExpression, NameError) as e:
                         self.log_failure(
                             f"Failed to execute test {test} for device {config.device}, {type(e).__name__}: {e}"
                         )

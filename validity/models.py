@@ -328,14 +328,14 @@ class NameSet(BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     description = models.TextField()
     _global = models.BooleanField(_("Global"), blank=True, default=False)
-    serializers = models.ManyToManyField(
-        ConfigSerializer, verbose_name=_("Config Serializers"), blank=True, related_name="namesets"
+    tests = models.ManyToManyField(
+        ComplianceTest, verbose_name=_("Compliance Tests"), blank=True, related_name="namesets"
     )
     definitions = models.TextField(help_text=_("Here you can write python functions or imports"))
 
     objects = NameSetQS.as_manager()
 
-    clone_fields = ("description", "_global", "serializers", "definitions")
+    clone_fields = ("description", "_global", "tests", "definitions")
     json_fields = ("id", "name", "description", "_global", "definitions")
 
     class Meta:
@@ -353,7 +353,7 @@ class NameSet(BaseModel):
             if isinstance(obj, ast.Assign):
                 if len(obj.targets) != 1 or obj.targets[0].id != "__all__":
                     raise ValidationError({"definitions": _("Assignments besides '__all__' are not allowed")})
-            if not isinstance(obj, (ast.Import, ast.ImportFrom, ast.FunctionDef)):
+            elif not isinstance(obj, (ast.Import, ast.ImportFrom, ast.FunctionDef)):
                 raise ValidationError(
                     {"definitions": _("Only 'import' and 'def' statements are allowed on the top level")}
                 )
