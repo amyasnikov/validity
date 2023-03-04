@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.models import NetBoxModel
+from jinja2 import Environment, BaseLoader
 
 from validity import settings
 from validity.managers import ComplianceTestQS, ConfigSerializerQS, GitRepoQS
@@ -220,6 +221,10 @@ class GitRepo(BaseModel):
             return self.repo_url
         schema, rest_of_url = splitted
         return f"{schema}://{self.username}:{self.password}@{rest_of_url}"
+
+    def rendered_device_path(self, device: Device) -> str:
+        template = Environment(loader=BaseLoader()).from_string(self.device_config_path)
+        return template.render(device=device)
 
 
 class ConfigSerializer(BaseModel):

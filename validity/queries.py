@@ -1,5 +1,5 @@
 from functools import partial
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Iterator, TypeVar
 
 from dcim.models import Device
 from django.db.models import BigIntegerField, Case, Count, F, OuterRef, QuerySet, When
@@ -12,7 +12,10 @@ if TYPE_CHECKING:
     from validity.models import BaseModel
 
 
-def annotate_json(qs: QuerySet, field: str, annotate_model: type["BaseModel"]) -> QuerySet:
+_QS = TypeVar('_QS', bound=QuerySet)
+
+
+def annotate_json(qs: _QS, field: str, annotate_model: type["BaseModel"]) -> _QS:
     return qs.annotate(**{field: annotate_model.objects.filter(pk=OuterRef(f"{field}_id")).as_json()})
 
 
@@ -24,7 +27,7 @@ class DeviceQS(RestrictedQuerySet):
         else:
             super().__init__(model, query, using, hints)
 
-    def annotate_git_repo_id(self) -> QuerySet[Device]:
+    def annotate_git_repo_id(self: _QS) -> _QS:
         from validity.models import GitRepo
 
         return self.annotate(
@@ -37,7 +40,7 @@ class DeviceQS(RestrictedQuerySet):
             )
         )
 
-    def annotate_serializer_id(self) -> QuerySet[Device]:
+    def annotate_serializer_id(self: _QS) -> _QS:
         return (
             self.annotate(device_s=KeyTextTransform("config_serializer", "custom_field_data"))
             .annotate(
@@ -53,32 +56,34 @@ class DeviceQS(RestrictedQuerySet):
             )
         )
 
-    def annotate_json_repo(self) -> QuerySet[Device]:
+    def annotate_json_repo(self: _QS) -> _QS:
         from validity.models import GitRepo
 
         qs = self.annotate_git_repo_id()
         return annotate_json(qs, "repo", GitRepo)
 
-    def annotate_json_serializer(self) -> QuerySet[Device]:
+    def annotate_json_serializer(self: _QS) -> _QS:
         from validity.models import ConfigSerializer
 
         qs = self.annotate_serializer_id()
         return annotate_json(qs, "serializer", ConfigSerializer)
 
-    def json_iterator(self, field: str) -> Iterator:
+    def json_iterator(self, *fields: str) -> Iterator:
         from validity.models import ConfigSerializer, GitRepo
 
         models = {"repo": GitRepo, "serializer": ConfigSerializer}
-        model = models[field]
         for obj in self:
-            json_dict = getattr(obj, field)
-            json_obj = model(**json_dict)
-            setattr(obj, field, json_obj)
+            for field in fields:
+                model = models[field]
+                json_dict = getattr(obj, field)
+                if json_dict is not None:
+                    json_obj = model(**json_dict)
+                    setattr(obj, field, json_obj)
             yield obj
 
 
 def count_devices_per_something(field: str, annotate_method: str) -> dict[int | None, int]:
-    qs = getattr(DeviceQS(), annotate_method).values(field).annotate(cnt=Count("id", distinct=True))
+    qs = getattr(DeviceQS(), annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
     result = {}
     for values in qs:
         result[values[field]] = values["cnt"]

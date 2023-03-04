@@ -1,0 +1,46 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load validity %}
+{% block head %}
+{% endblock %}
+{% block title %}{{ object }}: Serialized Configuration{% endblock %}
+{% block subtitle %}
+<div class="object-subtitle"></div>
+{% endblock %}
+{% block content %}
+<div class="row mb-2">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-2">Metainfo</h5>
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">Device Config</th>
+            <td>
+              {% with config_url=object|device_config_url %}
+                {% if config_url %}<a href="{{ config_url }}">{{ config_url }}</a>
+                {% else %}{{ "" | placeholder }}{% endif %}
+              {% endwith %}
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Serializer</th>
+            <td>{{ object.serializer | linkify }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Local copy last modified</th>
+            <td>{{ config.last_modified | date | placeholder}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title mb-2">Serialized Configuration</h5>
+      <pre class="bg-light">{{ config.serialized | placeholder }}</pre>
+    </div>
+</div>
+{% endblock %}

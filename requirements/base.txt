@@ -1,2 +1,4 @@
-django-bootstrap-v5==1.0.11
-pydantic==1.10.4
+django-bootstrap-v5==1.0.*
+pydantic==1.10.*
+ttp==0.9.*
+pygit2==1.11.*

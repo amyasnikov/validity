@@ -1,16 +1,14 @@
-import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+from datetime import datetime
 
 from dcim.models import Device
-from jinja2 import BaseLoader, Environment
 from ttp import ttp
+from django.utils.timezone import make_aware
 
 from validity import settings
-
-
-logger = logging.getLogger(__name__)
+from .exceptions import DeviceConfigError
 
 
 @dataclass
@@ -23,13 +21,9 @@ class TTPTemplate:
 class DeviceConfig:
     device: Device
     config_path: Path
+    last_modified: datetime | None = None
     template: TTPTemplate | None = None
     serialized: dict | list | None = None
-
-    @staticmethod
-    def eval_device_path(path: str, device: Device) -> str:
-        template = Environment(loader=BaseLoader()).from_string(path)
-        return template.render(device=device)
 
     @classmethod
     def from_device(cls, device: Device) -> "DeviceConfig":
@@ -38,11 +32,21 @@ class DeviceConfig:
         Device MUST be annotated with ".git_repo" pointing to a repo with device config file
         Device MUST be annotated with ".serializer" pointing to appropriate config serializer instance
         """
-        assert hasattr(device, "git_repo"), "Device must be annotated with .git_repo"
+        assert hasattr(device, "repo"), "Device must be annotated with .repo"
         assert hasattr(device, "serializer"), "Device must be annotated with .serializer"
-        device_path = settings.git_folder / cls.eval_device_path(device.git_repo.device_config_path, device)
-        template = TTPTemplate(name=device.serializer.name, template=device.serializer.effective_template)
-        return cls(device, device_path, template)
+        try:
+            device_path: Path = settings.git_folder / device.repo.rendered_device_path(device)
+            last_modified = None
+            if device_path.is_file():
+                lm_timestamp = device_path.stat().st_mtime
+                last_modified = make_aware(datetime.fromtimestamp(lm_timestamp))
+            template = TTPTemplate(name=device.serializer.name, template=device.serializer.effective_template)
+            return cls(device, device_path, last_modified, template)
+        except AttributeError as e:
+            raise DeviceConfigError(str(e)) from e
+
+    def serialize(self) -> None:
+        serialize_configs(self)
 
 
 def serialize_configs(*configs: DeviceConfig, override: bool = False) -> None:

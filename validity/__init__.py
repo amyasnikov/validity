@@ -1,6 +1,10 @@
+from pathlib import Path
+
 from django.conf import settings as django_settings
 from extras.plugins import PluginConfig
 from pydantic import BaseModel, DirectoryPath, Field
+
+from validity.copy_scripts import copy_scripts
 
 
 class NetBoxValidityConfig(PluginConfig):
@@ -11,13 +15,21 @@ class NetBoxValidityConfig(PluginConfig):
     base_url = "validity"
     django_apps = ["bootstrap5"]
 
+    plugin_scripts_dir = "scripts"
+
+    def ready(self):
+        if settings.autocopy_scripts:
+            copy_scripts(Path(__file__).parent / self.plugin_scripts_dir, Path(django_settings.SCRIPTS_ROOT))
+        return super().ready()
+
 
 config = NetBoxValidityConfig
 
 
 class ValiditySettings(BaseModel):
-    store_last_results: int = Field(default=5, gt=1, lt=1000)
-    git_folder: DirectoryPath = Field(default="/etc/netbox/scripts")
+    store_last_results: int = Field(default=5, gt=0, lt=1000)
+    git_folder: DirectoryPath = Path("/opt/git_repos")
+    autocopy_scripts: bool = False
 
 
 settings = ValiditySettings.parse_obj(django_settings.PLUGINS_CONFIG.get("validity", {}))

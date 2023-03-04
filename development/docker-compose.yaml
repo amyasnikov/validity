@@ -21,6 +21,7 @@ services:
     volumes:
       - ./configuration.py:/opt/netbox/netbox/netbox/configuration.py
       - ../validity:/plugin/validity/validity
+      - git_repos:/opt/git_repos/
     networks:
       - netboxnet
 
@@ -42,6 +43,7 @@ services:
     volumes:
       - ./configuration.py:/opt/netbox/netbox/netbox/configuration.py
       - ../validity:/plugin/validity/validity
+      - git_repos:/opt/git_repos/
     networks:
       - netboxnet
 
@@ -62,6 +64,7 @@ services:
 
 volumes:
   pgdata:
+  git_repos:
 
 networks:
   netboxnet:

@@ -1,3 +1,4 @@
+from .device import DeviceSerializedConfigView
 from .git_repo import GitRepoBulkDeleteView, GitRepoDeleteView, GitRepoEditView, GitRepoListView, GitRepoView
 from .selector import (
     ComplianceSelectorBulkDeleteView,

@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+from itertools import chain
 from pathlib import Path
 from typing import ClassVar
 
@@ -15,7 +16,7 @@ class GitRepo:
     name: str
     remote_url: str
     branch: str
-    _repo: pygit2.Repository | None = field(init=False)
+    _repo: pygit2.Repository | None = field(init=False, default=None)
 
     git_folder: ClassVar[Path] = settings.git_folder
 
@@ -40,15 +41,20 @@ class GitRepo:
 
     def clone(self) -> None:
         assert not self.exists, f"Cannot clone into existing Repo: {self.name}"
-        self._repo = pygit2.clone_repository(url=self.remote_url, path=self.local_path, checkout_branch=self.branch)
+        try:
+            self._repo = pygit2.clone_repository(url=self.remote_url, path=self.local_path, checkout_branch=self.branch)
+        except KeyError as e:
+            raise pygit2.GitError(str(e)) from e
 
     def force_pull(self) -> None:
         assert self._repo is not None, f"Trying to pull into not existing repo {self.name}. Clone first"
         remote = self._repo.remotes["origin"]
         remote.fetch()
-        remote_master_id = self._repo.lookup_reference(f"refs/remotes/origin/{self.branch}").target
-        repo_branch = self._repo.lookup_reference("refs/heads/%s" % self.branch)
-        repo_branch.set_target(remote_master_id)
+        try:
+            remote_master_id = self._repo.lookup_reference(f"refs/remotes/origin/{self.branch}").target
+        except KeyError as e:
+            raise pygit2.GitError(f'Unknown branch: {e}') from e
+        self._repo.head.set_target(remote_master_id)
         merge_result, _ = self._repo.merge_analysis(remote_master_id)
         # Up to date, do nothing
         if merge_result & pygit2.GIT_MERGE_ANALYSIS_UP_TO_DATE:
@@ -77,17 +83,46 @@ class GitRepo:
 class SyncGitRepos(Script):
     repos = MultiObjectVar(model=models.GitRepo, label=__("Repositories"), required=False)
 
+    class Meta:
+        name = __('Git Repositories Sync')
+        description = __('Pull the updates for all or particular Git Repositories')
+
     @staticmethod
-    def update_and_get_hash(db_repo: models.GitRepo) -> str:
-        repo = GitRepo.from_db(db_repo)
-        repo.clone_or_force_pull()
-        return repo.head_hash
+    def update_and_get_hash(db_repo: models.GitRepo) -> tuple[bool, str]:
+        try:
+            repo = GitRepo.from_db(db_repo)
+            repo.clone_or_force_pull()
+            return True, repo.head_hash
+        except pygit2.GitError as e:
+            return False, str(e)
+
+    @staticmethod
+    def format_script_output(hashes_map: dict) -> str:
+        if not hashes_map:
+            return ''
+        col_size = max(len(max(hashes_map.keys(), key=len)), len('Repository')) + 2
+        columns = chain([('Repository', 'Hash'), ('', '')], hashes_map.items())
+        return '\n'.join(f'{repo:<{col_size}}{hash_}' for repo, hash_ in columns)
 
     def run(self, data, commit):
         all_db_repos = models.GitRepo.objects.order_by("id")
         if repo_ids := data.get("repos"):
             all_db_repos = all_db_repos.filter(id__in=repo_ids)
         with ThreadPoolExecutor() as tp:
-            head_hashes = tp.map(self.update_and_get_hash, all_db_repos)
-            for repo, hash in zip(all_db_repos, head_hashes):
-                repo.head_hash = hash
+            results = tp.map(self.update_and_get_hash, all_db_repos)
+            successful_repo_ids = []
+            new_repo_hashes = {}
+            for repo, (is_success, msg) in zip(all_db_repos, results):
+                if is_success:
+                    repo.head_hash = msg
+                    successful_repo_ids.append(repo.pk)
+                    new_repo_hashes[repo.name] = msg
+                else:
+                    self.log_failure(f'{repo.name}: {msg}')
+            models.GitRepo.objects.bulk_update(all_db_repos.filter(pk__in=successful_repo_ids), ['head_hash'])
+            if successful_repo_ids:
+                self.log_success(f'Successfully updated {successful_repo_ids} repositories. Check out the table below')
+            return self.format_script_output(new_repo_hashes)
+
+
+name = 'Git'
