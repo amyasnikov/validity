@@ -5,7 +5,7 @@ from django_tables2 import SingleTableMixin
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 
-from validity import filterset_forms, filtersets, forms, models, tables
+from validity import filtersets, forms, models, tables
 
 
 class ComplianceTestListView(generic.ObjectListView):
@@ -32,7 +32,7 @@ class TestResultView(SingleTableMixin, FilterView):
     tab = ViewTab("Results")
     model = models.ComplianceTestResult
     filterset_class = filtersets.ComplianceTestResultFilterSet
-    filter_form_class = filterset_forms.TestResultFilterForm
+    filter_form_class = forms.TestResultFilterForm
     table_class = tables.ComplianceResultTable
 
     def get_table(self, **kwargs):
