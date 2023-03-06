@@ -15,12 +15,13 @@
         <h5 class="card-title mb-2">Metainfo</h5>
         <table class="table table-hover attr-table">
           <tr>
-            <th scope="row">Device Config</th>
+            <th scope="row">Git Repository</th>
+            <td>{{ object.repo | linkify | placeholder }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Device Config File</th>
             <td>
-              {% with config_url=object|device_config_url %}
-                {% if config_url %}<a href="{{ config_url }}" target="_blank">{{ config_url }}</a>
-                {% else %}{{ "" | placeholder }}{% endif %}
-              {% endwith %}
+              {% include "validity/inc/path_with_link.html" with file_path=object|device_path web_url=object.repo.rendered_web_url only %}
             </td>
           </tr>
           <tr>

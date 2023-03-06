@@ -24,6 +24,7 @@
               <th scope="row">Description</th>
               <td>{{ object.description }}</td>
             </tr>
+            {% include "validity/inc/git_link.html" %}
           </table>
         </div>
       </div>
@@ -31,9 +32,9 @@
     </div>
     <div class="col col-md-8">
       <div class="card mb-3">
-        <h5 class="card-header">Expression</h5>
+        <h5 class="card-header">Expression [source: {{ object | data_source }}]</h5>
         <div class="card-body">
-          <code>{{ object.expression }}</code>
+          <code>{{ object.effective_expression }}</code>
         </div>
       </div>
     </div>

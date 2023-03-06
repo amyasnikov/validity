@@ -17,7 +17,7 @@ class ComplianceSelectorViewSet(NetBoxModelViewSet):
 
 
 class ComplianceTestViewSet(NetBoxModelViewSet):
-    queryset = models.ComplianceTest.objects.prefetch_related("selectors", "tags")
+    queryset = models.ComplianceTest.objects.select_related("repo").prefetch_related("selectors", "tags")
     serializer_class = serializers.ComplianceTestSerializer
     filterset_class = filtersets.ComplianceTestFilterSet
 
@@ -29,18 +29,18 @@ class ComplianceTestResultViewSet(ReadOnlyNetboxViewSet):
 
 
 class GitRepoViewSet(NetBoxModelViewSet):
-    queryset = models.GitRepo.objects.all()
+    queryset = models.GitRepo.objects.prefetch_related("tags")
     serializer_class = serializers.GitRepoSerializer
     filterset_class = filtersets.GitRepoFilterSet
 
 
 class ConfigSerializerViewSet(NetBoxModelViewSet):
-    queryset = models.ConfigSerializer.objects.all()
+    queryset = models.ConfigSerializer.objects.select_related("repo").prefetch_related("tags")
     serializer_class = serializers.ConfigSerializerSerializer
     filterset_class = filtersets.ConfigSerializerFilterSet
 
 
 class NameSetViewSet(NetBoxModelViewSet):
-    queryset = models.NameSet.objects.prefetch_related("serializers")
+    queryset = models.NameSet.objects.select_related("repo").prefetch_related("tags")
     serializer_class = serializers.NameSetSerializer
     filterset_class = filtersets.NameSetFilterSet

@@ -1,0 +1,11 @@
+{% load validity %}
+<div class="row">
+    <div class="col mt-0 mb-0 pt-0 pb-0">
+      <code>{{ file_path | placeholder }}</code>
+    </div>
+    {% if file_path and web_url %}
+    <div class="col mt-0 mb-0 pt-0 pb-0 justify-content-end align-self-end d-flex">
+      <a class="btn btn-gray btn-sm" target=”_blank” href="{% urljoin web_url file_path %}">⤴</a>
+    </div>
+    {% endif %}
+</div>

@@ -10,7 +10,7 @@ from simpleeval import InvalidExpression
 import validity.config_compliance.solver.default_nameset as default_nameset
 from validity import settings
 from validity.config_compliance.device_config import DeviceConfig
-from validity.config_compliance.exceptions import DeviceConfigError
+from validity.config_compliance.exceptions import DeviceConfigError, EvalError
 from validity.config_compliance.solver.eval import ExplanationalEval
 from validity.config_compliance.solver.eval_defaults import DEFAULT_NAMES, DEFAULT_OPERATORS
 from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet
@@ -82,8 +82,8 @@ class RunTestsScript(Script):
         results = []
         for selector in selectors:
             for device in self.device_iterator(selector.filter):
-                config = DeviceConfig.from_device(device)
                 try:
+                    config = DeviceConfig.from_device(device)
                     dynamic_pair = next(self.device_iterator(selector.dynamic_pair_filter(device)), None)
                     pair_config = DeviceConfig.from_device(dynamic_pair) if dynamic_pair else None
                 except DeviceConfigError as e:
@@ -93,7 +93,7 @@ class RunTestsScript(Script):
                     explanation = []
                     try:
                         passed, explanation = self.run_test(config, pair_config, test)
-                    except (InvalidExpression, NameError) as e:
+                    except (InvalidExpression, EvalError) as e:
                         self.log_failure(
                             f"Failed to execute test {test} for device {config.device}, {type(e).__name__}: {e}"
                         )

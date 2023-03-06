@@ -1,9 +1,8 @@
 from functools import partial
-from types import GenericAlias
 from typing import TYPE_CHECKING, Iterator, TypeVar
 
 from dcim.models import Device
-from django.db.models import BigIntegerField, Case, Count, F, OuterRef, QuerySet, When
+from django.db.models import BigIntegerField, Case, Count, F, Model, OuterRef, QuerySet, When
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from netbox.models import RestrictedQuerySet
@@ -47,14 +46,23 @@ class DeviceQS(RestrictedQuerySet):
             .annotate(
                 devtype_s=KeyTextTransform("config_serializer", "device_type__custom_field_data"),
             )
-            .annotate(mf_s=KeyTextTransform("config_serializer", "device_type__manufacturer__custom_field_data"))
+            .annotate(
+                manufacturer_s=KeyTextTransform("config_serializer", "device_type__manufacturer__custom_field_data")
+            )
             .annotate(
                 serializer_id=Case(
                     When(device_s__isnull=False, then=Cast(F("device_s"), BigIntegerField())),
                     When(devtype_s__isnull=False, then=Cast(F("devtype_s"), BigIntegerField())),
-                    When(mf_s__isnull=False, then=Cast(F("mf_s"), BigIntegerField())),
+                    When(manufacturer_s__isnull=False, then=Cast(F("manufacturer_s"), BigIntegerField())),
                 )
             )
+        )
+
+    def annotate_json_serializer_repo(self: _QS) -> _QS:
+        from validity.models import GitRepo
+
+        return self.annotate(
+            serializer_repo=GitRepo.objects.filter(configserializer__pk=OuterRef("serializer_id")).as_json()
         )
 
     def annotate_json_repo(self: _QS) -> _QS:
@@ -66,24 +74,33 @@ class DeviceQS(RestrictedQuerySet):
     def annotate_json_serializer(self: _QS) -> _QS:
         from validity.models import ConfigSerializer
 
-        qs = self.annotate_serializer_id()
+        qs = self.annotate_serializer_id().annotate_json_serializer_repo()
         return annotate_json(qs, "serializer", ConfigSerializer)
 
     def json_iterator(self, *fields: str) -> Iterator:
         from validity.models import ConfigSerializer, GitRepo
 
+        def handle_complex_fields(data: dict, model: Model) -> None:
+            for field, value in data.items():
+                if field in complex_fields.get(model, []):
+                    data[field] = model._meta.get_field(field).to_python(value)
+
         models = {"repo": GitRepo, "serializer": ConfigSerializer}
+        nested_fields = {"serializer": ["repo"]}
+        complex_fields = {GitRepo: ["encrypted_password"]}
         for device in self:
             for field in fields:
                 model = models[field]
                 json_repr = getattr(device, field, None)
                 if json_repr is None:
                     continue
-                if isinstance(model, GenericAlias):
-                    model = model.__args__[0]
-                    json_obj = [model(obj) for obj in json_repr]
-                else:
-                    json_obj = model(**json_repr)
+                for nested_field in nested_fields.get(field, []):
+                    if nested_json_repr := getattr(device, f"{field}_{nested_field}", None):
+                        nested_model = models[nested_field]
+                        handle_complex_fields(nested_json_repr, nested_model)
+                        json_repr[nested_field] = nested_model(**nested_json_repr)
+                handle_complex_fields(json_repr, model)
+                json_obj = model(**json_repr)
                 setattr(device, field, json_obj)
             yield device
 

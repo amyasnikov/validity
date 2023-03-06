@@ -50,9 +50,41 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
 NestedComplianceSelectorSerializer = nested_factory(ComplianceSelectorSerializer, ("id", "url", "display", "name"))
 
 
+class GitRepoSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:gitrepo-detail")
+    password = PasswordField()
+
+    class Meta:
+        model = models.GitRepo
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "git_url",
+            "web_url",
+            "device_config_path",
+            "default",
+            "username",
+            "password",
+            "branch",
+            "head_hash",
+            "tags",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )
+
+
+NestedGitRepoSerializer = nested_factory(GitRepoSerializer, ("id", "url", "display", "name", "default"))
+
+
 class ComplianceTestSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:compliancetest-detail")
     selectors = NestedComplianceSelectorSerializer(many=True)
+    repo = NestedGitRepoSerializer()
+    effective_expression = serializers.ReadOnlyField()
+    expression = serializers.Field(write_only=True)
 
     class Meta:
         model = models.ComplianceTest
@@ -63,6 +95,9 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
             "name",
             "severity",
             "description",
+            "repo",
+            "file_path",
+            "effective_expression",
             "expression",
             "selectors",
             "tags",
@@ -101,37 +136,11 @@ NestedComplianceTestResultSerializer = nested_factory(
 )
 
 
-class GitRepoSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:gitrepo-detail")
-    password = PasswordField()
-
-    class Meta:
-        model = models.GitRepo
-        fields = (
-            "id",
-            "url",
-            "display",
-            "name",
-            "git_url",
-            "web_url",
-            "device_config_path",
-            "default",
-            "username",
-            "password",
-            "branch",
-            "head_hash",
-            "tags",
-            "custom_fields",
-            "created",
-            "last_updated",
-        )
-
-
-NestedGitRepoSerializer = nested_factory(GitRepoSerializer, ("id", "url", "display", "name", "default"))
-
-
 class ConfigSerializerSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:configserializer-detail")
+    repo = NestedGitRepoSerializer()
+    ttp_template = serializers.Field(write_only=True)
+    effective_template = serializers.ReadOnlyField()
 
     class Meta:
         model = models.ConfigSerializer
@@ -141,6 +150,9 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
             "display",
             "name",
             "extraction_method",
+            "repo",
+            "file_path",
+            "effective_template",
             "ttp_template",
             "tags",
             "custom_fields",
@@ -154,6 +166,9 @@ NestedConfigSerializerSerializer = nested_factory(ConfigSerializerSerializer, ("
 
 class NameSetSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:nameset-detail")
+    repo = NestedGitRepoSerializer()
+    definitions = serializers.Field(write_only=True)
+    effective_definitions = serializers.ReadOnlyField()
 
     class Meta:
         model = models.NameSet
@@ -165,7 +180,10 @@ class NameSetSerializer(NetBoxModelSerializer):
             "description",
             "_global",
             "tests",
+            "repo",
+            "file_path",
             "definitions",
+            "effective_definitions",
             "tags",
             "custom_fields",
             "created",

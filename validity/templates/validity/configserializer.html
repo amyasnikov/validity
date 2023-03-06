@@ -17,6 +17,7 @@
                 <th scope="row">Config Extraction Method</th>
                 <td>{{ object | colored_choice:"extraction_method" }}</td>
               </tr>
+              {% include "validity/inc/git_link.html" %}
             </table>
           </div>
         </div>
@@ -27,9 +28,9 @@
     </div>
     <div class="col col-md-8">
       <div class="card">
-        <h5 class="card-header">TTP Template</h5>
+        <h5 class="card-header">TTP Template [Source: {{ object | data_source }}]</h5>
         <div class="card-body">
-          <pre class="bg-light">{{ object.ttp_template }}</pre>
+          <pre class="bg-light">{{ object.effective_template }}</pre>
         </div>
       </div>
     </div>

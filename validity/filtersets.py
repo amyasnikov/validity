@@ -31,10 +31,11 @@ class ComplianceSelectorFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 class ComplianceTestFilterSet(SearchMixin, NetBoxModelFilterSet):
     selector_id = ModelMultipleChoiceFilter(field_name="selectors", queryset=models.ComplianceSelector.objects.all())
+    repo_id = ModelMultipleChoiceFilter(field_name="repo", queryset=models.GitRepo.objects.all())
 
     class Meta:
         model = models.ComplianceTest
-        fields = ("id", "name", "selector_id", "severity")
+        fields = ("id", "name", "selector_id", "severity", "repo_id", "file_path")
         search_fields = ("name", "description", "expression")
 
 
@@ -63,14 +64,18 @@ class GitRepoFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 
 class ConfigSerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
+    repo_id = ModelMultipleChoiceFilter(field_name="repo", queryset=models.GitRepo.objects.all())
+
     class Meta:
         model = models.ConfigSerializer
-        fields = ("id", "name", "extraction_method")
+        fields = ("id", "name", "extraction_method", "repo_id", "file_path")
         search_fields = ("name",)
 
 
 class NameSetFilterSet(SearchMixin, NetBoxModelFilterSet):
+    repo_id = ModelMultipleChoiceFilter(field_name="repo", queryset=models.GitRepo.objects.all())
+
     class Meta:
         model = models.NameSet
-        fields = ("id", "name", "_global")
+        fields = ("id", "name", "_global", "repo_id", "file_path")
         search_fields = ("name", "description", "definitions")

@@ -1,19 +1,27 @@
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
 from django.forms import PasswordInput
 from django.forms.fields import CharField
+from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
-from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 
 from validity import models
 
 
 class ComplianceTestForm(NetBoxModelForm):
     selectors = DynamicModelMultipleChoiceField(queryset=models.ComplianceSelector.objects.all())
+    repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
+
+    fieldsets = (
+        (_("Compliance Test"), ("name", "severity", "description", "selectors", "tags")),
+        (_("Expression from Git"), ("repo", "file_path")),
+        (_("Expression from DB"), ("expression",)),
+    )
 
     class Meta:
         model = models.ComplianceTest
-        fields = ("name", "severity", "description", "expression", "selectors", "tags")
+        fields = ("name", "severity", "description", "expression", "selectors", "repo", "file_path", "tags")
 
 
 class ComplianceSelectorForm(NetBoxModelForm):
@@ -71,14 +79,29 @@ class GitRepoForm(NetBoxModelForm):
 
 
 class ConfigSerializerForm(NetBoxModelForm):
+    repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
+
+    fieldsets = (
+        (_("Config Serializer"), ("name", "extraction_method", "tags")),
+        (_("Template from Git"), ("repo", "file_path")),
+        (_("Template from DB"), ("ttp_template",)),
+    )
+
     class Meta:
         model = models.ConfigSerializer
-        fields = ("name", "extraction_method", "ttp_template", "tags")
+        fields = ("name", "extraction_method", "ttp_template", "repo", "file_path", "tags")
 
 
 class NameSetForm(NetBoxModelForm):
     tests = DynamicModelMultipleChoiceField(queryset=models.ComplianceTest.objects.all(), required=False)
+    repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
+
+    fieldsets = (
+        (_("Name Set"), ("name", "description", "_global", "tests", "tags")),
+        (_("Definitions from Git"), ("repo", "file_path")),
+        (_("Definitions from DB"), ("definitions",)),
+    )
 
     class Meta:
         model = models.NameSet
-        fields = ("name", "description", "_global", "tests", "definitions")
+        fields = ("name", "description", "_global", "tests", "definitions", "repo", "file_path", "tags")

@@ -43,6 +43,24 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 ENABLE_LOCALIZATION = False
 
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'timestamp': {
+            'format': '{asctime} [{levelname}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'timestamp'},
+    },
+    'loggers': {
+        'validity': {'handlers': ['console'], 'level': 'INFO'}
+    },
+}
+
 PLUGINS.append("validity")
 
 PLUGINS_CONFIG = {

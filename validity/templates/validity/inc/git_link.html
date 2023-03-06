@@ -1,0 +1,11 @@
+{% load helpers %}
+<tr>
+  <th scope="row">Git Repository</th>
+  <td>{{ object.repo | linkify | placeholder }}</td>
+</tr>
+<tr>
+  <th scope="row">Git File Path</th>
+  <td>
+    {% include "validity/inc/path_with_link.html" with file_path=object.file_path web_url=object.repo.rendered_web_url only %}
+  </td>
+</tr>

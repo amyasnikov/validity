@@ -32,5 +32,5 @@ class DeviceSerializedConfigView(generic.ObjectView):
             config = DeviceConfig.from_device(self.object)
             return {"config": config}
         except DeviceConfigError as e:
-            logger.info("Cannot render serialized config, %s", e)
+            logger.warning("Cannot render serialized config, %s", e)
             return {"config": None}

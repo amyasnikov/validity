@@ -4,7 +4,10 @@ from dcim.models import Device
 from django import template
 from django.db.models import Model
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 from utilities.templatetags.builtins.filters import linkify, placeholder
+
+from validity.models import GitRepoLinkMixin
 
 
 register = template.Library()
@@ -32,13 +35,29 @@ def checkmark(value: Any) -> str:
 
 
 @register.filter
-def device_config_url(device: Device) -> str:
+def device_path(device: Device) -> str:
     """
-    Returns link to device config in external system
+    Returns device config path
     device MUST be annotated with ".repo"
     """
     try:
         repo = device.repo
-        return repo.device_web_path(device)
+        return repo.rendered_device_path(device)
     except AttributeError:
         return ""
+
+
+@register.filter
+def data_source(model: GitRepoLinkMixin) -> str:
+    return _("Git") if model.repo else _("DB")
+
+
+@register.simple_tag
+def urljoin(*parts: str) -> str:
+    if len(parts) <= 1:
+        return "".join(parts)
+    middle_parts = "/".join((part.strip("/") for part in parts[1:-1]))
+    url_parts = [parts[0].rstrip("/"), parts[-1].lstrip("/")]
+    if middle_parts:
+        url_parts.insert(1, middle_parts)
+    return "/".join(url_parts)

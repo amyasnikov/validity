@@ -1,8 +1,9 @@
 import ast
 
 import deepdiff
-from simpleeval import EvalWithCompoundTypes
+from simpleeval import EvalWithCompoundTypes, InvalidExpression
 
+from ..exceptions import EvalError
 from .eval_defaults import repr_
 
 
@@ -43,4 +44,9 @@ class ExplanationalEval(EvalWithCompoundTypes):
 
     def eval(self, expr):
         self.explanation = []
-        return super().eval(expr)
+        try:
+            return super().eval(expr)
+        except InvalidExpression:
+            raise
+        except Exception as e:
+            raise EvalError(e) from e

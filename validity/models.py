@@ -26,6 +26,7 @@ from netbox.models import (
 )
 
 from validity import settings
+from validity.config_compliance import git
 from validity.managers import ComplianceTestQS, ComplianceTestResultQS, ConfigSerializerQS, GitRepoQS, NameSetQS
 from validity.utils.password import EncryptedString, PasswordField
 from .choices import BoolOperationChoices, ConfigExtractionChoices, DynamicPairsChoices, SeverityChoices
@@ -41,6 +42,57 @@ class URLMixin:
         return reverse(f"plugins:validity:{self._meta.model_name}", kwargs={"pk": self.pk})
 
 
+def validate_file_path(path: str) -> None:
+    if path.startswith("/"):
+        raise ValidationError(_("Path must be relative, do not use / at the beginning"))
+    if path.startswith("./"):
+        raise ValidationError(_("Do not use ./ at the start of the path, start with the name of directory or file"))
+
+
+class GitRepoLinkMixin(models.Model):
+    repo = models.ForeignKey(
+        "GitRepo", on_delete=models.PROTECT, null=True, blank=True, verbose_name=_("Git Repository")
+    )
+    file_path = models.CharField(_("File Path"), blank=True, max_length=255, validators=[validate_file_path])
+
+    text_db_field_name: str
+
+    class Meta:
+        abstract = True
+
+    def _validate_db_or_git_filled(self) -> bool:
+        return True
+
+    def clean(self) -> None:
+        text_value = getattr(self, self.text_db_field_name)
+        if text_value and (self.file_path or self.repo):
+            raise ValidationError(_(f"You cannot set both: repo/file_path and {self.text_db_field_name}"))
+        if self._validate_db_or_git_filled() and not text_value and (not self.repo or not self.file_path):
+            raise ValidationError(
+                {
+                    self.text_db_field_name: _(
+                        "You must set either {self.text_db_field_name} or both: Git repository and File Path"
+                    )
+                }
+            )
+
+    def effective_text_field(self) -> str:
+        text_db_value = getattr(self, self.text_db_field_name)
+        if text_db_value:
+            return text_db_value
+        if not self.repo:
+            logger.error("%s %s has no %s and no git repo defined", type(self).__name__, self, self.text_db_field_name)
+            return ""
+        git_repo = git.GitRepo.from_db(self.repo)
+        file_path = git_repo.local_path / self.file_path
+        try:
+            with file_path.open("r") as file:
+                return file.read()
+        except FileNotFoundError:
+            logger.error("File %s related to %s %s not found on the disk", file_path, type(self).__name__, self)
+            return ""
+
+
 class BaseModel(URLMixin, NetBoxModel):
     json_fields: tuple[str, ...] = ("id",)
 
@@ -48,20 +100,22 @@ class BaseModel(URLMixin, NetBoxModel):
         abstract = True
 
 
-class ComplianceTest(BaseModel):
+class ComplianceTest(GitRepoLinkMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     description = models.TextField(_("Description"))
     severity = models.CharField(
         _("Severity"), max_length=10, choices=SeverityChoices.choices, default=SeverityChoices.MIDDLE
     )
-    expression = models.TextField(_("Expression"))
+    expression = models.TextField(_("Expression"), blank=True)
     selectors = models.ManyToManyField(to="ComplianceSelector", related_name="tests", verbose_name=_("Selectors"))
 
-    clone_fields = ("expression", "selectors", "severity")
+    clone_fields = ("expression", "selectors", "severity", "repo", "file_path")
+    text_db_field_name = "expression"
 
     objects = ComplianceTestQS.as_manager()
 
     def clean(self):
+        super().clean()
         try:
             ast.parse(self.expression)
         except SyntaxError as e:
@@ -75,7 +129,7 @@ class ComplianceTest(BaseModel):
 
     @property
     def effective_expression(self):
-        return self.expression
+        return self.effective_text_field()
 
 
 class ComplianceTestResult(
@@ -216,7 +270,10 @@ class GitRepo(BaseModel):
         help_text=_("This URL will be used to display links to config files. Use {{branch}} if needed"),
     )
     device_config_path = models.CharField(
-        _("Device config path"), max_length=255, help_text=_("Jinja2 syntax allowed. E.g. /devices/{{device.name}}/")
+        _("Device config path"),
+        max_length=255,
+        validators=[validate_file_path],
+        help_text=_("Jinja2 syntax allowed. E.g. devices/{{device.name}}.txt"),
     )
     default = models.BooleanField(_("Default"), default=False)
     username = models.CharField(_("Username"), max_length=255, blank=True)
@@ -241,12 +298,16 @@ class GitRepo(BaseModel):
         "head_hash",
     )
 
+    class Meta:
+        verbose_name = _("Git Repository")
+        verbose_name_plural = _("Git Repositories")
+
     def __str__(self) -> str:
         return self.name
 
     def clean(self):
         if self.default:
-            if GitRepo.objects.filter(default=True).exists():
+            if (default_repo := GitRepo.objects.filter(default=True).first()) and default_repo.pk != self.pk:
                 raise ValidationError({"default": _("Default Repository already exists")})
 
     def save(self, **kwargs) -> None:
@@ -291,16 +352,16 @@ class GitRepo(BaseModel):
 
     def rendered_device_path(self, device: Device) -> str:
         template = Environment(loader=BaseLoader()).from_string(self.device_config_path)
-        return template.render(device=device).lstrip("/")
+        return template.render(device=device)
 
-    def device_web_path(self, device: Device) -> str:
-        device_path = self.rendered_device_path(device)
+    @property
+    def rendered_web_url(self):
         template = Environment(loader=BaseLoader()).from_string(self.web_url)
-        return template.render(branch=self.branch).rstrip("/") + "/" + device_path
+        return template.render(branch=self.branch)
 
 
-class ConfigSerializer(BaseModel):
-    name = models.CharField(_("Name"), max_length=255, blank=True, unique=True)
+class ConfigSerializer(GitRepoLinkMixin, BaseModel):
+    name = models.CharField(_("Name"), max_length=255, unique=True)
     extraction_method = models.CharField(
         _("Config Extraction Method"), max_length=10, choices=ConfigExtractionChoices.choices, default="TTP"
     )
@@ -308,8 +369,9 @@ class ConfigSerializer(BaseModel):
 
     objects = ConfigSerializerQS.as_manager()
 
-    clone_fields = ("ttp_template", "extraction_method")
-    json_fields = ("id", "name", "ttp_template", "extraction_method")
+    clone_fields = ("ttp_template", "extraction_method", "repo", "file_path")
+    json_fields = ("id", "name", "ttp_template", "extraction_method", "file_path")
+    text_db_field_name = "ttp_template"
 
     class Meta:
         ordering = ("name",)
@@ -320,11 +382,17 @@ class ConfigSerializer(BaseModel):
     def get_extraction_method_color(self):
         return ConfigExtractionChoices.colors.get(self.extraction_method)
 
+    def _validate_db_or_git_filled(self) -> bool:
+        return self.extraction_method == "TTP"
+
     def clean(self) -> None:
+        super().clean()
         if self.extraction_method != "TTP" and self.ttp_template:
             raise ValidationError({"ttp_template": _("TTP Template must be empty if extraction method is not TTP")})
-        if self.extraction_method == "TTP" and not self.ttp_template:
-            raise ValidationError({"ttp_template": _("TTP Template must be defined if extraction method is TTP")})
+        if self.extraction_method != "TTP" and (self.repo or self.file_path):
+            raise ValidationError(_("Git properties may be set only if extraction method is TTP"))
+        if self.extraction_method == "TTP" and not (self.ttp_template or self.repo):
+            raise ValidationError(_("TTP Template must be defined if extraction method is TTP"))
 
     def bound_devices(self) -> models.QuerySet[Device]:
         return (
@@ -336,25 +404,23 @@ class ConfigSerializer(BaseModel):
 
     @property
     def effective_template(self) -> str:
-        """
-        Returns a var appropriate for feeding into ttp() API: a filepath to template or template itself
-        """
-        return self.ttp_template
+        return self.effective_text_field()
 
 
-class NameSet(BaseModel):
+class NameSet(GitRepoLinkMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     description = models.TextField()
     _global = models.BooleanField(_("Global"), blank=True, default=False)
     tests = models.ManyToManyField(
         ComplianceTest, verbose_name=_("Compliance Tests"), blank=True, related_name="namesets"
     )
-    definitions = models.TextField(help_text=_("Here you can write python functions or imports"))
+    definitions = models.TextField(help_text=_("Here you can write python functions or imports"), blank=True)
 
     objects = NameSetQS.as_manager()
 
-    clone_fields = ("description", "_global", "tests", "definitions")
-    json_fields = ("id", "name", "description", "_global", "definitions")
+    clone_fields = ("description", "_global", "tests", "definitions", "repo", "file_path")
+    json_fields = ("id", "name", "description", "_global", "definitions", "file_path")
+    text_db_field_name = "definitions"
 
     class Meta:
         ordering = ("name",)
@@ -363,6 +429,7 @@ class NameSet(BaseModel):
         return self.name
 
     def clean(self):
+        super().clean()
         try:
             definitions = ast.parse(self.definitions)
         except SyntaxError as e:
@@ -378,4 +445,4 @@ class NameSet(BaseModel):
 
     @property
     def effective_definitions(self):
-        return self.definitions
+        return self.effective_text_field()

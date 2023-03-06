@@ -24,6 +24,9 @@ class EncryptedString:
         if self._fernet is None:
             self._fernet = self.get_fernet(base64.urlsafe_b64decode(self.salt))
 
+    def __len__(self) -> int:
+        return len(self.cipher)
+
     @classmethod
     def from_plain_text(cls, message: str | bytes, salt: str | bytes):
         message = message.encode() if isinstance(message, str) else message

@@ -37,7 +37,7 @@ class DeviceConfig:
     def from_device(cls, device: Device) -> "DeviceConfig":
         """
         Get DeviceConfig from dcim.models.Device
-        Device MUST be annotated with ".git_repo" pointing to a repo with device config file
+        Device MUST be annotated with ".repo" pointing to a repo with device config file
         Device MUST be annotated with ".serializer" pointing to appropriate config serializer instance
         """
         assert hasattr(device, "repo"), "Device must be annotated with .repo"
@@ -52,9 +52,9 @@ class DeviceConfig:
             if device_path.is_file():
                 lm_timestamp = device_path.stat().st_mtime
                 last_modified = make_aware(datetime.fromtimestamp(lm_timestamp))
-            cfg_cls = cls(device, device_path, last_modified)
-            cfg_cls.serialize()
-            return cfg_cls
+            instance = cls(device, device_path, last_modified)
+            instance.serialize()
+            return instance
         except AttributeError as e:
             raise DeviceConfigError(str(e)) from e
 
