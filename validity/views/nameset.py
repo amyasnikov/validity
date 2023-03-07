@@ -8,6 +8,7 @@ class NameSetListView(generic.ObjectListView):
     queryset = models.NameSet.objects.prefetch_related("tests")
     table = tables.NameSetTable
     filterset = filtersets.NameSetFilterSet
+    filterset_form = forms.NameSetFilterForm
 
 
 @register_model_view(models.NameSet)

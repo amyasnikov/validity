@@ -9,6 +9,7 @@ class ComplianceSelectorListView(generic.ObjectListView):
     queryset = models.ComplianceSelector.objects.all()
     table = tables.SelectorTable
     filterset = filtersets.ComplianceSelectorFilterSet
+    filterset_form = forms.ComplianceSelectorFilterForm
 
 
 @register_model_view(models.ComplianceSelector)

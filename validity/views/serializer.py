@@ -9,6 +9,7 @@ class ConfigSerializerListView(generic.ObjectListView):
     queryset = models.ConfigSerializer.objects.all()
     table = tables.ConfigSerializerTable
     filterset = filtersets.ConfigSerializerFilterSet
+    filterset_form = forms.ConfigSerializerFilterForm
 
 
 @register_model_view(models.ConfigSerializer)

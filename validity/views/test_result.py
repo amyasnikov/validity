@@ -4,7 +4,7 @@ from typing import Callable
 from netbox.views import generic
 from utilities.views import register_model_view
 
-from validity import filtersets, models, tables
+from validity import filtersets, forms, models, tables
 from validity.config_compliance.solver.eval_defaults import repr_
 
 
@@ -12,6 +12,7 @@ class ComplianceResultListView(generic.ObjectListView):
     queryset = models.ComplianceTestResult.objects.select_related("test", "device")
     table = tables.ComplianceResultTable
     filterset = filtersets.ComplianceTestResultFilterSet
+    filterset_form = forms.ComplianceTestResultFilterForm
 
 
 @register_model_view(models.ComplianceTestResult)

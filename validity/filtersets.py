@@ -4,10 +4,11 @@ from typing import Sequence
 
 from dcim.models import Device
 from django.db.models import Q
-from django_filters import BooleanFilter, ModelMultipleChoiceFilter
+from django_filters import BooleanFilter, ChoiceFilter, ModelMultipleChoiceFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
 from validity import models
+from validity.choices import SeverityChoices
 
 
 class SearchMixin:
@@ -43,11 +44,12 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     test_id = ModelMultipleChoiceFilter(field_name="test", queryset=models.ComplianceTest.objects.all())
     device_id = ModelMultipleChoiceFilter(field_name="device", queryset=Device.objects.all())
     latest = BooleanFilter(method="filter_latest")
+    test__severity = ChoiceFilter(field_name="test__severity", choices=SeverityChoices.choices)
     tag = None
 
     class Meta:
         model = models.ComplianceTestResult
-        fields = ("id", "test_id", "device_id", "passed")
+        fields = ("id", "test_id", "device_id", "passed", "latest", "test__severity")
         search_fields = ("test__name", "device__name")
 
     def filter_latest(self, queryset, name, value):

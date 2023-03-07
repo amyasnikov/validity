@@ -9,6 +9,7 @@ class GitRepoListView(generic.ObjectListView):
     queryset = models.GitRepo.objects.all()
     table = tables.GitRepoTable
     filterset = filtersets.GitRepoFilterSet
+    filterset_form = forms.GitRepoFilterForm
 
 
 @register_model_view(models.GitRepo)

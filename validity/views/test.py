@@ -10,9 +10,9 @@ from validity import filtersets, forms, models, tables
 
 class ComplianceTestListView(generic.ObjectListView):
     queryset = models.ComplianceTest.objects.annotate_latest_count()
-
     table = tables.ComplianceTestTable
     filterset = filtersets.ComplianceTestFilterSet
+    filterset_form = forms.ComplianceTestFilterForm
 
 
 @register_model_view(models.ComplianceTest)
