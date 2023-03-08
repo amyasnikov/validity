@@ -53,9 +53,7 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
         search_fields = ("test__name", "device__name")
 
     def filter_latest(self, queryset, name, value):
-        if value:
-            queryset = queryset.only_latest()
-        return queryset
+        return queryset.only_latest(exclude=not value)
 
 
 class GitRepoFilterSet(SearchMixin, NetBoxModelFilterSet):

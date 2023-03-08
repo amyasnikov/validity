@@ -8,9 +8,16 @@ from utilities.views import ViewTab, register_model_view
 from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.exceptions import DeviceConfigError
 from validity.queries import DeviceQS
+from .test_result import TestResultBaseView
 
 
 logger = logging.getLogger(__name__)
+
+
+@register_model_view(Device, "test_results", "results")
+class TestResultView(TestResultBaseView):
+    parent_model = Device
+    result_relation = "device"
 
 
 @register_model_view(Device, "serialized_config")

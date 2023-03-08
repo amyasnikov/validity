@@ -1,11 +1,9 @@
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404
-from django_filters.views import FilterView
-from django_tables2 import SingleTableMixin
 from netbox.views import generic
-from utilities.views import ViewTab, register_model_view
+from utilities.views import register_model_view
 
 from validity import filtersets, forms, models, tables
+from .test_result import TestResultBaseView
 
 
 class ComplianceTestListView(generic.ObjectListView):
@@ -27,36 +25,9 @@ class ComplianceTestView(generic.ObjectView):
 
 
 @register_model_view(models.ComplianceTest, "test_results", "results")
-class TestResultView(SingleTableMixin, FilterView):
-    template_name = "validity/compliance_results.html"
-    tab = ViewTab("Results")
-    model = models.ComplianceTestResult
-    filterset_class = filtersets.ComplianceTestResultFilterSet
-    filter_form_class = forms.TestResultFilterForm
-    table_class = tables.ComplianceResultTable
-
-    def get_table(self, **kwargs):
-        table = super().get_table(**kwargs)
-        table.exclude = ("test",)
-        return table
-
-    def get_queryset(self):
-        return models.ComplianceTestResult.objects.select_related("test", "device").filter(test=self.kwargs["pk"])
-
-    def get_object(self):
-        return get_object_or_404(models.ComplianceTest, pk=self.kwargs["pk"])
-
-    def get_filterform_initial(self):
-        if not hasattr(self.filterset.form, "cleaned_data"):
-            return {}
-        return {k: v for k, v in self.filterset.form.cleaned_data.items() if k in self.filter_form_class.base_fields}
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["filterset_form"] = self.filter_form_class(initial=self.get_filterform_initial())
-        context["object"] = self.get_object()
-        context["tab"] = self.tab
-        return context
+class TestResultView(TestResultBaseView):
+    parent_model = models.ComplianceTest
+    result_relation = "test"
 
 
 @register_model_view(models.ComplianceTest, "delete")

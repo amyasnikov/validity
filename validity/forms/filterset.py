@@ -16,12 +16,20 @@ class TestResultFilterForm(Form):
         queryset=Device.objects.all(),
         required=False,
     )
+    test_id = DynamicModelMultipleChoiceField(
+        label=_("Test"), queryset=models.ComplianceTest.objects.all(), required=False
+    )
     latest = PlaceholderChoiceField(required=False, placeholder=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
     passed = PlaceholderChoiceField(
         required=False,
         placeholder=_("Passed"),
         choices=BOOLEAN_WITH_BLANK_CHOICES[1:],
     )
+
+    def __init__(self, *args, exclude: str = "", **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if exclude:
+            self.fields.pop(exclude, None)
 
 
 class NameSetFilterForm(NetBoxModelFilterSetForm):

@@ -48,8 +48,11 @@ class ComplianceTestQS(RestrictedQuerySet):
 
 
 class ComplianceTestResultQS(RestrictedQuerySet):
-    def only_latest(self) -> "ComplianceTestResultQS":
-        return self.order_by("test__pk", "device__pk", "-created").distinct("test__pk", "device__pk")
+    def only_latest(self, exclude: bool = False) -> "ComplianceTestResultQS":
+        qs = self.order_by("test__pk", "device__pk", "-created").distinct("test__pk", "device__pk")
+        if exclude:
+            return self.exclude(pk__in=qs.values("pk"))
+        return qs
 
     def last_more_than(self, than: int) -> "ComplianceTestResultQS":
         qs = self.values("device", "test").annotate(ids=ArrayAgg(F("id"), ordering="-created"))

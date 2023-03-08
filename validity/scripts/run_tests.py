@@ -67,15 +67,14 @@ class RunTestsScript(Script):
         names = DEFAULT_NAMES | {"device": device}
         evaluator = ExplanationalEval(DEFAULT_OPERATORS, functions, names)
         passed = bool(evaluator.eval(test.effective_expression))
-        return passed, evaluator.explanation
+        return passed, [("device.dynamic_pair", device.dynamic_pair)] + evaluator.explanation
 
     @staticmethod
     def device_iterator(filter_: Q | None):
         if not filter_:
             return
-        fields = {"serializer", "repo"}
         devices = DeviceQS().filter(filter_).annotate_json_serializer().annotate_json_repo()
-        yield from devices.json_iterator(*fields)
+        yield from devices.json_iterator("serializer", "repo")
 
     def run(self, data, commit):
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
