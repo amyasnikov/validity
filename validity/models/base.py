@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from netbox.models import NetBoxModel
 
-from validity.config_compliance import git
+from validity.utils import git
 
 
 logger = logging.getLogger(__name__)

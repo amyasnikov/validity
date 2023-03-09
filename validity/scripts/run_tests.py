@@ -4,7 +4,7 @@ from typing import Any, Callable, Iterable
 from dcim.models import Device
 from django.db.models import Q
 from django.utils.translation import gettext as __
-from extras.scripts import Script
+from extras.scripts import BooleanVar, Script
 from simpleeval import InvalidExpression
 
 import validity.config_compliance.solver.default_nameset as default_nameset
@@ -13,11 +13,19 @@ from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.exceptions import DeviceConfigError, EvalError
 from validity.config_compliance.solver.eval import ExplanationalEval
 from validity.config_compliance.solver.eval_defaults import DEFAULT_NAMES, DEFAULT_OPERATORS
-from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet
+from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, GitRepo, NameSet
 from validity.queries import DeviceQS
+from validity.utils.git import SyncReposMixin
 
 
-class RunTestsScript(Script):
+class RunTestsScript(SyncReposMixin, Script):
+    sync_repos = BooleanVar(
+        required=False,
+        default=False,
+        label=__("Sync Repositories"),
+        description=__("Pull updates from all available git repositories before running the tests"),
+    )
+
     class Meta:
         name = __("Run Compliance Tests")
         description = __("Execute compliance tests and save the results")
@@ -67,7 +75,7 @@ class RunTestsScript(Script):
         names = DEFAULT_NAMES | {"device": device}
         evaluator = ExplanationalEval(DEFAULT_OPERATORS, functions, names)
         passed = bool(evaluator.eval(test.effective_expression))
-        return passed, [("device.dynamic_pair", device.dynamic_pair)] + evaluator.explanation
+        return passed, [("str(device.dynamic_pair)", str(device.dynamic_pair))] + evaluator.explanation
 
     @staticmethod
     def device_iterator(filter_: Q | None):
@@ -77,6 +85,8 @@ class RunTestsScript(Script):
         yield from devices.json_iterator("serializer", "repo")
 
     def run(self, data, commit):
+        if data.get("sync_repos"):
+            self.update_git_repos(GitRepo.objects.all())
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
         results = []
         for selector in selectors:

@@ -1,8 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import pygit2
+from django.db.models import QuerySet
 
 from validity import settings
 
@@ -66,3 +68,31 @@ class GitRepo:
     def head_hash(self) -> "str":
         assert self._repo is not None, f"Trying to get head from not existing repo {self.name}. Clone first"
         return str(self._repo.head.target)[:7]
+
+
+class SyncReposMixin:
+    @staticmethod
+    def update_and_get_hash(db_repo: "models.GitRepo") -> tuple[bool, str]:
+        try:
+            repo = GitRepo.from_db(db_repo)
+            repo.clone_or_force_pull()
+            return True, repo.head_hash
+        except pygit2.GitError as e:
+            return False, str(e)
+
+    def update_git_repos(self, db_repos: QuerySet["models.GitRepo"]) -> dict[str, str]:
+        with ThreadPoolExecutor() as tp:
+            results = tp.map(self.update_and_get_hash, db_repos)
+            successful_repo_ids = []
+            new_repo_hashes = {}
+            for repo, (is_success, msg) in zip(db_repos, results):
+                if is_success:
+                    repo.head_hash = msg
+                    successful_repo_ids.append(repo.pk)
+                    new_repo_hashes[repo.name] = msg
+                else:
+                    self.log_failure(f"{repo.name}: {msg}")
+            db_repos.model.objects.bulk_update(db_repos.filter(pk__in=successful_repo_ids), ["head_hash"])
+            if successful_repo_ids:
+                self.log_success(f"Successfully updated {len(successful_repo_ids)} repositories")
+            return new_repo_hashes
