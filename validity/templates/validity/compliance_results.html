@@ -8,6 +8,13 @@
 {% block subtitle %}
   <div class="object-subtitle"></div>
 {% endblock %}
+{% block controls %}
+{%if read_only %}
+  <div class="controls"></div>
+{% else %}
+  {{ block.super }}
+{% endif %}
+{% endblock %}
 {% block content %}
   <div class="row mb-3">
     <div class="col-auto">

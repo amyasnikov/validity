@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.db.models import TextChoices
 from django.db.models.enums import ChoicesMeta
 from django.utils.translation import gettext_lazy as _
@@ -53,3 +55,27 @@ class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
     JSON = "JSON", "JSON", "orange"
     YAML = "YAML", "YAML", "info"
+
+
+class DeviceGroupByChoices(TextChoices):
+    DEVICE_TYPE = "device_type", _("Device Type")
+    MANUFACTURER = "device_type__manufacturer", _("Manufacturer")
+    DEVICE_ROLE = "device_role", _("Device Role")
+    TENANT = "tenant", _("Tenant")
+    PLATFORM = "platform", _("Platform")
+    LOCATION = "location", _("Location")
+    SITE = "site", _("Site")
+
+    @classmethod
+    def contains(cls, value: str) -> bool:
+        return value in cls._value2member_map_
+
+    @classmethod
+    def member(cls, value: str) -> Optional["DeviceGroupByChoices"]:
+        return cls._value2member_map_.get(value)  # type: ignore
+
+    def viewname(self) -> str:
+        app_map = {self.TENANT: "tenancy"}
+        default_app = "dcim"
+        model_name = self.value.split("__")[-1].replace("_", "")
+        return app_map.get(self, default_app) + ":" + model_name

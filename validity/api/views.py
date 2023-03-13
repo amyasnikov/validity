@@ -23,7 +23,7 @@ class ComplianceTestViewSet(NetBoxModelViewSet):
 
 
 class ComplianceTestResultViewSet(ReadOnlyNetboxViewSet):
-    queryset = models.ComplianceTestResult.objects.select_related("device", "test").prefetch_related("tags")
+    queryset = models.ComplianceTestResult.objects.select_related("device", "test", "report")
     serializer_class = serializers.ComplianceTestResultSerializer
     filterset_class = filtersets.ComplianceTestResultFilterSet
 
@@ -44,3 +44,8 @@ class NameSetViewSet(NetBoxModelViewSet):
     queryset = models.NameSet.objects.select_related("repo").prefetch_related("tags")
     serializer_class = serializers.NameSetSerializer
     filterset_class = filtersets.NameSetFilterSet
+
+
+class ComplianceReportViewSet(ReadOnlyNetboxViewSet):
+    queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
+    serializer_class = serializers.ComplianceReportSerializer

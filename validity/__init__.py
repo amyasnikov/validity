@@ -27,7 +27,8 @@ config = NetBoxValidityConfig
 
 
 class ValiditySettings(BaseModel):
-    store_last_results: int = Field(default=5, gt=0, lt=1000)
+    store_last_results: int = Field(default=5, gt=0, lt=1001)
+    store_reports: int = Field(default=5, gt=0, lt=1001)
     git_folder: DirectoryPath = Path("/opt/git_repos")
     autocopy_scripts: bool = False
 

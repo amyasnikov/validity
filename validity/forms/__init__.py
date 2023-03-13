@@ -5,6 +5,7 @@ from .filterset import (
     ConfigSerializerFilterForm,
     GitRepoFilterForm,
     NameSetFilterForm,
+    ReportGroupByForm,
     TestResultFilterForm,
 )
 from .general import ComplianceSelectorForm, ComplianceTestForm, ConfigSerializerForm, GitRepoForm, NameSetForm

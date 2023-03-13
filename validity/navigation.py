@@ -32,6 +32,10 @@ validity_menu_items = (
         link_text="Test Results",
     ),
     PluginMenuItem(
+        link="plugins:validity:compliancereport_list",
+        link_text="Reports",
+    ),
+    PluginMenuItem(
         link="plugins:validity:gitrepo_list",
         link_text="Git Repositories",
         buttons=[

@@ -1,10 +1,13 @@
+from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import Column, Table
 from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
 
 from validity import models
+from validity.utils.misc import colorful_percentage
 from .queries import count_devices_per_repo, count_devices_per_serializer
 
 
@@ -118,3 +121,57 @@ class NameSetTable(NetBoxTable):
         model = models.NameSet
         fields = ("name", "_global", "tests")
         default_columns = fields
+
+
+class ComplianceReportTable(NetBoxTable):
+    id = Column(linkify=True)
+    groupby_value = Column(
+        verbose_name=_("GroupBy Value"),
+        linkify=lambda record: reverse(record["viewname"], kwargs={"pk": record["groupby_pk"]}),
+        empty_values=(None,),
+    )
+    device_count = Column(verbose_name=_("Devices"), empty_values=())
+    test_count = Column(verbose_name=_("Unique Tests"), empty_values=())
+    total_stats = Column(verbose_name=_("Overall Passed"), empty_values=())
+    low_stats = Column(verbose_name=_("Low Severity"), empty_values=())
+    middle_stats = Column(verbose_name=_("Middle Severity"), empty_values=())
+    high_stats = Column(verbose_name=_("High Severity"), empty_values=())
+
+    class Meta(NetBoxTable.Meta):
+        model = models.ComplianceReport
+        fields = (
+            "id",
+            "groupby_value",
+            "created",
+            "device_count",
+            "test_count",
+            "total_stats",
+            "low_stats",
+            "middle_stats",
+            "high_stats",
+        )
+        exclude = ("actions",)
+        default_columns = fields
+
+    def _render_stats(self, severity, record):
+        def get_table_attr(obj, attr_name):
+            return getattr(obj, attr_name) if hasattr(obj, attr_name) else obj.get(attr_name)
+
+        count = get_table_attr(record, f"{severity}_count")
+        if not count:
+            return "—"
+        passed = get_table_attr(record, f"{severity}_passed")
+        percentage = get_table_attr(record, f"{severity}_percentage")
+        return mark_safe(f"{passed}/{count} ") + colorful_percentage(percentage)
+
+    def render_total_stats(self, record):
+        return self._render_stats("total", record)
+
+    def render_low_stats(self, record):
+        return self._render_stats("low", record)
+
+    def render_middle_stats(self, record):
+        return self._render_stats("middle", record)
+
+    def render_high_stats(self, record):
+        return self._render_stats("high", record)

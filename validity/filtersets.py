@@ -43,6 +43,7 @@ class ComplianceTestFilterSet(SearchMixin, NetBoxModelFilterSet):
 class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     test_id = ModelMultipleChoiceFilter(field_name="test", queryset=models.ComplianceTest.objects.all())
     device_id = ModelMultipleChoiceFilter(field_name="device", queryset=Device.objects.all())
+    report_id = ModelMultipleChoiceFilter(field_name="report", queryset=models.ComplianceReport.objects.all())
     latest = BooleanFilter(method="filter_latest")
     test__severity = ChoiceFilter(field_name="test__severity", choices=SeverityChoices.choices)
     tag = None

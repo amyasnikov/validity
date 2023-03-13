@@ -1,0 +1,12 @@
+{% load validity %}
+{% load helpers %}
+<tr>
+    <th scope="row">{{ row_name }}</th>
+    <td>
+      {% if count %}
+        {{ passed }}/{{ count }} {{ percentage | colorful_percentage }}
+      {% else %}
+        {{ "" | placeholder }}
+      {% endif %}
+    </td>
+</tr>

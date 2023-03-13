@@ -9,6 +9,7 @@ from dcim.api.nested_serializers import (
 from extras.api.nested_serializers import NestedTagSerializer
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from validity import models
 from .helpers import PasswordField, nested_factory
@@ -110,10 +111,55 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
 NestedComplianceTestSerializer = nested_factory(ComplianceTestSerializer, ("id", "url", "display", "name", "severity"))
 
 
+class ComplianceReportSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:compliancereport-detail")
+    results_url = serializers.SerializerMethodField()
+    device_count = serializers.ReadOnlyField()
+    test_count = serializers.ReadOnlyField()
+    total_passed = serializers.ReadOnlyField()
+    total_count = serializers.ReadOnlyField()
+    low_passed = serializers.ReadOnlyField()
+    low_count = serializers.ReadOnlyField()
+    middle_passed = serializers.ReadOnlyField()
+    middle_count = serializers.ReadOnlyField()
+    high_passed = serializers.ReadOnlyField()
+    high_count = serializers.ReadOnlyField()
+
+    class Meta:
+        model = models.ComplianceReport
+        fields = (
+            "id",
+            "url",
+            "display",
+            "device_count",
+            "test_count",
+            "total_passed",
+            "total_count",
+            "low_passed",
+            "low_count",
+            "middle_passed",
+            "middle_count",
+            "high_passed",
+            "high_count",
+            "results_url",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )
+
+    def get_results_url(self, obj):
+        results_url = reverse("plugins-api:validity-api:compliancetestresult-list", request=self.context["request"])
+        return results_url + f"?report_id={obj.pk}"
+
+
+NestedComplianceReportSerializer = nested_factory(ComplianceReportSerializer, ("id", "url", "display"))
+
+
 class ComplianceTestResultSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:compliancetestresult-detail")
     test = NestedComplianceTestSerializer()
     device = NestedDeviceSerializer()
+    report = NestedComplianceReportSerializer()
 
     class Meta:
         model = models.ComplianceTestResult
@@ -123,6 +169,7 @@ class ComplianceTestResultSerializer(NetBoxModelSerializer):
             "display",
             "test",
             "device",
+            "report",
             "passed",
             "explanation",
             "custom_fields",

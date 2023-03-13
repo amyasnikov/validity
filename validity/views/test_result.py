@@ -54,7 +54,7 @@ class ComplianceResultView(generic.ObjectView):
 
 class TestResultBaseView(SingleTableMixin, FilterView):
     template_name = "validity/compliance_results.html"
-    tab = ViewTab("Test Results")
+    tab = ViewTab("Test Results", badge=lambda obj: obj.results.count())
     model = models.ComplianceTestResult
     filterset_class = filtersets.ComplianceTestResultFilterSet
     filter_form_class = forms.TestResultFilterForm
@@ -62,6 +62,7 @@ class TestResultBaseView(SingleTableMixin, FilterView):
 
     parent_model: type[Model]
     result_relation: str
+    read_only: bool = False
 
     def get_table(self, **kwargs):
         table = super().get_table(**kwargs)
@@ -88,7 +89,9 @@ class TestResultBaseView(SingleTableMixin, FilterView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["filterset_form"] = self.get_filterform()
-        context["object"] = self.get_object()
-        context["tab"] = self.tab
-        return context
+        return context | {
+            "filterset_form": self.get_filterform(),
+            "object": self.get_object(),
+            "tab": self.tab,
+            "read_only": self.read_only,
+        }

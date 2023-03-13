@@ -42,7 +42,10 @@ class DeviceConfig:
         """
         assert hasattr(device, "repo"), "Device must be annotated with .repo"
         assert hasattr(device, "serializer"), "Device must be annotated with .serializer"
-        return cls._config_classes[device.serializer.extraction_method]._from_device(device)
+        try:
+            return cls._config_classes[device.serializer.extraction_method]._from_device(device)
+        except AttributeError as e:
+            raise DeviceConfigError(f"{device.name} has no bound serializer") from e
 
     @classmethod
     def _from_device(cls, device: Device) -> "DeviceConfig":

@@ -4,7 +4,6 @@ import deepdiff
 from simpleeval import EvalWithCompoundTypes, InvalidExpression
 
 from ..exceptions import EvalError
-from .eval_defaults import repr_
 
 
 class ExplanationalEval(EvalWithCompoundTypes):
@@ -36,9 +35,7 @@ class ExplanationalEval(EvalWithCompoundTypes):
             left = right
             right = self._eval(comp)
             if isinstance(left, self.deepdiff_types) and isinstance(right, self.deepdiff_types):
-                self.explanation.append(
-                    (f"Deepdiff FROM:\n{repr_(left)}\nTO:\n{repr_(right)}", deepdiff.DeepDiff(left, right).to_dict())
-                )
+                self.explanation.append(("Deepdiff between 2 previous lines", deepdiff.DeepDiff(left, right).to_dict()))
             to_return = self.operators[type(operation)](left, right)
         return to_return
 

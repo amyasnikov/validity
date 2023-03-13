@@ -27,4 +27,6 @@ urlpatterns = [
     path("namesets/add/", views.NameSetEditView.as_view(), name="nameset_add"),
     path("namesets/delete/", views.NameSetBulkDeleteView.as_view(), name="nameset_bulk_delete"),
     path("namesets/<int:pk>/", include(get_model_urls("validity", "nameset"))),
+    path("reports/", views.ComplianceReportListView.as_view(), name="compliancereport_list"),
+    path("reports/<int:pk>/", include(get_model_urls("validity", "compliancereport"))),
 ]

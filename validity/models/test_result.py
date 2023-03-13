@@ -1,35 +1,26 @@
 from dcim.models import Device
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from netbox.models import (
-    ChangeLoggingMixin,
-    CustomFieldsMixin,
-    CustomLinksMixin,
-    CustomValidationMixin,
-    ExportTemplatesMixin,
-    WebhooksMixin,
-)
 
 from validity import settings
 from validity.managers import ComplianceTestResultQS
-from .base import URLMixin
+from .base import BaseReadOnlyModel
 from .test import ComplianceTest
 
 
-class ComplianceTestResult(
-    URLMixin,
-    ChangeLoggingMixin,
-    CustomFieldsMixin,
-    CustomLinksMixin,
-    CustomValidationMixin,
-    ExportTemplatesMixin,
-    WebhooksMixin,
-    models.Model,
-):
+class ComplianceTestResult(BaseReadOnlyModel):
     test = models.ForeignKey(ComplianceTest, verbose_name=_("Test"), related_name="results", on_delete=models.CASCADE)
     device = models.ForeignKey(Device, verbose_name=_("Device"), related_name="results", on_delete=models.CASCADE)
     passed = models.BooleanField(_("Passed"))
     explanation = models.JSONField(_("Explanation"), default=list)
+    report = models.ForeignKey(
+        "ComplianceReport",
+        verbose_name=_("Report"),
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="results",
+    )
 
     objects = ComplianceTestResultQS.as_manager()
 

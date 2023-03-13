@@ -3,9 +3,11 @@ from typing import TYPE_CHECKING, Optional
 
 from dcim.models import Device
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Count, F, Prefetch, Q
+from django.db.models import Case, Count, F, FloatField, Prefetch, Q, Value, When
 from django.db.models.functions import JSONObject
 from netbox.models import RestrictedQuerySet
+
+from validity.choices import DeviceGroupByChoices, SeverityChoices
 
 
 if TYPE_CHECKING:
@@ -59,6 +61,9 @@ class ComplianceTestResultQS(RestrictedQuerySet):
         last_ids = chain.from_iterable(record["ids"][than:] for record in qs.iterator())
         return self.model.objects.filter(pk__in=last_ids)
 
+    def count_devices_and_tests(self):
+        return self.aggregate(device_count=Count("devices", distinct=True), test_count=Count("tests", distinct=True))
+
 
 class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
     def from_device(self, device: Device) -> Optional["ConfigSerializer"]:
@@ -73,3 +78,39 @@ class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
 
 class NameSetQS(JSONObjMixin, RestrictedQuerySet):
     pass
+
+
+class ComplianceReportQS(RestrictedQuerySet):
+    def annotate_result_stats(self, group_by_field: DeviceGroupByChoices | None = None):
+        def percentage(field1: str, field2: str) -> Case:
+            return Case(
+                When(Q(**{f"{field2}__gt": 0}), then=Value(100.0) * F(field1) / F(field2)),
+                default=100.0,
+                output_field=FloatField(),
+            )
+
+        qs = self
+        if group_by_field:
+            qs = self.values(f"results__device__{group_by_field}__pk", f"results__device__{group_by_field}__slug")
+        only_passed = Q(results__passed=True)
+        qs = qs.annotate(
+            total_count=Count("results"),
+            total_passed=Count("results", filter=only_passed),
+            total_percentage=percentage("total_passed", "total_count"),
+        )
+        for severity, _ in SeverityChoices.choices:
+            s_lower = severity.lower()
+            s_filter = Q(results__test__severity=severity)
+            qs = qs.annotate(
+                **{
+                    f"{s_lower}_count": Count("results", filter=s_filter),
+                    f"{s_lower}_passed": Count("results", filter=s_filter & only_passed),
+                    f"{s_lower}_percentage": percentage(f"{s_lower}_passed", f"{s_lower}_count"),
+                }
+            )
+        return qs
+
+    def count_devices_and_tests(self):
+        return self.annotate(
+            device_count=Count("results__device", distinct=True), test_count=Count("results__test", distinct=True)
+        )

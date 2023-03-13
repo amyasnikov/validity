@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from utilities.templatetags.builtins.filters import linkify, placeholder
 
 from validity.models import GitRepoLinkMixin
+from validity.utils.misc import colorful_percentage as _colorful_percentage
 
 
 register = template.Library()
@@ -52,6 +53,11 @@ def data_source(model: GitRepoLinkMixin) -> str:
     return _("Git") if model.repo else _("DB")
 
 
+@register.filter
+def colorful_percentage(percent):
+    return _colorful_percentage(percent)
+
+
 @register.simple_tag
 def urljoin(*parts: str) -> str:
     if len(parts) <= 1:
@@ -61,3 +67,15 @@ def urljoin(*parts: str) -> str:
     if middle_parts:
         url_parts.insert(1, middle_parts)
     return "/".join(url_parts)
+
+
+@register.inclusion_tag("validity/inc/report_stats_row.html")
+def report_stats_row(obj, row_name, severity):
+    for i, row_part in enumerate((row_parts := row_name.split())):
+        if row_part.lower() in {"low", "middle", "high"}:
+            row_parts[i] = f"<b>{row_part.upper()}</b>"
+    row_name = mark_safe(" ".join(row_parts))
+    count = getattr(obj, f"{severity}_count")
+    passed = getattr(obj, f"{severity}_passed")
+    percentage = getattr(obj, f"{severity}_percentage")
+    return {"row_name": row_name, "passed": passed, "count": count, "percentage": percentage}

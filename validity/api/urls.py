@@ -11,6 +11,7 @@ router.register("test-results", views.ComplianceTestResultViewSet)
 router.register("git-repositories", views.GitRepoViewSet)
 router.register("serializers", views.ConfigSerializerViewSet)
 router.register("namesets", views.NameSetViewSet)
+router.register("reports", views.ComplianceReportViewSet)
 
 urlpatterns = router.urls
 

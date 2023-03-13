@@ -4,7 +4,15 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from netbox.models import NetBoxModel
+from netbox.models import (
+    CustomFieldsMixin,
+    CustomLinksMixin,
+    CustomValidationMixin,
+    ExportTemplatesMixin,
+    NetBoxModel,
+    RestrictedQuerySet,
+    WebhooksMixin,
+)
 
 from validity.utils import git
 
@@ -70,6 +78,25 @@ class GitRepoLinkMixin(models.Model):
 
 class BaseModel(URLMixin, NetBoxModel):
     json_fields: tuple[str, ...] = ("id",)
+
+    class Meta:
+        abstract = True
+
+
+class BaseReadOnlyModel(
+    URLMixin,
+    CustomFieldsMixin,
+    CustomLinksMixin,
+    CustomValidationMixin,
+    ExportTemplatesMixin,
+    WebhooksMixin,
+    models.Model,
+):
+
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    last_updated = models.DateTimeField(auto_now=True, blank=True, null=True)
+
+    objects = RestrictedQuerySet.as_manager()
 
     class Meta:
         abstract = True

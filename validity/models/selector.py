@@ -39,7 +39,6 @@ class ComplianceSelector(BaseModel):
 
     clone_fields = (
         "filter_operation",
-        "filter_operation",
         "name_filter",
         "tag_filter",
         "manufacturer_filter",
@@ -90,7 +89,7 @@ class ComplianceSelector(BaseModel):
             attr = getattr(self, attr_name)
             if isinstance(attr, models.Manager):
                 yield from (models.Q(**{filter_name: instance}) for instance in attr.all())
-            else:
+            elif attr:
                 yield models.Q(**{filter_name: attr})
 
     @property

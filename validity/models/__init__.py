@@ -1,6 +1,7 @@
 from .base import GitRepoLinkMixin
 from .nameset import NameSet
 from .repo import GitRepo
+from .report import ComplianceReport
 from .selector import ComplianceSelector
 from .serializer import ConfigSerializer
 from .test import ComplianceTest

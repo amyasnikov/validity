@@ -6,11 +6,24 @@ from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
 from validity import models
-from validity.choices import BoolOperationChoices, ConfigExtractionChoices, DynamicPairsChoices, SeverityChoices
+from validity.choices import (
+    BoolOperationChoices,
+    ConfigExtractionChoices,
+    DeviceGroupByChoices,
+    DynamicPairsChoices,
+    SeverityChoices,
+)
 from .helpers import PlaceholderChoiceField
 
 
 class TestResultFilterForm(Form):
+    latest = PlaceholderChoiceField(required=False, placeholder=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
+    passed = PlaceholderChoiceField(
+        required=False,
+        placeholder=_("Passed"),
+        choices=BOOLEAN_WITH_BLANK_CHOICES[1:],
+    )
+    test__severity = PlaceholderChoiceField(required=False, placeholder=_("Severity"), choices=SeverityChoices.choices)
     device_id = DynamicModelMultipleChoiceField(
         label=_("Device"),
         queryset=Device.objects.all(),
@@ -19,17 +32,32 @@ class TestResultFilterForm(Form):
     test_id = DynamicModelMultipleChoiceField(
         label=_("Test"), queryset=models.ComplianceTest.objects.all(), required=False
     )
-    latest = PlaceholderChoiceField(required=False, placeholder=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
-    passed = PlaceholderChoiceField(
+    report_id = DynamicModelMultipleChoiceField(
+        label=_("Report"),
+        queryset=models.ComplianceReport.objects.all(),
         required=False,
-        placeholder=_("Passed"),
-        choices=BOOLEAN_WITH_BLANK_CHOICES[1:],
+    )
+    selector_id = DynamicModelMultipleChoiceField(
+        label=_("Selector"), queryset=models.ComplianceSelector.objects.all(), required=False
     )
 
     def __init__(self, *args, exclude: str = "", **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if exclude:
             self.fields.pop(exclude, None)
+
+
+class ComplianceTestResultFilterForm(TestResultFilterForm, NetBoxModelFilterSetForm):
+    model = models.ComplianceTestResult
+
+
+class ReportGroupByForm(Form):
+    group_by = PlaceholderChoiceField(
+        label=_("Group results by"),
+        placeholder=_("Group results by"),
+        required=False,
+        choices=DeviceGroupByChoices.choices,
+    )
 
 
 class NameSetFilterForm(NetBoxModelFilterSetForm):
@@ -83,17 +111,4 @@ class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
     )
     repo_id = DynamicModelMultipleChoiceField(
         label=_("Git Repository"), queryset=models.GitRepo.objects.all(), required=False
-    )
-
-
-class ComplianceTestResultFilterForm(NetBoxModelFilterSetForm):
-    model = models.ComplianceTestResult
-    latest = NullBooleanField(required=False, widget=StaticSelect(choices=BOOLEAN_WITH_BLANK_CHOICES))
-    passed = NullBooleanField(required=False, widget=StaticSelect(choices=BOOLEAN_WITH_BLANK_CHOICES))
-    selector_id = DynamicModelMultipleChoiceField(
-        label=_("Selector"), queryset=models.ComplianceTest.objects.all(), required=False
-    )
-    device_id = DynamicModelMultipleChoiceField(label=_("Device"), queryset=Device.objects.all(), required=False)
-    test__severity = PlaceholderChoiceField(
-        required=False, placeholder=_("Test Severity"), choices=SeverityChoices.choices
     )
