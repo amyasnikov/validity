@@ -81,7 +81,7 @@ class NameSetQS(JSONObjMixin, RestrictedQuerySet):
 
 
 class ComplianceReportQS(RestrictedQuerySet):
-    def annotate_result_stats(self, group_by_field: DeviceGroupByChoices | None = None):
+    def annotate_result_stats(self, groupby_field: DeviceGroupByChoices | None = None):
         def percentage(field1: str, field2: str) -> Case:
             return Case(
                 When(Q(**{f"{field2}__gt": 0}), then=Value(100.0) * F(field1) / F(field2)),
@@ -90,8 +90,8 @@ class ComplianceReportQS(RestrictedQuerySet):
             )
 
         qs = self
-        if group_by_field:
-            qs = self.values(f"results__device__{group_by_field}__pk", f"results__device__{group_by_field}__slug")
+        if groupby_field:
+            qs = self.values(f"results__{groupby_field.pk_field()}", f"results__{groupby_field}")
         only_passed = Q(results__passed=True)
         qs = qs.annotate(
             total_count=Count("results"),

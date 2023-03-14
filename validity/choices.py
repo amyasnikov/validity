@@ -58,13 +58,15 @@ class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
 
 
 class DeviceGroupByChoices(TextChoices):
-    DEVICE_TYPE = "device_type", _("Device Type")
-    MANUFACTURER = "device_type__manufacturer", _("Manufacturer")
-    DEVICE_ROLE = "device_role", _("Device Role")
-    TENANT = "tenant", _("Tenant")
-    PLATFORM = "platform", _("Platform")
-    LOCATION = "location", _("Location")
-    SITE = "site", _("Site")
+    DEVICE = "device__name", _("Device")
+    DEVICE_TYPE = "device__device_type__slug", _("Device Type")
+    MANUFACTURER = "device__device_type__manufacturer__slug", _("Manufacturer")
+    DEVICE_ROLE = "device__device_role__slug", _("Device Role")
+    TENANT = "device__tenant__slug", _("Tenant")
+    PLATFORM = "device__platform__slug", _("Platform")
+    LOCATION = "device__location__slug", _("Location")
+    SITE = "device__site__slug", _("Site")
+    TEST = "test__name", _("Test")
 
     @classmethod
     def contains(cls, value: str) -> bool:
@@ -75,7 +77,11 @@ class DeviceGroupByChoices(TextChoices):
         return cls._value2member_map_.get(value)  # type: ignore
 
     def viewname(self) -> str:
-        app_map = {self.TENANT: "tenancy"}
-        default_app = "dcim"
-        model_name = self.value.split("__")[-1].replace("_", "")
-        return app_map.get(self, default_app) + ":" + model_name
+        view_prefixes = {self.TENANT: "tenancy:", self.TEST: "plugins:validity:compliance"}
+        default_prefix = "dcim:"
+        model_name = self.value.split("__")[-2].replace("_", "")
+        return view_prefixes.get(self, default_prefix) + model_name
+
+    def pk_field(self):
+        pk_path = self.value.split("__")[:-1] + ["pk"]
+        return "__".join(pk_path)

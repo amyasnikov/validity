@@ -29,13 +29,12 @@ class ComplianceReportView(generic.ObjectView):
         return table
 
     def transform_groupby_qs(self, groupby_qs: Iterable[dict], groupby_field: DeviceGroupByChoices) -> Iterator[dict]:
-        pk_field = f"results__device__{groupby_field.value}__pk"
-        slug_field = f"results__device__{groupby_field.value}__slug"
+        pk_field = f"results__{groupby_field.pk_field()}"
+        name_field = f"results__{groupby_field}"
         for item in groupby_qs:
             item["viewname"] = groupby_field.viewname()
-            item["groupby_value"] = item[slug_field]
+            item["groupby_value"] = item[name_field]
             item["groupby_pk"] = item[pk_field]
-            print(item)
             yield item
 
     def get_extra_context(self, request, instance):
@@ -48,6 +47,7 @@ class ComplianceReportView(generic.ObjectView):
                 self.model.objects.filter(pk=instance.pk).annotate_result_stats(groupby_field).count_devices_and_tests()
             )
             table = self.get_table(self.transform_groupby_qs(groupby_qs, groupby_field))
+            table.configure(request)
             context["groupby_table"] = table
             context["groupby_label"] = groupby_field.label
         return context

@@ -8,7 +8,7 @@
 {% block content %}
   <div class="row">
     <div class="col col-md-8">
-      <div class="card mb-3">
+      <div class="card mb-2">
         <h5 class="card-header">Compliance Report</h5>
         <div class="card-body">
           <table class="table table-hover attr-table">
@@ -55,6 +55,7 @@
         <div class="card-body">
           {% if groupby_table %}
           <div class="table-responsive">{% render_table groupby_table %}</div>
+          {%include 'inc/paginator.html' with paginator=groupby_table.paginator page=groupby_table.page%}
           {% else %}
           <i>Choose a field to group by to display statistics</i>
           {% endif %}
