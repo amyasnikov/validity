@@ -7,6 +7,7 @@ from django.db.models import Case, Count, F, FloatField, Prefetch, Q, Value, Whe
 from django.db.models.functions import JSONObject
 from netbox.models import RestrictedQuerySet
 
+from validity import settings
 from validity.choices import DeviceGroupByChoices, SeverityChoices
 
 
@@ -64,6 +65,9 @@ class ComplianceTestResultQS(RestrictedQuerySet):
     def count_devices_and_tests(self):
         return self.aggregate(device_count=Count("devices", distinct=True), test_count=Count("tests", distinct=True))
 
+    def delete_old(self):
+        return self.filter(report=None).last_more_than(settings.store_last_results).delete()
+
 
 class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
     def from_device(self, device: Device) -> Optional["ConfigSerializer"]:
@@ -114,3 +118,8 @@ class ComplianceReportQS(RestrictedQuerySet):
         return self.annotate(
             device_count=Count("results__device", distinct=True), test_count=Count("results__test", distinct=True)
         )
+
+    def delete_old(self):
+        return self.filter(
+            pk__in=self.values_list("pk", flat=True).order_by("-created")[settings.store_reports :]
+        ).delete()

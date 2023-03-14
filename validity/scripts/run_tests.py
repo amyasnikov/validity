@@ -1,19 +1,19 @@
 from itertools import chain
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Generator, Iterable
 
+import yaml
 from dcim.models import Device
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils.translation import gettext as __
-from extras.scripts import BooleanVar, Script
+from extras.scripts import BooleanVar, MultiObjectVar, Script
 from simpleeval import InvalidExpression
 
 import validity.config_compliance.solver.default_nameset as default_nameset
-from validity import settings
 from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.exceptions import DeviceConfigError, EvalError
 from validity.config_compliance.solver.eval import ExplanationalEval
 from validity.config_compliance.solver.eval_defaults import DEFAULT_NAMES, DEFAULT_OPERATORS
-from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, GitRepo, NameSet
+from validity.models import ComplianceReport, ComplianceSelector, ComplianceTest, ComplianceTestResult, GitRepo, NameSet
 from validity.queries import DeviceQS
 from validity.utils.git import SyncReposMixin
 
@@ -25,6 +25,8 @@ class RunTestsScript(SyncReposMixin, Script):
         label=__("Sync Repositories"),
         description=__("Pull updates from all available git repositories before running the tests"),
     )
+    make_report = BooleanVar(default=True, label=__("Make Compliance Report"))
+    selectors = MultiObjectVar(model=ComplianceReport, required=False, label=__("Specific selectors"))
 
     class Meta:
         name = __("Run Compliance Tests")
@@ -34,6 +36,8 @@ class RunTestsScript(SyncReposMixin, Script):
         super().__init__()
         self._nameset_functions = {}
         self.global_namesets = NameSet.objects.filter(_global=True)
+        self.results_count = 0
+        self.results_passed = 0
 
     def nameset_functions(self, namesets: Iterable[NameSet]) -> dict[str, Callable]:
         def extract_nameset(nameset, globals_):
@@ -84,10 +88,36 @@ class RunTestsScript(SyncReposMixin, Script):
         devices = DeviceQS().filter(filter_).annotate_json_serializer().annotate_json_repo()
         yield from devices.json_iterator("serializer", "repo")
 
+    def run_tests_for_device(
+        self,
+        tests_qs: QuerySet[ComplianceTest],
+        device_config: DeviceConfig,
+        pair_config: DeviceConfig | None,
+        report: ComplianceReport,
+    ) -> Generator[ComplianceTestResult, None, None]:
+        for test in tests_qs:
+            explanation = []
+            try:
+                passed, explanation = self.run_test(device_config, pair_config, test)
+            except (InvalidExpression, EvalError) as e:
+                self.log_failure(
+                    f"Failed to execute test {test} for device {device_config.device}, {type(e).__name__}: {e}"
+                )
+                passed = False
+                explanation.append((f"{type(e).__name__}: {e}", None))
+            self.results_count += 1
+            self.results_passed += int(passed)
+            yield ComplianceTestResult(
+                test=test, device=device_config.device, passed=passed, explanation=explanation, report=report
+            )
+
     def run(self, data, commit):
         if data.get("sync_repos"):
             self.update_git_repos(GitRepo.objects.all())
+        report = ComplianceReport.objects.create() if data["make_report"] else None
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
+        if specific_selectors := data.get("selectors"):
+            selectors = selectors.filter(pk__in=specific_selectors)
         results = []
         for selector in selectors:
             for device in self.device_iterator(selector.filter):
@@ -98,21 +128,14 @@ class RunTestsScript(SyncReposMixin, Script):
                 except DeviceConfigError as e:
                     self.log_failure(str(e) + f", ignoring all tests for {device}")
                     continue
-                for test in selector.tests.all():
-                    explanation = []
-                    try:
-                        passed, explanation = self.run_test(config, pair_config, test)
-                    except (InvalidExpression, EvalError) as e:
-                        self.log_failure(
-                            f"Failed to execute test {test} for device {config.device}, {type(e).__name__}: {e}"
-                        )
-                        passed = False
-                        explanation.append((f"{type(e).__name__}: {e}", None))
-                    results.append(
-                        ComplianceTestResult(test=test, device=config.device, passed=passed, explanation=explanation)
-                    )
+                results.extend(self.run_tests_for_device(selector.tests.all(), config, pair_config, report))
         ComplianceTestResult.objects.bulk_create(results)
-        ComplianceTestResult.objects.last_more_than(settings.store_last_results).delete()
+        ComplianceTestResult.objects.delete_old()
+        result = {"results": {"all": self.results_count, "passed": self.results_passed}}
+        if report:
+            ComplianceReport.objects.delete_old()
+            result["report"] = {"id": report.pk, "link": report.get_absolute_url()}
+        return yaml.dump(result, sort_keys=False)
 
 
 name = "Validity Compliance Tests"
