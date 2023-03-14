@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from django.forms import ChoiceField
 from utilities.forms import StaticSelect
 
@@ -15,3 +17,10 @@ class PlaceholderChoiceField(ChoiceField):
         kwargs["choices"] = (("", placeholder),) + tuple(kwargs["choices"])
         kwargs["widget"] = SelectWithPlaceholder()
         super().__init__(**kwargs)
+
+
+class ExcludeMixin:
+    def __init__(self, *args, exclude: Sequence[str] = (), **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        for field in exclude:
+            self.fields.pop(field, None)

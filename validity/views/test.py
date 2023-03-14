@@ -24,10 +24,11 @@ class ComplianceTestView(generic.ObjectView):
         return {"nameset_table": table}
 
 
-@register_model_view(models.ComplianceTest, "test_results", "results")
+@register_model_view(models.ComplianceTest, "results")
 class TestResultView(TestResultBaseView):
     parent_model = models.ComplianceTest
     result_relation = "test"
+    exclude_form_fields = ("platform_id", "tenant_id", "device_role_id", "manufacturer_id", "report_id", "selector_id")
 
 
 @register_model_view(models.ComplianceTest, "delete")

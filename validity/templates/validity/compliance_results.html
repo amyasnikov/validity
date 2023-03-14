@@ -6,13 +6,13 @@
 {% endblock %}
 {% block title %}{{ object }}: Test Results{% endblock %}
 {% block subtitle %}
-  <div class="object-subtitle"></div>
+<div class="object-subtitle"></div>
 {% endblock %}
 {% block controls %}
 {%if read_only %}
-  <div class="controls"></div>
+<div class="controls"></div>
 {% else %}
-  {{ block.super }}
+{{ block.super }}
 {% endif %}
 {% endblock %}
 {% block content %}
@@ -21,15 +21,24 @@
     <form role="form" class="row" method="get">
       {% bootstrap_form filterset_form layout="inline" %}
       <div class="col-auto">{% buttons submit="Search" %}{% endbuttons %}</div>
-    </form>
-    </div>
-  </div>
-  <div class="card mb-3">
-    <div class="card-body">
-      <h5 class="card-title mb-2">All Results related to {{ object }}</h5>
-      <div class="table-responsive">
-        {% render_table table %}
+      <div class="col-auto">
+        <a
+          class="btn btn-primary"
+          target="_blank"
+          href="{% url 'plugins:validity:compliancetestresult_list' %}?{{ result_relation }}_id={{ object.pk }}"
+        >
+          Advanced Search ⤴
+        </a>
       </div>
-      {%include 'inc/paginator.html' with paginator=table.paginator page=table.page%}
+    </form>
+  </div>
+</div>
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title mb-2">All Results related to {{ object }}</h5>
+    <div class="table-responsive">
+      {% render_table table %}
     </div>
-{% endblock %}
+    {%include 'inc/paginator.html' with paginator=table.paginator page=table.page%}
+  </div>
+  {% endblock %}

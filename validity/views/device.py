@@ -14,10 +14,11 @@ from .test_result import TestResultBaseView
 logger = logging.getLogger(__name__)
 
 
-@register_model_view(Device, "test_results", "results")
+@register_model_view(Device, "results")
 class TestResultView(TestResultBaseView):
     parent_model = Device
     result_relation = "device"
+    exclude_form_fields = ("platform_id", "tenant_id", "device_role_id", "manufacturer_id", "report_id", "selector_id")
 
 
 @register_model_view(Device, "serialized_config")

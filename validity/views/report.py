@@ -53,8 +53,9 @@ class ComplianceReportView(generic.ObjectView):
         return context
 
 
-@register_model_view(models.ComplianceReport, "report_results", "results")
+@register_model_view(models.ComplianceReport, "results")
 class ReportResultView(TestResultBaseView):
     parent_model = models.ComplianceReport
     result_relation = "report"
     read_only = True
+    exclude_form_fields = ("latest", "selector_id", "platform_id", "tenant_id", "device_role_id", "manufacturer_id")

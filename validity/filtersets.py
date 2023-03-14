@@ -2,10 +2,11 @@ import operator
 from functools import reduce
 from typing import Sequence
 
-from dcim.models import Device
+from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.db.models import Q
 from django_filters import BooleanFilter, ChoiceFilter, ModelMultipleChoiceFilter
 from netbox.filtersets import NetBoxModelFilterSet
+from tenancy.models import Tenant
 
 from validity import models
 from validity.choices import SeverityChoices
@@ -45,12 +46,35 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     device_id = ModelMultipleChoiceFilter(field_name="device", queryset=Device.objects.all())
     report_id = ModelMultipleChoiceFilter(field_name="report", queryset=models.ComplianceReport.objects.all())
     latest = BooleanFilter(method="filter_latest")
-    test__severity = ChoiceFilter(field_name="test__severity", choices=SeverityChoices.choices)
+    severity = ChoiceFilter(field_name="test__severity", choices=SeverityChoices.choices)
+    device_type_id = ModelMultipleChoiceFilter(field_name="device__device_type", queryset=DeviceType.objects.all())
+    manufacturer_id = ModelMultipleChoiceFilter(
+        field_name="device__device_type__manufacturer", queryset=Manufacturer.objects.all()
+    )
+    device_role_id = ModelMultipleChoiceFilter(field_name="device__device_role", queryset=DeviceRole.objects.all())
+    tenant_id = ModelMultipleChoiceFilter(field_name="device__tenant", queryset=Tenant.objects.all())
+    platform_id = ModelMultipleChoiceFilter(field_name="device__platform", queryset=Platform.objects.all())
+    location_id = ModelMultipleChoiceFilter(field_name="device__location", queryset=Location.objects.all())
+    site_id = ModelMultipleChoiceFilter(field_name="device__site", queryset=Site.objects.all())
     tag = None
 
     class Meta:
         model = models.ComplianceTestResult
-        fields = ("id", "test_id", "device_id", "passed", "latest", "test__severity")
+        fields = (
+            "id",
+            "test_id",
+            "device_id",
+            "passed",
+            "latest",
+            "severity",
+            "device_type_id",
+            "manufacturer_id",
+            "device_role_id",
+            "tenant_id",
+            "platform_id",
+            "location_id",
+            "site_id",
+        )
         search_fields = ("test__name", "device__name")
 
     def filter_latest(self, queryset, name, value):

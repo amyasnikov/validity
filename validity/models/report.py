@@ -1,9 +1,12 @@
 from dataclasses import dataclass, field
-from typing import Collection
+from typing import TYPE_CHECKING, Collection
 
 from validity.managers import ComplianceReportQS
-from validity.models import ComplianceTestResult
 from .base import BaseReadOnlyModel
+
+
+if TYPE_CHECKING:
+    from validity.models import ComplianceTestResult
 
 
 @dataclass(slots=True, kw_only=True)
@@ -19,7 +22,7 @@ class ResultStat:
 
 @dataclass(slots=True)
 class ResultBatch(ResultStat):
-    results: Collection[ComplianceTestResult]
+    results: Collection["ComplianceTestResult"]
     low: ResultStat = field(init=False, default_factory=ResultStat)
     middle: ResultStat = field(init=False, default_factory=ResultStat)
     high: ResultStat = field(init=False, default_factory=ResultStat)

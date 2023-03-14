@@ -1,7 +1,8 @@
-from dcim.models import Device
+from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.forms import CharField, Form, NullBooleanField
 from django.utils.translation import gettext_lazy as _
 from netbox.forms import NetBoxModelFilterSetForm, StaticSelect
+from tenancy.models import Tenant
 from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
@@ -13,17 +14,17 @@ from validity.choices import (
     DynamicPairsChoices,
     SeverityChoices,
 )
-from .helpers import PlaceholderChoiceField
+from .helpers import ExcludeMixin, PlaceholderChoiceField
 
 
-class TestResultFilterForm(Form):
+class TestResultFilterForm(ExcludeMixin, Form):
     latest = PlaceholderChoiceField(required=False, placeholder=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
     passed = PlaceholderChoiceField(
         required=False,
         placeholder=_("Passed"),
         choices=BOOLEAN_WITH_BLANK_CHOICES[1:],
     )
-    test__severity = PlaceholderChoiceField(required=False, placeholder=_("Severity"), choices=SeverityChoices.choices)
+    severity = PlaceholderChoiceField(required=False, placeholder=_("Severity"), choices=SeverityChoices.choices)
     device_id = DynamicModelMultipleChoiceField(
         label=_("Device"),
         queryset=Device.objects.all(),
@@ -40,15 +41,40 @@ class TestResultFilterForm(Form):
     selector_id = DynamicModelMultipleChoiceField(
         label=_("Selector"), queryset=models.ComplianceSelector.objects.all(), required=False
     )
-
-    def __init__(self, *args, exclude: str = "", **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        if exclude:
-            self.fields.pop(exclude, None)
+    device_type_id = DynamicModelMultipleChoiceField(
+        required=False, label=("Device Type"), queryset=DeviceType.objects.all()
+    )
+    manufacturer_id = DynamicModelMultipleChoiceField(
+        required=False, label=_("Manufacturer"), queryset=Manufacturer.objects.all()
+    )
+    device_role_id = DynamicModelMultipleChoiceField(
+        required=False, label=_("Device Role"), queryset=DeviceRole.objects.all()
+    )
+    tenant_id = DynamicModelMultipleChoiceField(required=False, label=("Tenant"), queryset=Tenant.objects.all())
+    platform_id = DynamicModelMultipleChoiceField(required=False, label=_("Platform"), queryset=Platform.objects.all())
+    location_id = DynamicModelMultipleChoiceField(required=False, label=_("Location"), queryset=Location.objects.all())
+    site_id = DynamicModelMultipleChoiceField(required=False, label=_("Site"), queryset=Site.objects.all())
 
 
 class ComplianceTestResultFilterForm(TestResultFilterForm, NetBoxModelFilterSetForm):
     model = models.ComplianceTestResult
+    fieldsets = (
+        [_("Common"), ("latest", "passed", "selector_id")],
+        [_("Test"), ("severity", "test_id", "report_id")],
+        [
+            _("Device"),
+            (
+                "device_id",
+                "device_type_id",
+                "manufacturer_id",
+                "device_role_id",
+                "tenant_id",
+                "platform_id",
+                "location_id",
+                "site_id",
+            ),
+        ],
+    )
 
 
 class ReportGroupByForm(Form):

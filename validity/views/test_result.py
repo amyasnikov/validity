@@ -63,6 +63,7 @@ class TestResultBaseView(SingleTableMixin, FilterView):
     parent_model: type[Model]
     result_relation: str
     read_only: bool = False
+    exclude_form_fields: tuple[str, ...] = ()
 
     def get_table(self, **kwargs):
         table = super().get_table(**kwargs)
@@ -84,7 +85,9 @@ class TestResultBaseView(SingleTableMixin, FilterView):
             initial = {
                 k: v for k, v in self.filterset.form.cleaned_data.items() if k in self.filter_form_class.base_fields
             }
-        form = self.filter_form_class(initial=initial, exclude=self.result_relation + "_id")
+        form = self.filter_form_class(
+            initial=initial, exclude=self.exclude_form_fields + (self.result_relation + "_id",)
+        )
         return form
 
     def get_context_data(self, **kwargs):
@@ -94,4 +97,5 @@ class TestResultBaseView(SingleTableMixin, FilterView):
             "object": self.get_object(),
             "tab": self.tab,
             "read_only": self.read_only,
+            "result_relation": self.result_relation,
         }
