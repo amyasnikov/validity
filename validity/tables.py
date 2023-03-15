@@ -142,13 +142,13 @@ class ComplianceReportTable(NetBoxTable):
         fields = (
             "id",
             "groupby_value",
-            "created",
             "device_count",
             "test_count",
             "total_stats",
             "low_stats",
             "middle_stats",
             "high_stats",
+            "created",
         )
         exclude = ("actions",)
         default_columns = fields

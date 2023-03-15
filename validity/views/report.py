@@ -9,12 +9,12 @@ from .test_result import TestResultBaseView
 
 
 class ComplianceReportListView(generic.ObjectListView):
-    queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
+    queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests().order_by("-created")
     table = tables.ComplianceReportTable
 
     def get_table(self, data, request, bulk_actions=True):
         table = super().get_table(data, request, bulk_actions)
-        table.exclude += ("grouby_value",)
+        table.exclude += ("groupby_value",)
         return table
 
 
