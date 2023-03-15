@@ -5,8 +5,10 @@ import yaml
 from dcim.models import Device
 from django.db.models import Q, QuerySet
 from django.utils.translation import gettext as __
-from extras.context_managers import change_logging
+from extras.choices import ObjectChangeActionChoices
 from extras.scripts import BooleanVar, MultiObjectVar, Script
+from extras.webhooks import enqueue_object
+from netbox.context import webhooks_queue
 from simpleeval import InvalidExpression
 
 import validity.config_compliance.solver.default_nameset as default_nameset
@@ -114,8 +116,8 @@ class RunTestsScript(SyncReposMixin, Script):
 
     def fire_report_webhook(self, report_id: int) -> None:
         report = ComplianceReport.objects.filter(pk=report_id).annotate_result_stats().count_devices_and_tests().first()
-        with change_logging(self.request):
-            report.save()
+        queue = webhooks_queue.get()
+        enqueue_object(queue, report, self.request.user, self.request.id, ObjectChangeActionChoices.ACTION_UPDATE)
 
     def run(self, data, commit):
         if data.get("sync_repos"):
