@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Collection
 
+from netbox.models import ChangeLoggingMixin
+
 from validity.managers import ComplianceReportQS
 from .base import BaseReadOnlyModel
 
@@ -37,7 +39,7 @@ class ResultBatch(ResultStat):
                 result_stat.passed += 1
 
 
-class ComplianceReport(BaseReadOnlyModel):
+class ComplianceReport(ChangeLoggingMixin, BaseReadOnlyModel):
     objects = ComplianceReportQS.as_manager()
 
     class Meta:

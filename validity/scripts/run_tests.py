@@ -5,6 +5,7 @@ import yaml
 from dcim.models import Device
 from django.db.models import Q, QuerySet
 from django.utils.translation import gettext as __
+from extras.context_managers import change_logging
 from extras.scripts import BooleanVar, MultiObjectVar, Script
 from simpleeval import InvalidExpression
 
@@ -111,6 +112,11 @@ class RunTestsScript(SyncReposMixin, Script):
                 test=test, device=device_config.device, passed=passed, explanation=explanation, report=report
             )
 
+    def fire_report_webhook(self, report_id: int) -> None:
+        report = ComplianceReport.objects.filter(pk=report_id).annotate_result_stats().count_devices_and_tests().first()
+        with change_logging(self.request):
+            report.save()
+
     def run(self, data, commit):
         if data.get("sync_repos"):
             self.update_git_repos(GitRepo.objects.all())
@@ -135,6 +141,7 @@ class RunTestsScript(SyncReposMixin, Script):
         if report:
             ComplianceReport.objects.delete_old()
             result["report"] = {"id": report.pk, "link": report.get_absolute_url()}
+            self.fire_report_webhook(report.pk)
         return yaml.dump(result, sort_keys=False)
 
 
