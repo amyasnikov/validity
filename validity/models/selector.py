@@ -4,7 +4,7 @@ from functools import reduce
 from typing import Generator
 
 from dcim.choices import DeviceStatusChoices
-from dcim.models import Device, DeviceType, Location, Manufacturer, Platform
+from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Site
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -32,7 +32,7 @@ class ComplianceSelector(BaseModel):
     platform_filter = models.ManyToManyField(Platform, verbose_name=_("Platform Filter"), blank=True, related_name="+")
     status_filter = models.CharField(max_length=50, choices=DeviceStatusChoices, blank=True)
     location_filter = models.ManyToManyField(Location, verbose_name=_("Location Filter"), blank=True, related_name="+")
-    site_filter = models.ManyToManyField(Location, verbose_name=_("Site Filter"), blank=True, related_name="+")
+    site_filter = models.ManyToManyField(Site, verbose_name=_("Site Filter"), blank=True, related_name="+")
     dynamic_pairs = models.CharField(
         _("Dynamic Pairs"), max_length=20, choices=DynamicPairsChoices.choices, default="NO"
     )
@@ -58,6 +58,7 @@ class ComplianceSelector(BaseModel):
         "platform_filter": "platform",
         "status_filter": "status",
         "location_filter": "location",
+        "site_filter": "site",
     }
 
     class Meta:
@@ -84,18 +85,20 @@ class ComplianceSelector(BaseModel):
     def get_dynamic_pairs_color(self):
         return DynamicPairsChoices.colors.get(self.dynamic_pairs)
 
-    def _filters_flatten(self) -> Generator[models.Q, None, None]:
+    def q_objects(self) -> Generator[models.Q, None, None]:
         for attr_name, filter_name in self.filters.items():
             attr = getattr(self, attr_name)
             if isinstance(attr, models.Manager):
-                yield from (models.Q(**{filter_name: instance}) for instance in attr.all())
+                q = reduce(operator.or_, (models.Q(**{filter_name: instance}) for instance in attr.all()), models.Q())
+                if q:
+                    yield q
             elif attr:
                 yield models.Q(**{filter_name: attr})
 
     @property
     def filter(self) -> models.Q:
         op = operator.or_ if self.filter_operation == BoolOperationChoices.OR else operator.and_
-        return reduce(op, self._filters_flatten())
+        return reduce(op, self.q_objects(), models.Q())
 
     @property
     def devices(self) -> models.QuerySet:

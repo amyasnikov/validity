@@ -25,10 +25,14 @@ class ComplianceTest(GitRepoLinkMixin, BaseModel):
 
     def clean(self):
         super().clean()
-        try:
-            ast.parse(self.expression)
-        except SyntaxError as e:
-            raise ValidationError({"expression": "Invalid Python expression"}) from e
+        if self.expression:
+            err = {"expression": "Invalid Python expression"}
+            try:
+                expr = ast.parse(self.expression)
+                if len(expr.body) != 1 or not isinstance(expr.body[0], ast.Expr):
+                    raise ValidationError(err)
+            except SyntaxError as e:
+                raise ValidationError(err) from e
 
     def __str__(self) -> str:
         return self.name

@@ -30,3 +30,10 @@ max-line-length = 120
 exclude = ["migrations", "__pycache__"]
 per-file-ignores = ["__init__.py:F401"]
 extend-ignore = "E203"
+
+
+[tool.pytest.ini_options]
+addopts = "-p no:warnings -vv --no-migrations"
+testpaths = ["validity/tests"]
+DJANGO_SETTINGS_MODULE = "netbox.settings"
+pythonpath = ["/opt/netbox/netbox"]

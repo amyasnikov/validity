@@ -32,18 +32,24 @@ class NameSet(GitRepoLinkMixin, BaseModel):
 
     def clean(self):
         super().clean()
+        if not self.definitions:
+            return
         try:
             definitions = ast.parse(self.definitions)
         except SyntaxError as e:
             raise ValidationError({"definitions": _("Invalid python syntax")}) from e
+        assign_counter = 0
         for obj in definitions.body:
             if isinstance(obj, ast.Assign):
+                assign_counter += 1
                 if len(obj.targets) != 1 or obj.targets[0].id != "__all__":
                     raise ValidationError({"definitions": _("Assignments besides '__all__' are not allowed")})
             elif not isinstance(obj, (ast.Import, ast.ImportFrom, ast.FunctionDef)):
                 raise ValidationError(
                     {"definitions": _("Only 'import' and 'def' statements are allowed on the top level")}
                 )
+        if not assign_counter:
+            raise ValidationError({"definitions": _("You must define __all__")})
 
     @property
     def effective_definitions(self):

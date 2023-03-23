@@ -6,7 +6,10 @@ from dcim.api.nested_serializers import (
     NestedPlatformSerializer,
     NestedSiteSerializer,
 )
+from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
 from extras.api.nested_serializers import NestedTagSerializer
+from extras.models import Tag
+from netbox.api.fields import SerializedPKRelatedField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -17,12 +20,27 @@ from .helpers import PasswordField, nested_factory
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:complianceselector-detail")
-    tags_filter = NestedTagSerializer(many=True, required=False)
-    manufacturer_filter = NestedManufacturerSerializer(many=True, required=False)
-    type_filter = NestedDeviceTypeSerializer(many=True, required=False)
-    platform_filter = NestedPlatformSerializer(many=True, required=False)
-    location_filter = NestedLocationSerializer(many=True, required=False)
-    site_filter = NestedSiteSerializer(many=True, required=False)
+    tag_filter = SerializedPKRelatedField(
+        serializer=NestedTagSerializer,
+        many=True,
+        required=False,
+        queryset=Tag.objects.all(),
+    )
+    manufacturer_filter = SerializedPKRelatedField(
+        serializer=NestedManufacturerSerializer, many=True, required=False, queryset=Manufacturer.objects.all()
+    )
+    type_filter = SerializedPKRelatedField(
+        serializer=NestedDeviceTypeSerializer, many=True, required=False, queryset=DeviceType.objects.all()
+    )
+    platform_filter = SerializedPKRelatedField(
+        serializer=NestedPlatformSerializer, many=True, required=False, queryset=Platform.objects.all()
+    )
+    location_filter = SerializedPKRelatedField(
+        serializer=NestedLocationSerializer, many=True, required=False, queryset=Location.objects.all()
+    )
+    site_filter = SerializedPKRelatedField(
+        serializer=NestedSiteSerializer, many=True, required=False, queryset=Site.objects.all()
+    )
 
     class Meta:
         model = models.ComplianceSelector
@@ -33,7 +51,7 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
             "name",
             "filter_operation",
             "name_filter",
-            "tags_filter",
+            "tag_filter",
             "manufacturer_filter",
             "type_filter",
             "platform_filter",
@@ -53,6 +71,7 @@ NestedComplianceSelectorSerializer = nested_factory(ComplianceSelectorSerializer
 
 class GitRepoSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:gitrepo-detail")
+    head_hash = serializers.ReadOnlyField()
     password = PasswordField()
 
     class Meta:
@@ -82,10 +101,15 @@ NestedGitRepoSerializer = nested_factory(GitRepoSerializer, ("id", "url", "displ
 
 class ComplianceTestSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:compliancetest-detail")
-    selectors = NestedComplianceSelectorSerializer(many=True)
-    repo = NestedGitRepoSerializer()
+    selectors = SerializedPKRelatedField(
+        serializer=NestedComplianceSelectorSerializer,
+        many=True,
+        required=False,
+        queryset=models.ComplianceSelector.objects.all(),
+    )
+    repo = NestedGitRepoSerializer(required=False)
     effective_expression = serializers.ReadOnlyField()
-    expression = serializers.Field(write_only=True)
+    expression = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = models.ComplianceTest
@@ -185,8 +209,8 @@ NestedComplianceTestResultSerializer = nested_factory(
 
 class ConfigSerializerSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:configserializer-detail")
-    repo = NestedGitRepoSerializer()
-    ttp_template = serializers.Field(write_only=True)
+    repo = NestedGitRepoSerializer(required=False)
+    ttp_template = serializers.CharField(write_only=True, required=False)
     effective_template = serializers.ReadOnlyField()
 
     class Meta:
@@ -213,8 +237,8 @@ NestedConfigSerializerSerializer = nested_factory(ConfigSerializerSerializer, ("
 
 class NameSetSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:nameset-detail")
-    repo = NestedGitRepoSerializer()
-    definitions = serializers.Field(write_only=True)
+    repo = NestedGitRepoSerializer(required=False)
+    definitions = serializers.CharField(write_only=True, required=False)
     effective_definitions = serializers.ReadOnlyField()
 
     class Meta:

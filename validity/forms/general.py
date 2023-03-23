@@ -1,5 +1,5 @@
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import PasswordInput
+from django.forms import PasswordInput, ValidationError
 from django.forms.fields import CharField
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
@@ -25,9 +25,11 @@ class ComplianceTestForm(NetBoxModelForm):
 
 
 class ComplianceSelectorForm(NetBoxModelForm):
-    tags_filter = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
+    tag_filter = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
     manufacturer_filter = DynamicModelMultipleChoiceField(queryset=Manufacturer.objects.all(), required=False)
-    type_filter = DynamicModelMultipleChoiceField(queryset=DeviceType.objects.all(), required=False)
+    type_filter = DynamicModelMultipleChoiceField(
+        queryset=DeviceType.objects.all(), required=False, label=_("Device Type Filter")
+    )
     platform_filter = DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False)
     location_filter = DynamicModelMultipleChoiceField(queryset=Location.objects.all(), required=False)
     site_filter = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False)
@@ -39,7 +41,7 @@ class ComplianceSelectorForm(NetBoxModelForm):
             "filter_operation",
             "dynamic_pairs",
             "name_filter",
-            "tags_filter",
+            "tag_filter",
             "manufacturer_filter",
             "type_filter",
             "platform_filter",
@@ -48,6 +50,11 @@ class ComplianceSelectorForm(NetBoxModelForm):
             "site_filter",
             "tags",
         )
+
+    def clean(self):
+        super().clean()
+        if not self.cleaned_data.keys() & models.ComplianceSelector.filters.keys():
+            raise ValidationError(_("You must specify at least one filter"))
 
 
 class GitRepoForm(NetBoxModelForm):

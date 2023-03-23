@@ -4,5 +4,9 @@ flake8==6.0.*
 Flake8-pyproject==1.2.*
 flake8-bugbear==22.12.*
 flake8-print==5.0.*
+factory_boy==3.2.*
+pytest==7.2.*
+pytest-django==4.5.*
+pytest-subtests==0.10.*
 ipython
 ptvsd

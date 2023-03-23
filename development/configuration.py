@@ -4,7 +4,7 @@ import socket
 from .configuration_example import *
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 DATABASE = {
     "NAME": os.getenv("POSTGRES_DB"),
