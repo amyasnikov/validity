@@ -34,10 +34,19 @@ class NoneFilter(DynamicPairFilter):
 class DynamicNamePairFilter(DynamicPairFilter):
     @staticmethod
     def extract_first_group(regex: str) -> str | None:
-        regex = regex.replace(r"\(", "").replace(r"\)", "")
         open_bracket_index = -1
+        open_square_brackets = 0
         for i, char in enumerate(regex):
-            if len(regex) - i >= 3 and regex[i : i + 3] == "(?:":
+            if char in "[]" and (i == 0 or regex[i - 1] != "\\"):
+                open_square_brackets += 1 if char == "[" else -1
+                continue
+            if any(
+                (
+                    open_square_brackets > 0,
+                    len(regex) - i >= 3 and regex[i : i + 3] == "(?:",
+                    i != 0 and regex[i - 1] == "\\",
+                )
+            ):
                 continue
             if char == "(":
                 open_bracket_index = i
@@ -51,7 +60,7 @@ class DynamicNamePairFilter(DynamicPairFilter):
             return
         if not (group1 := self.extract_first_group(self.selector.name_filter)):
             return
-        if not (name_match := re.match(self.selector.name_filter, self.device.name)):
+        if not (name_match := re.search(self.selector.name_filter, self.device.name)):
             return
         start, end = name_match.start(1), name_match.end(1)
         filter_string = self.device.name[:start] + group1 + self.device.name[end:]

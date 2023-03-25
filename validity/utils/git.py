@@ -71,6 +71,10 @@ class GitRepo:
 
 
 class SyncReposMixin:
+    """
+    Mixin for scripts to sync Git Repositories
+    """
+
     @staticmethod
     def update_and_get_hash(db_repo: "models.GitRepo") -> tuple[bool, str]:
         try:
