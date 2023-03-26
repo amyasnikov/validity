@@ -9,7 +9,7 @@ from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 
 from validity import filtersets, forms, models, tables
-from validity.config_compliance.solver.eval_defaults import repr_
+from validity.config_compliance.eval import repr_
 
 
 class ComplianceResultListView(generic.ObjectListView):

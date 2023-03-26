@@ -11,11 +11,10 @@ from extras.webhooks import enqueue_object
 from netbox.context import webhooks_queue
 from simpleeval import InvalidExpression
 
-import validity.config_compliance.solver.default_nameset as default_nameset
+import validity.config_compliance.eval.default_nameset as default_nameset
 from validity.config_compliance.device_config import DeviceConfig
+from validity.config_compliance.eval import DEFAULT_NAMES, DEFAULT_OPERATORS, ExplanationalEval
 from validity.config_compliance.exceptions import DeviceConfigError, EvalError
-from validity.config_compliance.solver.eval import ExplanationalEval
-from validity.config_compliance.solver.eval_defaults import DEFAULT_NAMES, DEFAULT_OPERATORS
 from validity.models import ComplianceReport, ComplianceSelector, ComplianceTest, ComplianceTestResult, GitRepo, NameSet
 from validity.queries import DeviceQS
 from validity.utils.git import SyncReposMixin

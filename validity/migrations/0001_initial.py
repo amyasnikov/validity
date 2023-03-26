@@ -7,6 +7,7 @@ import taggit.managers
 import utilities.json
 import validity.models.base
 import validity.utils.password
+import validity.models.test_result
 
 
 class Migration(migrations.Migration):
@@ -198,7 +199,7 @@ class Migration(migrations.Migration):
                 ("created", models.DateTimeField(auto_now_add=True, null=True)),
                 ("last_updated", models.DateTimeField(auto_now=True, null=True)),
                 ("passed", models.BooleanField()),
-                ("explanation", models.JSONField(default=list)),
+                ("explanation", models.JSONField(default=list, encoder=validity.models.test_result.DeepDiffEncoder)),
                 (
                     "device",
                     models.ForeignKey(
