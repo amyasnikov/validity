@@ -8,7 +8,7 @@ from pydantic import BaseModel, DirectoryPath, Field
 class NetBoxValidityConfig(PluginConfig):
     name = "validity"
     verbose_name = "Validity: Configuration Compliance"
-    description = "Simple framework to build your own configuration compliance rule set"
+    description = "Vendor agnostic framework to build your own configuration compliance rule set"
     version = "0.1.0"
     base_url = "validity"
     django_apps = ["bootstrap5"]
