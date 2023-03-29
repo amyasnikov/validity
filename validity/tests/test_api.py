@@ -1,5 +1,7 @@
 from base import ApiGetTest, ApiPostGetTest
 from factories import (
+    CompTestDBFactory,
+    CompTestResultFactory,
     DeviceTypeFactory,
     GitRepoFactory,
     LocationFactory,
@@ -9,8 +11,6 @@ from factories import (
     SelectorFactory,
     SiteFactory,
     TagFactory,
-    TestDBFactory,
-    TestResultFactory,
 )
 
 
@@ -34,7 +34,7 @@ class TestGitNameSet(ApiPostGetTest):
         "name": "nameset-1",
         "description": "nameset description",
         "global": False,
-        "tests": [TestDBFactory, TestDBFactory],
+        "tests": [CompTestDBFactory, CompTestDBFactory],
         "repo": GitRepoFactory,
         "file_path": "some/file.txt",
     }
@@ -118,7 +118,7 @@ class TestGitTest(ApiPostGetTest):
 
 
 class TestTestResult(ApiGetTest):
-    factory = TestResultFactory
+    factory = CompTestResultFactory
     entity = "test-results"
 
 

@@ -1,3 +1,6 @@
+import builtins
+import time
+from inspect import getmembers
 from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
@@ -11,6 +14,7 @@ from extras.webhooks import enqueue_object
 from netbox.context import webhooks_queue
 from simpleeval import InvalidExpression
 
+import validity
 import validity.config_compliance.eval.default_nameset as default_nameset
 from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.eval import DEFAULT_NAMES, DEFAULT_OPERATORS, ExplanationalEval
@@ -21,6 +25,9 @@ from validity.utils.git import SyncReposMixin
 
 
 class RunTestsScript(SyncReposMixin, Script):
+
+    _sleep_between_tests = validity.settings.sleep_between_tests
+
     sync_repos = BooleanVar(
         required=False,
         default=False,
@@ -45,11 +52,11 @@ class RunTestsScript(SyncReposMixin, Script):
         def extract_nameset(nameset, globals_):
             locs = {}
             exec(nameset.effective_definitions, globals_, locs)
-            __all__ = set(locs["__all__"])
-            return {k: v for k, v in locs.items() if k in __all__ and isinstance(v, Callable)}
+            __all__ = set(locs.get("__all__", []))
+            return {k: v for k, v in locs.items() if k in __all__ and callable(v)}
 
         result = {name: getattr(default_nameset, name) for name in default_nameset.__all__}
-        globals_ = result.copy()
+        globals_ = dict(getmembers(builtins)) | result
         for nameset in chain(namesets, self.global_namesets):
             if nameset.name not in self._nameset_functions:
                 try:
@@ -95,7 +102,7 @@ class RunTestsScript(SyncReposMixin, Script):
         tests_qs: QuerySet[ComplianceTest],
         device_config: DeviceConfig,
         pair_config: DeviceConfig | None,
-        report: ComplianceReport,
+        report: ComplianceReport | None,
     ) -> Generator[ComplianceTestResult, None, None]:
         for test in tests_qs:
             explanation = []
@@ -112,38 +119,52 @@ class RunTestsScript(SyncReposMixin, Script):
             yield ComplianceTestResult(
                 test=test, device=device_config.device, passed=passed, explanation=explanation, report=report
             )
+            time.sleep(self._sleep_between_tests)
+
+    def prepare_device_configs(
+        self, device: Device, selector: ComplianceSelector
+    ) -> tuple[DeviceConfig, DeviceConfig | None]:
+        config = DeviceConfig.from_device(device)
+        dynamic_pair = next(self.device_iterator(selector.dynamic_pair_filter(device)), None)
+        pair_config = DeviceConfig.from_device(dynamic_pair) if dynamic_pair else None
+        return config, pair_config
+
+    def run_tests_for_selector(
+        self, selector: ComplianceSelector, report: ComplianceReport | None
+    ) -> Generator[ComplianceTestResult, None, None]:
+        for device in self.device_iterator(selector.filter):
+            try:
+                config, pair_config = self.prepare_device_configs(device, selector)
+            except DeviceConfigError as e:
+                self.log_failure(str(e) + f", ignoring all tests for {device}")
+                continue
+            yield from self.run_tests_for_device(selector.tests.all(), config, pair_config, report)
 
     def fire_report_webhook(self, report_id: int) -> None:
         report = ComplianceReport.objects.filter(pk=report_id).annotate_result_stats().count_devices_and_tests().first()
         queue = webhooks_queue.get()
         enqueue_object(queue, report, self.request.user, self.request.id, ObjectChangeActionChoices.ACTION_UPDATE)
 
+    def save_to_db(self, results: list[ComplianceTestResult], report: ComplianceReport | None) -> None:
+        ComplianceTestResult.objects.bulk_create(results)
+        ComplianceTestResult.objects.delete_old()
+        if report:
+            ComplianceReport.objects.delete_old()
+
     def run(self, data, commit):
         if data.get("sync_repos"):
             self.update_git_repos(GitRepo.objects.all())
-        report = ComplianceReport.objects.create() if data["make_report"] else None
+        report = ComplianceReport.objects.create() if data.get("make_report") else None
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
         if specific_selectors := data.get("selectors"):
             selectors = selectors.filter(pk__in=specific_selectors)
-        results = []
-        for selector in selectors:
-            for device in self.device_iterator(selector.filter):
-                try:
-                    config = DeviceConfig.from_device(device)
-                    dynamic_pair = next(self.device_iterator(selector.dynamic_pair_filter(device)), None)
-                    pair_config = DeviceConfig.from_device(dynamic_pair) if dynamic_pair else None
-                except DeviceConfigError as e:
-                    self.log_failure(str(e) + f", ignoring all tests for {device}")
-                    continue
-                results.extend(self.run_tests_for_device(selector.tests.all(), config, pair_config, report))
-        ComplianceTestResult.objects.bulk_create(results)
-        ComplianceTestResult.objects.delete_old()
-        result = {"results": {"all": self.results_count, "passed": self.results_passed}}
+        results = [*chain.from_iterable(self.run_tests_for_selector(selector, report) for selector in selectors)]
+        self.save_to_db(results, report)
+        output = {"results": {"all": self.results_count, "passed": self.results_passed}}
         if report:
-            ComplianceReport.objects.delete_old()
-            result["report"] = {"id": report.pk, "link": report.get_absolute_url()}
+            output["report"] = {"id": report.pk, "link": report.get_absolute_url()}
             self.fire_report_webhook(report.pk)
-        return yaml.dump(result, sort_keys=False)
+        return yaml.dump(output, sort_keys=False)
 
 
 name = "Validity Compliance Tests"

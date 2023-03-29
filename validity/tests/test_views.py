@@ -1,24 +1,29 @@
 import textwrap
 
-import factories
 from base import ViewTest
 from factories import (
+    CompTestDBFactory,
+    CompTestResultFactory,
     DeviceTypeFactory,
     GitRepoFactory,
     LocationFactory,
     ManufacturerFactory,
+    NameSetDBFactory,
+    NameSetGitFactory,
     PlatformFactory,
+    ReportFactory,
     SelectorFactory,
+    SerializerDBFactory,
+    SerializerGitFactory,
     SiteFactory,
     TagFactory,
-    TestDBFactory,
 )
 
 from validity import models
 
 
 class TestDBNameSet(ViewTest):
-    factory_class = factories.NameSetDBFactory
+    factory_class = NameSetDBFactory
     model_class = models.NameSet
     post_body = {
         "name": "nameset-1",
@@ -34,13 +39,13 @@ class TestDBNameSet(ViewTest):
 
 
 class TestGitNameSet(ViewTest):
-    factory_class = factories.NameSetGitFactory
+    factory_class = NameSetGitFactory
     model_class = models.NameSet
     post_body = {
         "name": "nameset-1",
         "description": "descr",
         "_global": False,
-        "tests": [TestDBFactory, TestDBFactory],
+        "tests": [CompTestDBFactory, CompTestDBFactory],
         "definitions": "",
         "repo": GitRepoFactory,
         "file_path": "some/file.txt",
@@ -48,7 +53,7 @@ class TestGitNameSet(ViewTest):
 
 
 class TestGitRepo(ViewTest):
-    factory_class = factories.GitRepoFactory
+    factory_class = GitRepoFactory
     model_class = models.GitRepo
     post_body = {
         "name": "repo-1",
@@ -63,7 +68,7 @@ class TestGitRepo(ViewTest):
 
 
 class TestReport(ViewTest):
-    factory_class = factories.ReportFactory
+    factory_class = ReportFactory
     model_class = models.ComplianceReport
     get_suffixes = ["", "list"]
     post_suffixes = []
@@ -71,7 +76,7 @@ class TestReport(ViewTest):
 
 
 class TestSelector(ViewTest):
-    factory_class = factories.SelectorFactory
+    factory_class = SelectorFactory
     model_class = models.ComplianceSelector
     post_body = {
         "name": "sel-1",
@@ -89,13 +94,13 @@ class TestSelector(ViewTest):
 
 
 class TestDBSerializer(ViewTest):
-    factory_class = factories.SerializerDBFactory
+    factory_class = SerializerDBFactory
     model_class = models.ConfigSerializer
     post_body = {"name": "serializer-1", "extraction_method": "TTP", "ttp_template": "interface {{interface}}"}
 
 
 class TestGitSerializer(ViewTest):
-    factory_class = factories.SerializerGitFactory
+    factory_class = SerializerGitFactory
     model_class = models.ConfigSerializer
     post_body = {
         "name": "serializer-1",
@@ -109,13 +114,13 @@ class TestGitSerializer(ViewTest):
 class TestTestResult(ViewTest):
     get_suffixes = ["", "list"]
     post_suffixes = []
-    factory_class = factories.TestResultFactory
+    factory_class = CompTestResultFactory
     model_class = models.ComplianceTestResult
     post_body = {}
 
 
 class TestDBTest(ViewTest):
-    factory_class = factories.TestDBFactory
+    factory_class = CompTestDBFactory
     model_class = models.ComplianceTest
     post_body = {
         "name": "test-1",
@@ -127,7 +132,7 @@ class TestDBTest(ViewTest):
 
 
 class TestGitTest(ViewTest):
-    factory_class = factories.TestDBFactory
+    factory_class = CompTestDBFactory
     model_class = models.ComplianceTest
     post_body = {
         "name": "test-1",

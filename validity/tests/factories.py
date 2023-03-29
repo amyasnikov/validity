@@ -69,7 +69,7 @@ class SerializerGitFactory(GitRepoLinkFactory, SerializerDBFactory):
         model = models.ConfigSerializer
 
 
-class TestDBFactory(DjangoModelFactory):
+class CompTestDBFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"test-{n}")
     expression = "1==1"
 
@@ -77,7 +77,7 @@ class TestDBFactory(DjangoModelFactory):
         model = models.ComplianceTest
 
 
-class TestGitFactory(GitRepoLinkFactory, TestDBFactory):
+class CompTestGitFactory(GitRepoLinkFactory, CompTestDBFactory):
     expression = ""
 
     class Meta:
@@ -157,8 +157,8 @@ class LocationFactory(DjangoModelFactory):
         model = Location
 
 
-class TestResultFactory(DjangoModelFactory):
-    test = factory.SubFactory(TestDBFactory)
+class CompTestResultFactory(DjangoModelFactory):
+    test = factory.SubFactory(CompTestDBFactory)
     device = factory.SubFactory(DeviceFactory)
     report = factory.SubFactory(ReportFactory)
     passed = True

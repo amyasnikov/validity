@@ -11,7 +11,7 @@ class NetBoxValidityConfig(PluginConfig):
     name = "validity"
     verbose_name = "Validity: Configuration Compliance"
     description = "Simple framework to build your own configuration compliance rule set"
-    version = "0.1"
+    version = "0.1.0"
     base_url = "validity"
     django_apps = ["bootstrap5"]
 
@@ -31,6 +31,7 @@ class ValiditySettings(BaseModel):
     store_reports: int = Field(default=5, gt=0, lt=1001)
     git_folder: DirectoryPath = Path("/opt/git_repos")
     autocopy_scripts: bool = False
+    sleep_between_tests: float = 0
 
 
 settings = ValiditySettings.parse_obj(django_settings.PLUGINS_CONFIG.get("validity", {}))

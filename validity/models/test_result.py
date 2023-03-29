@@ -36,4 +36,4 @@ class ComplianceTestResult(BaseReadOnlyModel):
 
     def __str__(self) -> str:
         passed = "passed" if self.passed else "not passed"
-        return f"{self.test.name}:{self.device}:{passed}"
+        return f"{self.test.name}::{self.device}::{passed}"

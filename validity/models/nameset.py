@@ -44,9 +44,9 @@ class NameSet(GitRepoLinkMixin, BaseModel):
                 assign_counter += 1
                 if len(obj.targets) != 1 or obj.targets[0].id != "__all__":
                     raise ValidationError({"definitions": _("Assignments besides '__all__' are not allowed")})
-            elif not isinstance(obj, (ast.Import, ast.ImportFrom, ast.FunctionDef)):
+            elif not isinstance(obj, (ast.ImportFrom, ast.FunctionDef, ast.ClassDef)):
                 raise ValidationError(
-                    {"definitions": _("Only 'import' and 'def' statements are allowed on the top level")}
+                    {"definitions": _("Only 'def', 'from-import' and 'class' statements are allowed on the top level")}
                 )
         if not assign_counter:
             raise ValidationError({"definitions": _("You must define __all__")})

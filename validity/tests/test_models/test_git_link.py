@@ -3,12 +3,12 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from factories import (
+    CompTestDBFactory,
+    CompTestGitFactory,
     NameSetDBFactory,
     NameSetGitFactory,
     SerializerDBFactory,
     SerializerGitFactory,
-    TestDBFactory,
-    TestGitFactory,
 )
 
 from validity.models import base
@@ -21,8 +21,8 @@ from validity.models import base
         (SerializerGitFactory, "effective_template", ""),
         (p(NameSetDBFactory, definitions="def f(): pass"), "effective_definitions", "def f(): pass"),
         (NameSetGitFactory, "effective_definitions", ""),
-        (p(TestDBFactory, expression="1==2"), "effective_expression", "1==2"),
-        (TestGitFactory, "effective_expression", ""),
+        (p(CompTestDBFactory, expression="1==2"), "effective_expression", "1==2"),
+        (CompTestGitFactory, "effective_expression", ""),
     ],
 )
 @pytest.mark.django_db

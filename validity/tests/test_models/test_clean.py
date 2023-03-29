@@ -2,7 +2,7 @@ import textwrap
 
 import pytest
 from django.core.exceptions import ValidationError
-from factories import GitRepoFactory, NameSetGitFactory, SelectorFactory, SerializerGitFactory, TestGitFactory
+from factories import CompTestGitFactory, GitRepoFactory, NameSetGitFactory, SelectorFactory, SerializerGitFactory
 
 
 @pytest.mark.django_db
@@ -38,12 +38,14 @@ class TestNameSet(BaseTestClean):
     factory = NameSetGitFactory
     right_definition = textwrap.dedent(
         """
-            import itertools
             from collections import Counter
 
-            __all__ = ['itertools', 'Counter', 'func']
+            __all__ = ['A', 'Counter', 'func']
 
             def func():
+                pass
+
+            class A:
                 pass
         """
     )
@@ -79,7 +81,7 @@ class TestSerializer(BaseTestClean):
 
 
 class TestTest(BaseTestClean):
-    factory = TestGitFactory
+    factory = CompTestGitFactory
 
     right_kwargs = [{"expression": "a==1", "repo": None, "file_path": ""}, {}]
     wrong_kwargs = [{"expression": "a==b", "repo": None}, {"expression": "a = 10 + 15", "repo": None, "file_path": ""}]
