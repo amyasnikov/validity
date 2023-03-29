@@ -19,6 +19,7 @@ services:
       - REDIS_CACHE_HOST=redis
       - REDIS_HOST=redis
     volumes:
+      - custom_scripts:/opt/netbox/netbox/scripts
       - ./configuration.py:/opt/netbox/netbox/netbox/configuration.py
       - ../validity:/plugin/validity/validity
       - git_repos:/opt/git_repos/
@@ -41,6 +42,7 @@ services:
       - REDIS_CACHE_HOST=redis
       - REDIS_HOST=redis
     volumes:
+      - custom_scripts:/opt/netbox/netbox/scripts
       - ./configuration.py:/opt/netbox/netbox/netbox/configuration.py
       - ../validity:/plugin/validity/validity
       - git_repos:/opt/git_repos/
@@ -65,6 +67,7 @@ services:
 volumes:
   pgdata:
   git_repos:
+  custom_scripts:
 
 networks:
   netboxnet:
