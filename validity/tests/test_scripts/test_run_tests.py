@@ -58,6 +58,27 @@ def test_nameset_functions(nameset_texts, extracted_fn_names, warning_calls, moc
         assert callable(fn)
 
 
+FUNC = """
+__all__ = ['func']
+{}
+"""
+
+
+@pytest.mark.parametrize(
+    "definitions",
+    [
+        pytest.param(FUNC.format("def func(): return max(1, 10)"), id="max"),
+        pytest.param(FUNC.format('def func(): return jq(".data", {"data": [1,2,3]})'), id="jq"),
+    ],
+)
+@pytest.mark.django_db
+def test_builtins_are_available_in_nameset(definitions):
+    script = RunTestsScript()
+    namesets = [NameSetDBFactory(definitions=definitions)]
+    functions = script.nameset_functions(namesets)
+    functions["func"]()
+
+
 @pytest.mark.parametrize("device_cfg, pair_cfg", [(Mock(), Mock()), (Mock(), None)])
 def test_make_device(device_cfg, pair_cfg):
     script = RunTestsScript()
