@@ -36,6 +36,4 @@ jobs:
       - name: Build netbox
         run: cd development && docker compose build
       - name: Run Tests
-        run: |
-          cd development && docker compose run netbox sh -c
-          "cd /plugin/validity && pytest --cov"
+        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
