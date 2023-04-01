@@ -26,14 +26,14 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v3
-        - name: Define .env
-          run: cp development/.env.example development/.env 
-        - name: Tests
-          uses: cloudposse/github-action-docker-compose-test-run@main
-          with:
-            file: development/docker-compose.yaml
-            service: netbox
-            command: cd /plugin/validity && pytest --cov
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Define .env
+        run: cp development/.env.example development/.env 
+      - name: Tests
+        uses: cloudposse/github-action-docker-compose-test-run@main
+        with:
+          file: development/docker-compose.yaml
+          service: netbox
+          command: cd /plugin/validity && pytest --cov
