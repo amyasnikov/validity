@@ -1,0 +1,39 @@
+name: validity-ci
+on:
+  push:  
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      - name: Install dependecies
+        run: pip install -r requirements/dev.txt
+      - name: Run black
+        run: black --check --diff --color validity/
+      - name: Run isort
+        run: isort --check --diff --color validity/
+      - name: Run flake8
+        run: flake8 validity/
+
+  test:
+    runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Define .env
+          run: cp development/.env.example development/.env 
+        - name: Tests
+          uses: cloudposse/github-action-docker-compose-test-run@main
+          with:
+            file: development/docker-compose.yaml
+            service: netbox
+            command: cd /plugin/validity && pytest --cov

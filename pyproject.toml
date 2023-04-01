@@ -1,10 +1,36 @@
 [project]
 name = "validity"
 version = "0.1.0"
+description = "NetBox plugin for vendor agnostic configuration compliance"
+authors = [
+    {name = "Anton Miasnikov", email = "anton2008m@gmail.com"},
+]
+license = "MIT"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Unix",
+    "Operating System :: POSIX :: Linux",
+    "Framework :: Django",
+    "Topic :: System :: Networking",
+    "Topic :: Internet",
+]
+requires-python = ">=3.10"
 dynamic = ["dependencies"]
 
-[tool.setuptools.packages]
-find = {}
+[tool.setuptools.packages.find]
+exclude = ["development*"]
+
+[tool.setuptools.package-data]
+validity = ["*.html"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements/base.txt"]}
@@ -37,3 +63,15 @@ addopts = "-p no:warnings -vv --no-migrations"
 testpaths = ["validity/tests"]
 DJANGO_SETTINGS_MODULE = "netbox.settings"
 pythonpath = ["/opt/netbox/netbox"]
+
+[tool.coverage.run]
+branch = true
+omit = [
+        "validity/tests/*",
+        "validity/migrations/*",
+]
+source = ["validity"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80

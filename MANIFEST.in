@@ -1,0 +1,3 @@
+recursive-include validity/templates *
+include README.md
+include LICENSE
