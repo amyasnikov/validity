@@ -2,13 +2,10 @@ name: validity-ci
 on:
   push:  
   workflow_dispatch:
-  release:
-    types: [published]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    if: github.event_name == "push" || github.event_name == "workflow_dispatch"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -27,7 +24,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    if: github.event_name == "push" || github.event_name == "workflow_dispatch"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -39,25 +35,3 @@ jobs:
         run: cd development && docker compose build
       - name: Run Tests
         run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
-
-  pypi_upload:
-    runs-on: ubuntu-latest
-    if: github.event_name == "release"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.10"
-      - name: Setup build and twine
-        run: pip install twine==4.0.2 build==0.10.0
-      - name: Build
-        run: python -m build
-      - name: Twine check
-        run: python -m twine check dist/*
-      - name: Twine upload
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: twine upload -r testpypi dist/*
