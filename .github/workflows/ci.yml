@@ -1,6 +1,8 @@
 name: validity-ci
 on:
-  push:  
+  push:
+    tags-ignore:
+      - "**"
   workflow_dispatch:
 
 jobs:
