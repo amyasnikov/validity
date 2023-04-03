@@ -16,7 +16,6 @@ RUN mkdir -p /opt/netbox \
 
 # Install Validity
 COPY . /plugin/validity
-RUN pip install --editable /plugin/validity \
-    && pip install -r /plugin/validity/requirements/dev.txt
+RUN pip install --editable /plugin/validity[dev]
 
 WORKDIR /opt/netbox/netbox/
