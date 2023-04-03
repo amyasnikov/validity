@@ -35,5 +35,7 @@ jobs:
         run: docker version && docker compose version
       - name: Build netbox
         run: cd development && docker compose build
+      - name: Check missed migrations
+        run: cd development && docker compose run netbox sh -c "./manage.py makemigrations --check --dry-run"
       - name: Run Tests
         run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
