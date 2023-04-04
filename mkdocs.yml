@@ -1,0 +1,8 @@
+site_name: My Docs
+theme: readthedocs
+nav:
+    - Home: index.md
+    - Installation: installation.md
+markdown_extensions:
+  - admonition
+
