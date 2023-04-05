@@ -18,6 +18,9 @@ class DeepDiffEncoder(JSONEncoder):
 class ComplianceTestResult(BaseReadOnlyModel):
     test = models.ForeignKey(ComplianceTest, verbose_name=_("Test"), related_name="results", on_delete=models.CASCADE)
     device = models.ForeignKey(Device, verbose_name=_("Device"), related_name="results", on_delete=models.CASCADE)
+    dynamic_pair = models.ForeignKey(
+        Device, verbose_name=_("Dynamic Pair"), related_name="+", on_delete=models.CASCADE, null=True
+    )
     passed = models.BooleanField(_("Passed"))
     explanation = models.JSONField(_("Explanation"), default=list, encoder=DeepDiffEncoder)
     report = models.ForeignKey(

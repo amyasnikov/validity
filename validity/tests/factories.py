@@ -160,6 +160,7 @@ class LocationFactory(DjangoModelFactory):
 class CompTestResultFactory(DjangoModelFactory):
     test = factory.SubFactory(CompTestDBFactory)
     device = factory.SubFactory(DeviceFactory)
+    dynamic_pair = factory.SubFactory(DeviceFactory)
     report = factory.SubFactory(ReportFactory)
     passed = True
     explanation = [("qwe", "rty")]

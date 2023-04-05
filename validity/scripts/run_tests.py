@@ -88,7 +88,7 @@ class RunTestsScript(SyncReposMixin, Script):
         names = DEFAULT_NAMES | {"device": device}
         evaluator = ExplanationalEval(DEFAULT_OPERATORS, functions, names)
         passed = bool(evaluator.eval(test.effective_expression))
-        return passed, [("str(device.dynamic_pair)", str(device.dynamic_pair))] + evaluator.explanation
+        return passed, evaluator.explanation
 
     @staticmethod
     def device_iterator(filter_: Q | None):
@@ -117,7 +117,12 @@ class RunTestsScript(SyncReposMixin, Script):
             self.results_count += 1
             self.results_passed += int(passed)
             yield ComplianceTestResult(
-                test=test, device=device_config.device, passed=passed, explanation=explanation, report=report
+                test=test,
+                device=device_config.device,
+                passed=passed,
+                explanation=explanation,
+                report=report,
+                dynamic_pair=getattr(pair_config, "device", None),
             )
             time.sleep(self._sleep_between_tests)
 

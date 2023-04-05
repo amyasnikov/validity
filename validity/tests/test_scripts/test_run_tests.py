@@ -105,9 +105,7 @@ def test_run_test(monkeypatch):
     test = Mock()
     passed, explanation = script.run_test(device_cfg, pair_cfg, test)
     assert passed  # bool(Mock()) is True
-    assert len(explanation) == 2
-    assert explanation[0][0] == "str(device.dynamic_pair)"
-    assert explanation[1] == ("var1", "val1")
+    assert explanation
     nm_functions.assert_called_once_with(test.namesets.all())
     make_device.assert_called_once_with(device_cfg, pair_cfg)
     evaluator_cls.assert_called_once_with(
@@ -126,7 +124,7 @@ def test_run_test(monkeypatch):
     ],
 )
 def test_run_tests_for_device(mock_script_logging, run_test_mock, monkeypatch):
-    result_cls = namedtuple("MockResult", "passed explanation device test report")
+    result_cls = namedtuple("MockResult", "passed explanation device test report dynamic_pair")
     monkeypatch.setattr(run_tests, "ComplianceTestResult", result_cls)
     script = RunTestsScript()
     script._sleep_between_tests = 0

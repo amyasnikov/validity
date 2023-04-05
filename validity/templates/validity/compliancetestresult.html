@@ -28,6 +28,10 @@
             <td>{{ object.device | linkify }}</td>
           </tr>
           <tr>
+            <th scope="row">Dynamic Pair</th>
+            <td>{{ object.dynamic_pair | linkify | placeholder }}</td>
+          </tr>
+          <tr>
             <th scope="row">Result</th>
             <td>
               {% if object.passed %}

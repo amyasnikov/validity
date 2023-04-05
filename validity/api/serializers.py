@@ -183,6 +183,7 @@ class ComplianceTestResultSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:compliancetestresult-detail")
     test = NestedComplianceTestSerializer()
     device = NestedDeviceSerializer()
+    dynamic_pair = NestedDeviceSerializer(allow_null=True)
     report = NestedComplianceReportSerializer()
 
     class Meta:
@@ -193,6 +194,7 @@ class ComplianceTestResultSerializer(NetBoxModelSerializer):
             "display",
             "test",
             "device",
+            "dynamic_pair",
             "report",
             "passed",
             "explanation",
