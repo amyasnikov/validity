@@ -80,7 +80,7 @@ NestedComplianceSelectorSerializer = nested_factory(ComplianceSelectorSerializer
 class GitRepoSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:gitrepo-detail")
     head_hash = serializers.ReadOnlyField()
-    password = PasswordField()
+    password = PasswordField(required=False)
 
     class Meta:
         model = models.GitRepo

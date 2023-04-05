@@ -1,8 +1,12 @@
-site_name: My Docs
+site_name: Validity
+repo_url: https://github.com/amyasnikov/validity/
 theme: readthedocs
 nav:
-    - Home: index.md
+    - Intro: index.md
     - Installation: installation.md
+    - Quickstart: quickstart.md
 markdown_extensions:
   - admonition
-
+  - tables
+plugins:
+  - include-markdown

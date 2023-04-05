@@ -54,7 +54,7 @@ class GitRepoLinkMixin(models.Model):
             raise ValidationError(
                 {
                     self.text_db_field_name: _(
-                        "You must set either {self.text_db_field_name} or both: Git repository and File Path"
+                        f"You must set either {self.text_db_field_name} or both: repo and file_path"
                     )
                 }
             )

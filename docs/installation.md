@@ -3,9 +3,16 @@
 
 Validity is the [NetBox](https://netbox.dev/) plugin. So, before installing validity you have to install NetBox first. Please refer [NetBox docs](https://docs.netbox.dev/en/stable/installation/) for how to do it.
 
+## System Requirements
+
+| **Python** | **NetBox** |
+|------------|------------|
+| >=3.10     | >=3.4      |
+
+## Installation steps
 Once you have installed NetBox, you should follow these steps
 
-* Install validity using pip. 
+* Install validity using pip
 ```console
 pip install validity
 ```
