@@ -8,8 +8,8 @@
 
 ## Preparing Git repository
 
-* Create repository on github.com with device configurations.
-E.g. `https://github.com/amyasnikov/device_repo`
+* Create repository on github.com with device configurations. E.g. <br/>
+`https://github.com/amyasnikov/device_repo`
 
 * Place 2 config files in the root of the repository
 
@@ -20,7 +20,7 @@ E.g. `https://github.com/amyasnikov/device_repo`
 </tr>
 <tr>
 <td>
-<pre>
+<pre><code>
 interface Loopback0
  description device1 LoopBack
  ip address 10.0.0.1 255.255.255.255
@@ -29,10 +29,10 @@ interface Vlan100
  description CPE_Access_Vlan
  ip address 10.100.0.254 255.255.255.0
 !
-</pre>
+</code></pre>
 </td>
 <td>
-<pre>
+<pre><code>
 interface Loopback0
  description device2 LoopBack
  ip address 10.0.0.2 255.255.255.255
@@ -40,7 +40,7 @@ interface Loopback0
 interface ge0/0/1
  ip address 10.10.10.1 255.255.255.252
 !
-</pre>
+</code></pre>
 </td>
 </tr>
 </table>
@@ -48,25 +48,40 @@ interface ge0/0/1
 
 ## Creating entities in NetBox
 
-* Create device1 and device2 together with some mandatory dependant models. All of this are just regular NetBox models, there is nothing related to Validity yet.
+* Create **device1** and **device2** together with some other mandatory models. All of this are just regular NetBox entities, there is nothing related to Validity yet.
 
 ```python
 from pynetbox.core.api import Api
+
+
 token = 'get api token via web gui and place it here'
+
 nb = Api(url='http://127.0.0.1:8000', token=token)
-site = nb.dcim.sites.create(name='site-1', slug='site1')
+
+site = nb.dcim.sites.create(name='site1', slug='site1')
 role = nb.dcim.device_roles.create(name='role1', slug='role1', color='ffffff')
 mf = nb.dcim.manufacturers.create(name='manufacturer1', slug='manufacturer1')
 devtype = nb.dcim.device_types.create(model='model1', slug='model1', manufacturer=mf.id)
-device1 = nb.dcim.devices.create(name='device1', site=site.id, device_type=devtype.id, device_role=role.id)
-device2 = nb.dcim.devices.create(name='device2', site=site.id, device_type=devtype.id, device_role=role.id)
+
+device1 = nb.dcim.devices.create(
+    name='device1',
+    site=site.id,
+    device_type=devtype.id,
+    device_role=role.id
+)
+device2 = nb.dcim.devices.create(
+    name='device2',
+    site=site.id,
+    device_type=devtype.id,
+    device_role=role.id
+)
 ```
 
 * Create **device_repo** Repository entity, mark it as default
 
 ```python
 repo = nb.plugins.validity.git_repositories.create(
-    name='device_repo2',
+    name='device_repo',
     git_url='https://github.com/amyasnikov/device_repo',
     web_url='https://github.com/amyasnikov/device_repo/blob/{{branch}}',
     device_config_path='{{device.name}}.txt',
@@ -75,7 +90,7 @@ repo = nb.plugins.validity.git_repositories.create(
 )
 ```
 
-* Create Config Serializer to translate device configuration into JSON and then bind this serializer to created devices.
+* Create Config Serializer to translate device configuration into JSON and then bind this serializer to created devices (e.g. via device type).
 
 ```python
 template = '''
@@ -85,6 +100,7 @@ interface {{ interface }}
  description {{ description | ORPHRASE }}
 </group>
 '''
+
 serializer = nb.plugins.validity.serializers.create(
     name='serializer1',
     extraction_method='TTP',
@@ -100,11 +116,12 @@ devtype.save()
 selector = nb.plugins.validity.selectors.create(name='all', name_filter='.*')
 ```
 
-* Create Compliance Test that checks that all device interfaces must have a description. Bind this test to the selector create previously
+* Create Compliance Test that checks that all device interfaces have a description. Bind this test to the selector created previously
 
 ```
 expression = '''
-jq('.interfaces[] | select(.description).interface', device.config) == jq('.interfaces[].interface', device.config)
+jq('.interfaces[] | select(.description).interface', device.config) == \ 
+jq('.interfaces[].interface', device.config)
 '''
 
 test = nb.plugins.validity.tests.create(
