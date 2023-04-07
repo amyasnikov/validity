@@ -1,3 +1,5 @@
+from dcim.api.urls import urlpatterns as dcim_urls
+from django.urls import path
 from netbox.api.routers import NetBoxRouter
 
 from . import views
@@ -16,3 +18,8 @@ router.register("reports", views.ComplianceReportViewSet)
 urlpatterns = router.urls
 
 app_name = "validity"
+
+
+dcim_urls.append(
+    path("devices/<int:pk>/serialized_config/", views.SerializedConfigView.as_view(), name="serialized_config")
+)

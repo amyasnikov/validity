@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from dcim.api.nested_serializers import (
     NestedDeviceSerializer,
     NestedDeviceTypeSerializer,
@@ -275,3 +277,14 @@ class NameSetSerializer(NetBoxModelSerializer):
 
 
 NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "display", "name"))
+
+
+class SerializedConfigSerializer(serializers.Serializer):
+    serializer = NestedConfigSerializerSerializer(read_only=True, source="device.serializer")
+    repo = NestedGitRepoSerializer(read_only=True, source="device.repo")
+    local_copy_last_updated = serializers.DateTimeField(allow_null=True, source="last_modified")
+    config_web_link = serializers.SerializerMethodField()
+    serialized_config = serializers.JSONField(source="serialized")
+
+    def get_config_web_link(self, obj):
+        return urljoin(obj.device.repo.web_url, obj.config_path.as_posix())

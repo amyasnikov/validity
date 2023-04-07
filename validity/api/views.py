@@ -1,6 +1,15 @@
+from http import HTTPStatus
+
+from drf_yasg.utils import swagger_auto_schema
 from netbox.api.viewsets import NetBoxModelViewSet
+from rest_framework.exceptions import NotFound
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from validity import filtersets, models
+from validity.config_compliance.device_config import DeviceConfig
+from validity.queries import DeviceQS
+from ..config_compliance.exceptions import DeviceConfigError
 from . import serializers
 
 
@@ -49,3 +58,27 @@ class NameSetViewSet(NetBoxModelViewSet):
 class ComplianceReportViewSet(ReadOnlyNetboxViewSet):
     queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
     serializer_class = serializers.ComplianceReportSerializer
+
+
+class SerializedConfigView(APIView):
+    queryset = DeviceQS().annotate_json_repo().annotate_json_serializer()
+
+    def get_object(self, pk):
+        try:
+            return next(self.queryset.filter(pk=pk).json_iterator("repo", "serializer"))
+        except StopIteration:
+            raise NotFound
+
+    @swagger_auto_schema(
+        responses={200: serializers.SerializedConfigSerializer()}, operation_id="dcim_devices_serialized_config"
+    )
+    def get(self, request, pk):
+        device = self.get_object(pk)
+        try:
+            config = DeviceConfig.from_device(device)
+            serializer = serializers.SerializedConfigSerializer(config, context={"request": request})
+            return Response(serializer.data)
+        except DeviceConfigError as e:
+            return Response(
+                data={"detail": "Unable to fetch serialized config", "error": str(e)}, status=HTTPStatus.BAD_REQUEST
+            )

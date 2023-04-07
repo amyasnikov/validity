@@ -1,7 +1,14 @@
+from http import HTTPStatus
+from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
 from base import ApiGetTest, ApiPostGetTest
+from django.utils import timezone
 from factories import (
     CompTestDBFactory,
     CompTestResultFactory,
+    DeviceFactory,
     DeviceTypeFactory,
     GitRepoFactory,
     LocationFactory,
@@ -9,9 +16,12 @@ from factories import (
     PlatformFactory,
     ReportFactory,
     SelectorFactory,
+    SerializerDBFactory,
     SiteFactory,
     TagFactory,
 )
+
+from validity.config_compliance.device_config import DeviceConfig
 
 
 class TestDBNameSet(ApiPostGetTest):
@@ -125,3 +135,26 @@ class TestTestResult(ApiGetTest):
 class TestReport(ApiGetTest):
     factory = ReportFactory
     entity = "reports"
+
+
+@pytest.mark.django_db
+def test_get_serialized_config(monkeypatch, admin_client):
+    device = DeviceFactory()
+    device.repo = GitRepoFactory(web_url="http://github.com/reponame")
+    device.serializer = SerializerDBFactory()
+    lm = timezone.now()
+    config = DeviceConfig(
+        device=device, config_path=Path("some/file.txt"), last_modified=lm, serialized={"key1": "value1"}
+    )
+    monkeypatch.setattr(DeviceConfig, "from_device", Mock(return_value=config))
+    resp = admin_client.get(f"/api/dcim/devices/{device.pk}/serialized_config/")
+    assert resp.status_code == HTTPStatus.OK
+    assert resp.json().keys() == {
+        "serializer",
+        "repo",
+        "local_copy_last_updated",
+        "config_web_link",
+        "serialized_config",
+    }
+    assert resp.json()["serialized_config"] == {"key1": "value1"}
+    assert resp.json()["local_copy_last_updated"] == lm.isoformat().replace("+00:00", "Z")
