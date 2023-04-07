@@ -6,7 +6,7 @@ def forward_func(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
     CustomField = apps.get_model("extras", "CustomField")
     Device = apps.get_model("dcim", "Device")
-    Tenant = apps.get_model("dcim", "Tenant")
+    Tenant = apps.get_model("tenancy", "Tenant")
     DeviceType = apps.get_model("dcim", "DeviceType")
     Manufacturer = apps.get_model("dcim", "Manufacturer")
     ConfigSerializer = apps.get_model("validity", "ConfigSerializer")
