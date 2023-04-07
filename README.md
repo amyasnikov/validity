@@ -9,7 +9,7 @@ To use validity you need:
 
 2. Define [TTP Template](https://ttp.readthedocs.io/en/latest/) to translate the config from vendor specific format into JSON.
 
-3. Write compliance test as a python expression, e.g.
+3. Write compliance test as a python expression, e.g.<br/>
 `device.config["ntp-servers"] == ["1.2.3.4", "5.6.7.8"]`
 
 4. Apply created test to specific devices and get the results per device (passed or failed).
