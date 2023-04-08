@@ -1,6 +1,15 @@
 {% extends 'generic/object.html' %}
 {% load validity %}
 {% load render_table from django_tables2 %}
+
+{% block extra_controls %}
+<form action="{% url 'extras:script' module='validity_git' name='SyncGitRepos' %}" method="post">
+  {% csrf_token %}
+  <input type="hidden" name="repos" value="{{ object.pk }}">
+  <button class="btn btn-sm btn-primary" type="submit">⟳ Sync</button>
+</form>
+{% endblock %}
+
 {% block content %}
   <div class="row mb-3">
     <div class="col col-md-6">
