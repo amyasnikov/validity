@@ -5,6 +5,7 @@ nav:
     - Intro: index.md
     - Installation: installation.md
     - Quickstart: quickstart.md
+    - Git Repositories: git_repos.md
 markdown_extensions:
   - admonition
   - tables

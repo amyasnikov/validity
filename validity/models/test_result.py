@@ -38,5 +38,5 @@ class ComplianceTestResult(BaseReadOnlyModel):
         ordering = ("-created",)
 
     def __str__(self) -> str:
-        passed = "passed" if self.passed else "not passed"
+        passed = "passed" if self.passed else "failed"
         return f"{self.test.name}::{self.device}::{passed}"

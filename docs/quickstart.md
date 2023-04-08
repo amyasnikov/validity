@@ -213,11 +213,10 @@ while (status := nb.extras.job_results.get(id=result_id).status.value) != 'compl
 ```
 
 Now when the script have finished its work we can check the test results.
-You can see that out test for device1 is passed while for device is failed. As you may remember from the beginning, interface **ge0/0/1** from **device2** has no description.
+You can see that our test is passed for device1 and failed for device2. As you may remember from the beginning, interface **ge0/0/1** from **device2** has no description.
 
 !!! note
-    As you may notice, the explanation in the API answer may be difficult to read. It definitely looks more readable as a table in the GUI View. Check this out.
-
+    Explanation field contains a list of 2-tuples. First part of the tuple is the part of original expression and the second part is its value.
 ```python
 print(
     json.dumps(
@@ -262,7 +261,7 @@ print(
 #     {
 #         "id": 2,
 #         "url": "http://127.0.0.1:8000/api/plugins/validity/test-results/2/",
-#         "display": "iface_description::device2::not passed",
+#         "display": "iface_description::device2::failed",
 #         "test": 1,
 #         "device": 2,
 #         "dynamic_pair": null,
