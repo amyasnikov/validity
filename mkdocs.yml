@@ -2,10 +2,14 @@ site_name: Validity
 repo_url: https://github.com/amyasnikov/validity/
 theme: readthedocs
 nav:
-    - Intro: index.md
-    - Installation: installation.md
-    - Quickstart: quickstart.md
-    - Git Repositories: git_repos.md
+  - Intro: index.md
+  - Installation: installation.md
+  - Quickstart: quickstart.md
+  - Dynamic Pairs: dynamic_pairs.md
+  - Entities:
+    - Git Repositories: entities/git_repos.md
+    - Selectors: entities/selectors.md
+    - Config Serializers: entities/serializers.md
 markdown_extensions:
   - admonition
   - tables
