@@ -2,6 +2,7 @@ import factory
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from extras.models import Tag
 from factory.django import DjangoModelFactory
+from tenancy.models import Tenant
 
 from validity import models
 
@@ -120,6 +121,14 @@ class SiteFactory(DjangoModelFactory):
 
     class Meta:
         model = Site
+
+
+class TenantFactory(DjangoModelFactory):
+    name = factory.Sequence(lambda n: f"tenant-{n}")
+    slug = factory.Sequence(lambda n: f"tenant-{n}")
+
+    class Meta:
+        model = Tenant
 
 
 class DeviceFactory(DjangoModelFactory):

@@ -22,6 +22,7 @@ class SelectorTable(NetBoxTable):
     status_filter = BooleanColumn(empty_values=())
     location_filter = BooleanColumn(accessor="location_filter__all")
     site_filter = BooleanColumn(accessor="site_filter__all")
+    tenant_filter = BooleanColumn(accessor="tenant_filter__all")
     dynamic_pairs = ChoiceFieldColumn()
 
     class Meta(NetBoxTable.Meta):
@@ -37,6 +38,7 @@ class SelectorTable(NetBoxTable):
             "status_filter",
             "location_filter",
             "site_filter",
+            "tenant_filter",
             "dynamic_pairs",
         )
         default_columns = fields

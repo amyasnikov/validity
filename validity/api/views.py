@@ -19,7 +19,14 @@ class ReadOnlyNetboxViewSet(NetBoxModelViewSet):
 
 class ComplianceSelectorViewSet(NetBoxModelViewSet):
     queryset = models.ComplianceSelector.objects.prefetch_related(
-        "tag_filter", "manufacturer_filter", "type_filter", "platform_filter", "location_filter", "site_filter", "tags"
+        "tag_filter",
+        "manufacturer_filter",
+        "type_filter",
+        "platform_filter",
+        "location_filter",
+        "site_filter",
+        "tenant_filter",
+        "tags",
     )
     serializer_class = serializers.ComplianceSelectorSerializer
     filterset_class = filtersets.ComplianceSelectorFilterSet

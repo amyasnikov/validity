@@ -15,6 +15,8 @@ from netbox.api.fields import SerializedPKRelatedField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 from rest_framework.reverse import reverse
+from tenancy.api.nested_serializers import NestedTenantSerializer
+from tenancy.models import Tenant
 
 from validity import models
 from .helpers import PasswordField, nested_factory
@@ -43,6 +45,9 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
     site_filter = SerializedPKRelatedField(
         serializer=NestedSiteSerializer, many=True, required=False, queryset=Site.objects.all()
     )
+    tenant_filter = SerializedPKRelatedField(
+        serializer=NestedTenantSerializer, many=True, required=False, queryset=Tenant.objects.all()
+    )
 
     class Meta:
         model = models.ComplianceSelector
@@ -60,6 +65,7 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
             "status_filter",
             "location_filter",
             "site_filter",
+            "tenant_filter",
             "dynamic_pairs",
             "tags",
             "custom_fields",

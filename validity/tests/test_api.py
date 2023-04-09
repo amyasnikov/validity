@@ -19,6 +19,7 @@ from factories import (
     SerializerDBFactory,
     SiteFactory,
     TagFactory,
+    TenantFactory,
 )
 
 from validity.config_compliance.device_config import DeviceConfig
@@ -77,6 +78,7 @@ class TestSelector(ApiPostGetTest):
         "status_filter": "active",
         "location_filter": [LocationFactory],
         "site_filter": [SiteFactory],
+        "tenant_filter": [TenantFactory],
         "dynamic_pairs": "NAME",
     }
 
