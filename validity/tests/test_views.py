@@ -17,6 +17,7 @@ from factories import (
     SerializerGitFactory,
     SiteFactory,
     TagFactory,
+    TenantFactory,
 )
 
 from validity import models
@@ -89,6 +90,7 @@ class TestSelector(ViewTest):
         "status_filter": "active",
         "location_filter": [LocationFactory],
         "site_filter": [SiteFactory],
+        "tenant_filter": [TenantFactory],
         "dynamic_pairs": "NAME",
     }
 

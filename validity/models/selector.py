@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
+from tenancy.models import Tenant
 
 from validity.choices import BoolOperationChoices, DynamicPairsChoices
 from validity.config_compliance.dynamic_pairs import DynamicNamePairFilter, dpf_factory
@@ -33,6 +34,7 @@ class ComplianceSelector(BaseModel):
     status_filter = models.CharField(max_length=50, choices=DeviceStatusChoices, blank=True)
     location_filter = models.ManyToManyField(Location, verbose_name=_("Location Filter"), blank=True, related_name="+")
     site_filter = models.ManyToManyField(Site, verbose_name=_("Site Filter"), blank=True, related_name="+")
+    tenant_filter = models.ManyToManyField(Tenant, verbose_name=_("Tenant Filter"), blank=True, related_name="+")
     dynamic_pairs = models.CharField(
         _("Dynamic Pairs"), max_length=20, choices=DynamicPairsChoices.choices, default="NO"
     )
@@ -47,6 +49,7 @@ class ComplianceSelector(BaseModel):
         "status_filter",
         "location_filter",
         "site_filter",
+        "tenant_filter",
         "dynamic_pairs",
     )
 
@@ -59,6 +62,7 @@ class ComplianceSelector(BaseModel):
         "status_filter": "status",
         "location_filter": "location",
         "site_filter": "site",
+        "tenant_filter": "tenant",
     }
 
     class Meta:

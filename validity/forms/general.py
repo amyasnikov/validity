@@ -4,6 +4,7 @@ from django.forms.fields import CharField
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
+from tenancy.models import Tenant
 from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 
 from validity import models
@@ -33,6 +34,7 @@ class ComplianceSelectorForm(NetBoxModelForm):
     platform_filter = DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False)
     location_filter = DynamicModelMultipleChoiceField(queryset=Location.objects.all(), required=False)
     site_filter = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False)
+    tenant_filter = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), required=False)
 
     class Meta:
         model = models.ComplianceSelector
@@ -48,6 +50,7 @@ class ComplianceSelectorForm(NetBoxModelForm):
             "status_filter",
             "location_filter",
             "site_filter",
+            "tenant_filter",
             "tags",
         )
 

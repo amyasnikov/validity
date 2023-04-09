@@ -15,7 +15,14 @@ class ComplianceSelectorListView(generic.ObjectListView):
 @register_model_view(models.ComplianceSelector)
 class ComplianceSelectorView(generic.ObjectView):
     queryset = models.ComplianceSelector.objects.prefetch_related(
-        "tag_filter", "manufacturer_filter", "type_filter", "platform_filter", "location_filter", "site_filter", "tags"
+        "tag_filter",
+        "manufacturer_filter",
+        "type_filter",
+        "platform_filter",
+        "location_filter",
+        "site_filter",
+        "tenant_filter",
+        "tags",
     )
 
     def get_extra_context(self, request, instance):
