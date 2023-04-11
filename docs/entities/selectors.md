@@ -33,7 +33,7 @@ On the other hand, Multi-filter Operation equal to `AND` will select all `asw` d
 
 This field can filter devices by their names. You can use regular expressions syntax to make complex filters. **Search** logic is applied to the contents of the filter. It means that `asw[0-9]{2}` filter will match both `asw01-london` and `london-asw01`.
 
-Name filter has an additional purpose: to make a rule for dynamic pairs creation. You can read more about it in the [Dynamic Pairs](../dynamic_pairs.md) reference.
+Name filter has an additional purpose: to make a rule for dynamic pairs creation. You can read more about it in the [Dynamic Pairs](../tips_tricks/dynamic_pairs.md) reference.
 
 
 #### Status Filter
@@ -41,14 +41,15 @@ This filter allows to filter device by its `status` field.
 
 #### Other filters
 
-* Tag Filter
-* Manufacturer Filter
-* Device Type Filter
+* Tag filter
+* Manufacturer filter
+* Device Type filter
 * Platform filter
 * Location filter
 * Site filter
+* Tenant filter
 
-All of this are some properties of the device that you can filter by. In any of these fields you can use multiple values. Multiple values in single field has `OR` logic (and this is completely independent from Multi-filter operation).
+All of this are some properties of the device that you can filter by. In any of these fields you can use multiple values. Multiple values in a single field have `OR` logic (and this is completely independent from Multi-filter operation).
 For instance, if you have Location filter "`room-403`, `room-404`", this will select both the devices from room 403 and from 404.
 
 #### Dynamic Pairs
@@ -58,4 +59,4 @@ For now it has 2 possible values:
 * **NO** - dynamic pairs won't be created
 * **By name** - dynamic pairs will be created according to the **Device Name Filter** value
 
-More info: [Dynamic Pairs](../dynamic_pairs.md).
+More info: [Dynamic Pairs](../tips_tricks/dynamic_pairs.md).

@@ -27,7 +27,7 @@ PLUGINS = [
 ]
 ```
 
-* Validity requires its own tables inside NetBox database. To create these tables run
+* Create DB tables
 ```console
 ./manage.py migrate validity
 ```
@@ -38,6 +38,8 @@ These scripts must be placed inside **SCRIPTS_ROOT** directory (`/opt/netbox/net
 ```console
 ./manage.py linkscripts
 ```
-This command will create symbolic links inside **SCRIPTS_ROOT** for each validity script (originally recided in *validity/scripts*).
+This command will create symbolic links inside **SCRIPTS_ROOT** for each validity script (originally resided in *validity/scripts*).
 !!! note
     if you use [netbox-docker](https://github.com/netbox-community/netbox-docker) as a deployment mechanism, check and fix your volume permissions in **docker-compose.yml**. By default netbox-docker allows read-only access to SCRIPTS_ROOT, so `./manage.py linkscripts` will fail.
+
+* Change plugin settings according to your needs via **PLUGINS_CONFIG** variable. Read more: [Plugin Settings](plugin_settings.md)

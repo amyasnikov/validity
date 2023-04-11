@@ -16,7 +16,7 @@ To use validity you need:
 
 
 ## Why?
-Configuration compliance is one of the very common problems that arises in every company with the growth of their network. Usually companies solve this problem with some kind of scripts that do all the things at the same time: they parse configs, apply some compliance logic and push the results into some DB or third-party OSS system. Usually after the addition of several vendors (or even several software revisions of one model) these scripts become unreadbale and almost no one can definitely say which rules the script checks for.
+Configuration compliance is one of the very common problems that arises in every company with the growth of their network. Usually companies solve this problem with some kind of scripts that do all the things at the same time: they parse configs, apply some compliance logic and push the results into some DB or third-party OSS system. Usually after the addition of several vendors (or even several software revisions of one model) these scripts become unreadable and almost no one can definitely say which rules the script checks for.
 
 Validity completely separates compliance test code from all other things like config serialization. This one encourages you to write short, clean and understandable compliance tests together with the mandatory description.
 
@@ -26,7 +26,7 @@ Validity completely separates compliance test code from all other things like co
 * Flexible selector system to apply tests only to specific subset of devices
 * Concept of **dynamic pairs**. With dynamic pair you can compare 2 different devices between each other (e.g. compare configuration of 2 MC-LAG members).
 * **Test result explanation**. When some test fails, you can get the **explanation** of the calculation process step by step.
-* **ORM access** inside the test. You have full access to the **device** properties (e.g. `device.primary_ip4`, `device.device_type.manufacturer`, `device.get_config_context()`)
+* **ORM access** inside the test. You have full access to the **device** properties. For instance, you may leverage [Configuration Contexts](https://docs.netbox.dev/en/stable/models/extras/configcontext/) NetBox feature to store your desired configuration and compare it with the config collected from device.
 * **Reports and webhooks**. After execution of some bunch of tests you can get the report with passed/failed statistics grouped by some Location/Site/Manufacturer/etc. Moreover, you can provision the webhook to notify an external system when compliance report is generated.
 * **Test extensibility**. You can define your own python functions or classes to reuse the code between multiple compliance tests.
 * Possibility to store all heavy text-based entities (like compliance tests or TTP Templates) in a **Git repository**

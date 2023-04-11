@@ -2,7 +2,11 @@ import ast
 import operator
 import reprlib
 
+import simpleeval
 from simpleeval import DEFAULT_NAMES, DEFAULT_OPERATORS  # noqa
+
+
+simpleeval.DISALLOW_METHODS += ["delete", "save", "update", "bulk_update", "bulk_create"]
 
 
 DEFAULT_OPERATORS |= {ast.BitOr: operator.or_, ast.BitAnd: operator.and_}

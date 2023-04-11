@@ -28,9 +28,10 @@ This field defines the way of getting serialized config from the text.
 
 #### TTP Template
 
-This is the field to store template text in the DB.
+Inside this field at the serializer page you can view your template defined either via DB or via Git.
 
-The usage of this field fits well when you have small templates or just need to quickly test some setup.
+At the add/edit form this field is used to store TTP Template inside the DB.
+This option fits well when you have small templates or just need to quickly test some setup.
 
 
 #### Git Repository and File Path
@@ -52,3 +53,5 @@ There are 3 ways to bind a serializer to device:
 * Set the serializer at **Device Type** level. Go to Device Type page at set the serializer via custom fields. This action applies this serializer to all the devices with this Device Type and overwrites the value from Manufacturer.
 
 * Set the serializer at the individual **Device** level. Go to Device page at set the serializer via custom fields. This action applies this serializer to one specific device and overwrites the values from Device Type and Manufacturer.
+
+When device has bound serializer and repository you can find out how serialized config looks like at the Device page (**Serialized Config** tab) or by using API handle `/api/plugins/validity/devices/<id>/serialized_config/`
