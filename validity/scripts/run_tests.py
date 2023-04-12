@@ -169,7 +169,7 @@ class RunTestsScript(SyncReposMixin, Script):
         self.save_to_db(results, report)
         output = {"results": {"all": self.results_count, "passed": self.results_passed}}
         if report:
-            output["report"] = {"id": report.pk, "link": report.get_absolute_url()}
+            self.log_info(f'See [Compliance Report]({report.get_absolute_url()}) for detailed statistics')
             self.fire_report_webhook(report.pk)
         return yaml.dump(output, sort_keys=False)
 

@@ -52,6 +52,9 @@ For this expression you can get the following explanation:
 | 10 + 20 * 3 == 70 | True       |
 
 
+!!! info
+    To quite decrease the verbosity the *attribute* operation (object.attrib) was excluded from the explanations.
+
 
 # Reports
 
