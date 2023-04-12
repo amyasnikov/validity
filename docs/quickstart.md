@@ -2,7 +2,7 @@
 
 
 !!! note
-    This guide uses [pynetbox](https://github.com/netbox-community/pynetbox)  library and regular REST API to interact with NetBox. Going this way facilitates the readability and reproducibility of the guide. Moreover, it may be just more convenient way for an engineer to gather information from code examples rather than from GUI screenshots.
+    This guide uses [pynetbox](https://github.com/netbox-community/pynetbox) library and regular REST API to interact with NetBox. Going this way facilitates the readability and reproducibility of the guide. Moreover, it may be just more convenient way for an engineer to gather information from code examples rather than from GUI screenshots.
     Of course, **you can do exactly all the same things using web GUI**.
 
 

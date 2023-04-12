@@ -22,6 +22,7 @@ from validity.config_compliance.exceptions import DeviceConfigError, EvalError
 from validity.models import ComplianceReport, ComplianceSelector, ComplianceTest, ComplianceTestResult, GitRepo, NameSet
 from validity.queries import DeviceQS
 from validity.utils.git import SyncReposMixin
+from validity.utils.misc import null_request
 
 
 class RunTestsScript(SyncReposMixin, Script):
@@ -148,7 +149,7 @@ class RunTestsScript(SyncReposMixin, Script):
     def fire_report_webhook(self, report_id: int) -> None:
         report = ComplianceReport.objects.filter(pk=report_id).annotate_result_stats().count_devices_and_tests().first()
         queue = webhooks_queue.get()
-        enqueue_object(queue, report, self.request.user, self.request.id, ObjectChangeActionChoices.ACTION_UPDATE)
+        enqueue_object(queue, report, self.request.user, self.request.id, ObjectChangeActionChoices.ACTION_CREATE)
 
     def save_to_db(self, results: list[ComplianceTestResult], report: ComplianceReport | None) -> None:
         ComplianceTestResult.objects.bulk_create(results)
@@ -159,7 +160,8 @@ class RunTestsScript(SyncReposMixin, Script):
     def run(self, data, commit):
         if data.get("sync_repos"):
             self.update_git_repos(GitRepo.objects.all())
-        report = ComplianceReport.objects.create() if data.get("make_report") else None
+        with null_request():
+            report = ComplianceReport.objects.create() if data.get("make_report") else None
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
         if specific_selectors := data.get("selectors"):
             selectors = selectors.filter(pk__in=specific_selectors)

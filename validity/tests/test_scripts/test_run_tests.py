@@ -1,15 +1,18 @@
 from collections import namedtuple
 from unittest.mock import Mock
+from uuid import uuid4
 
 import pytest
-from factories import NameSetDBFactory
+from factories import NameSetDBFactory, ReportFactory
 from simpleeval import InvalidExpression
 
 import validity.config_compliance.eval.default_nameset as default_nameset
 from validity.config_compliance.eval.eval_defaults import DEFAULT_NAMES, DEFAULT_OPERATORS
 from validity.config_compliance.exceptions import EvalError
+from validity.models import ComplianceReport
 from validity.scripts import run_tests
 from validity.scripts.run_tests import RunTestsScript
+from validity.utils.misc import null_request
 
 
 NS_1 = """
@@ -162,3 +165,23 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
     assert script.prepare_device_configs.call_count == len(devices)
     assert script.run_tests_for_device.call_count == len(devices)
     script.run_tests_for_device.assert_called_with(selector.tests.all(), "config", "pair_config", report)
+
+
+@pytest.mark.django_db
+def test_webhook_without_ctx_is_not_fired(monkeypatch):
+    enq_obj = Mock()
+    monkeypatch.setattr(run_tests, "enqueue_object", enq_obj)
+    with null_request():
+        ComplianceReport.objects.create()
+    enq_obj.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_fire_report_webhook(monkeypatch):
+    enq_obj = Mock()
+    monkeypatch.setattr(run_tests, "enqueue_object", enq_obj)
+    script = RunTestsScript()
+    script.request = Mock(id=uuid4(), user=Mock(username="admin"))
+    report = ReportFactory()
+    script.fire_report_webhook(report.pk)
+    enq_obj.assert_called_once()

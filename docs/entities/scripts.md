@@ -37,4 +37,3 @@ The script may generate a lot of DB queries. To spread the queries over time you
 | Sync Repositories      | Update all Git Repositories before the run           | False             |
 | Make Compliance Report | Create Report together with Test Results             | True              |
 | Specific selectors     | Run the tests only for a limited number of selectors | All               |
-
