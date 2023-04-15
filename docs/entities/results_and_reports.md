@@ -24,7 +24,7 @@ Device instance Compliance Test was executed for
 
 #### Dynamic Pair
 
-Device instance which was used as a [Dynamic Pair](../tips_tricks/dynamic_pairs.md) for the target device
+Device instance which was used as a [Dynamic Pair](../features/dynamic_pairs.md) for the target device
 
 #### Result
 
@@ -64,5 +64,5 @@ The user may choose either to create a report together with the Test Results dur
 
 At the report page you can observe test result statistics (total and grouped by severity). Moreover, in web GUI you can choose an additional param to group the results by and display the statistics for each group.
 
-Another one feature is webhook generation after creation of the report. It may be useful for Validity integration with some other OSS/BSS/Monitoring systems. Read more: [Webhooks](../tips_tricks/webhooks.md)
+Another one feature is webhook generation after creation of the report. It may be useful for Validity integration with some other OSS/BSS/Monitoring systems. Read more: [Webhooks](../features/webhooks.md)
 

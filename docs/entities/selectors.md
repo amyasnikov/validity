@@ -59,4 +59,4 @@ For now it has 2 possible values:
 * **NO** - dynamic pairs won't be created
 * **By name** - dynamic pairs will be created according to the **Device Name Filter** value
 
-More info: [Dynamic Pairs](../tips_tricks/dynamic_pairs.md).
+More info: [Dynamic Pairs](../features/dynamic_pairs.md).

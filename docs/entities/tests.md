@@ -27,6 +27,56 @@ If you're still unsure, you always can use python built-in function `eval()` to 
 !!! note
     Your expression SHOULD return boolean value as a result. If it don't, the result will be converted to boolean using Python built-in function `bool()`
 
+
+## Expressions Context
+
+#### built-ins
+
+The most of the Python built-ins are available inside the expression.
+
+Introspection or other possibly dangerous functions like `type()`, `dir()`, `open()`, `eval()` are disabled.
+
+You can find the full list of available built-ins in [this source file](https://github.com/amyasnikov/validity/blob/master/validity/config_compliance/eval/default_nameset.py).
+
+
+#### jq
+
+```python
+jq(expression: str, object: dict | list | str) -> list
+```
+
+This function applies `expression` to `object` and return the list of results.
+
+If you want to get only the first result (e.g. your expression produces only one result), you may use
+
+```python
+jq.first(expression: str, object: dict | list | str) -> Any
+```
+
+#### device
+
+This is the representation of the current device the test is running against. The instance of NetBox `Device` model
+
+**device.config** - the serialized config of the device
+
+**device.dynamic_pair** - dynamic pair for this device, it is also `Device` instance. May be equal to `None` if 
+
+Device has multiple built-in fields and methods that can be used in test expressions.
+
+It's not the purpose of Validity to list all these attributes. If you want you can discover them by yourself using django shell.
+
+```
+cd netbox_folder/netbox
+./manage.py shell
+
+from dcim.models import Device
+device = Device.objects.first()
+dir(device)
+```
+
+This is how you can discover the whole list of device fields and methods.
+
+
 #### Expression restrictions
 
 In test expressions you **CANNOT USE**:
@@ -34,7 +84,7 @@ In test expressions you **CANNOT USE**:
 * the fields or methods that start with underscore (e.g. `device._meta`)
 * `.delete()`, `.save()`, `.update()`, `.bulk_update()`, `.bulk_create()`, `.mro()`, `.format()`, `.format_map()` methods
 * introspection or other dangerous built-ins like `type()`, `open()` or `eval()`
-* Creation of very long strings (over 100&nbsp;000 characters) or very long comprehensions (over 10&nbsp;000 items)
+* Creation of very long strings (over 1&nbsp;000&nbsp;000 characters) or very long comprehensions (over 100&nbsp;000 items)
 
 !!! Warning
     As you may notice, execution of the test with the above defaults is **RELATIVELY** safe. It means that you can't break anything with some obvious way. However:

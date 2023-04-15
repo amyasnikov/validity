@@ -36,7 +36,7 @@ class RunTestsScript(SyncReposMixin, Script):
         description=__("Pull updates from all available git repositories before running the tests"),
     )
     make_report = BooleanVar(default=True, label=__("Make Compliance Report"))
-    selectors = MultiObjectVar(model=ComplianceReport, required=False, label=__("Specific selectors"))
+    selectors = MultiObjectVar(model=ComplianceSelector, required=False, label=__("Specific selectors"))
 
     class Meta:
         name = __("Run Compliance Tests")
@@ -169,7 +169,7 @@ class RunTestsScript(SyncReposMixin, Script):
         self.save_to_db(results, report)
         output = {"results": {"all": self.results_count, "passed": self.results_passed}}
         if report:
-            self.log_info(f'See [Compliance Report]({report.get_absolute_url()}) for detailed statistics')
+            self.log_info(f"See [Compliance Report]({report.get_absolute_url()}) for detailed statistics")
             self.fire_report_webhook(report.pk)
         return yaml.dump(output, sort_keys=False)
 
