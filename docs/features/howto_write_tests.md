@@ -39,38 +39,86 @@ routing-policies:
 - name: policy2
   terms: [...]
 ```
-So, we'll extract policy names list with `."routing-policies"[].name`
+So, we'll extract policy names list with 
+
+```
+."routing-policies"[].name
+```
 
 [Check online](https://jqplay.org/s/-56gmv4nAjf)
 
-The next step is to tie together 2 previous expressions using Python
+The next step is to tie together 2 previous expressions. Get all policy names and feed them into usage counter.
 
-```python
+```
+."routing-policies"[].name as $pol_name
+| [.. | select(type == "string" and . == $pol_name)] | length
+```
+
+[Check online](https://jqplay.org/s/BTlUDRyOW-T)
+
+Let's also remove `."routing-policies"` subtree from the usage calculations
+
+```
+."routing-policies"[].name as $pol_name
+| [
+    del(."routing-policies") | .. | select(type == "string" and . == $pol_name)
+] | length
+```
+
+[Check online](https://jqplay.org/s/R8sp_op8cik)
+
+Now we've got real usage numbers for each of the policies. We could stop here and check for zeros in the resulting array, e.g. using python `all()` function. This would be a valid test expression.
+
+The problem arises when some user sees the fail of this test and wants to fix device config. The test does not output policy names with zero usage and the user (network engineer) has to spend some time to find them by himself.
+
+Let't create an array where policy name is the key and usage counter is the value:
+
+```
 [
-    pol_name
-    for pol_name in jq('."routing-policies"[].name', device.config)
-    if jq.first(
-        f'[del(."routing-policies") | .. | select(type == "string" and . == "{pol_name}")] | length',
-        device.config
-    ) == 0
-]
+    ."routing-policies"[].name as $pol_name
+    | {
+        key: $pol_name,
+        value: (
+            [
+                del(."routing-policies") 
+                | .. 
+                | select(type == "string" and . == $pol_name)
+            ] | length
+        )
+    }
+] | from_entries
 ```
-This Python/JQ expression outputs a policy names that that were not used in the rest of the config. As you see, we added `del(."routing-policies") |` to the first one expression to exclude `routing-policies` subtree from the usage calculations.
 
-The last thing we need to do is to check that this list is empty (this is the condition to pass the test)
+[Check online](https://jqplay.org/s/JidrghIjEAE)
+
+
+Here we feed policy names found in `."routing-policies"` into a dictionary creation expression. Key of the dictionary is the policy name, and the value is usage counter we wrote before.
+
+The last thing to do is to check that there would be no zeros in the dictionary values
 
 ```python
-not [
-    pol_name
-    for pol_name in jq('."routing-policies"[].name', device.config)
-    if jq.first(
-        f'[del(."routing-policies") | .. | select(type == "string" and . == "{pol_name}")] | length',
+all(
+    jq.first('''
+        [
+            ."routing-policies"[].name as $pol_name
+            | {
+                key: $pol_name,
+                value: (
+                    [
+                        del(."routing-policies") 
+                        | .. 
+                        | select(type == "string" and . == $pol_name)
+                    ] | length
+                )
+            }
+        ] | from_entries
+        ''',
         device.config
-    ) == 0
-]
+    ).values()
+)
 ```
 
-That's it, the test is ready.
+Someone may ask what have changed since the previous expression with the usage counters only. We still check the usage counters and ignore policy names. The difference is the **explanation** value of the Test Result. Explanation for the last one expression will show policy names and the respective usage count.
 
 
 ### Use dynamic pairs to compare paired device configs
@@ -115,7 +163,7 @@ jq.first(
 
 ### Use Config Contexts to compare desired state with operational state
 
-NetBox has a built-in feature called [Configuration Contexts](https://demo.netbox.dev/static/docs/features/context-data/). This feature could be leveraged for writing some kind of a device desired state. Then when we have desired state, we can compare it with the operational state (the real config from the device).
+NetBox has a built-in feature called [Configuration Contexts](https://demo.netbox.dev/static/docs/features/context-data/). This feature could be leveraged for writing some kind of a device desired state. When we have desired state, we can compare it with the operational state (the real config from the device).
 
 Let's suppose that you are dealing with multicast routing via PIM SM. One of the requirements of the proper work of this protocol is to have the same Rendezvous-Point (RP) IP address on all the routers. So, we want to check it using Validity.
 
@@ -168,7 +216,7 @@ Now we extend this expression to compare the *trunk_vlan* contents from the devi
 ```python
 [
     jq.first(
-        f'.interfaces[] | select(.name=="{iface.name}")',
+        f'.interfaces[] | select(.name=="{iface.connected_endpoints[0].name}")',
         iface.connected_endpoints[0].device.config
     ) == jq.first(f'.interfaces[] | select(.name=="{iface.name}")', device.config)
     for iface in device.interfaces.filter(
@@ -183,7 +231,7 @@ The final step is to check that all the values in the list are True. Python has 
 ```python
 all([
     jq.first(
-        f'.interfaces[] | select(.name=="{iface.name}")',
+        f'.interfaces[] | select(.name=="{iface.connected_endpoints[0].name}")',
         iface.connected_endpoints[0].device.config
     ) == jq.first(f'.interfaces[] | select(.name=="{iface.name}")', device.config)
     for iface in device.interfaces.filter(

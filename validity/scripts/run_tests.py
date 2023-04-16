@@ -15,9 +15,8 @@ from netbox.context import webhooks_queue
 from simpleeval import InvalidExpression
 
 import validity
-import validity.config_compliance.eval.default_nameset as default_nameset
 from validity.config_compliance.device_config import DeviceConfig
-from validity.config_compliance.eval import DEFAULT_NAMES, DEFAULT_OPERATORS, ExplanationalEval
+from validity.config_compliance.eval import ExplanationalEval
 from validity.config_compliance.exceptions import DeviceConfigError, EvalError
 from validity.models import ComplianceReport, ComplianceSelector, ComplianceTest, ComplianceTestResult, GitRepo, NameSet
 from validity.queries import DeviceQS
@@ -56,7 +55,7 @@ class RunTestsScript(SyncReposMixin, Script):
             __all__ = set(locs.get("__all__", []))
             return {k: v for k, v in locs.items() if k in __all__ and callable(v)}
 
-        result = {name: getattr(default_nameset, name) for name in default_nameset.__all__}
+        result = {}
         globals_ = dict(getmembers(builtins)) | result
         for nameset in chain(namesets, self.global_namesets):
             if nameset.name not in self._nameset_functions:
@@ -86,8 +85,7 @@ class RunTestsScript(SyncReposMixin, Script):
     ) -> tuple[bool, list[tuple[Any, Any]]]:
         functions = self.nameset_functions(test.namesets.all())
         device = self.make_device(device_config, pair_config)
-        names = DEFAULT_NAMES | {"device": device}
-        evaluator = ExplanationalEval(DEFAULT_OPERATORS, functions, names)
+        evaluator = ExplanationalEval(functions=functions, names={"device": device}, load_defaults=True)
         passed = bool(evaluator.eval(test.effective_expression))
         return passed, evaluator.explanation
 

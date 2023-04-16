@@ -12,7 +12,7 @@ from .test import ComplianceTest
 
 class DeepDiffEncoder(JSONEncoder):
     def encode(self, o) -> str:
-        return json_dumps(o)
+        return json_dumps(o, default_mapping={type({}.values()): list, type({}.keys()): list, object: str})
 
 
 class ComplianceTestResult(BaseReadOnlyModel):

@@ -33,7 +33,7 @@ On the other hand, Multi-filter Operation equal to `AND` will select all `asw` d
 
 This field can filter devices by their names. You can use regular expressions syntax to make complex filters. **Search** logic is applied to the contents of the filter. It means that `asw[0-9]{2}` filter will match both `asw01-london` and `london-asw01`.
 
-Name filter has an additional purpose: to make a rule for dynamic pairs creation. You can read more about it in the [Dynamic Pairs](../tips_tricks/dynamic_pairs.md) reference.
+Name filter has an additional purpose: to make a rule for dynamic pairs creation. You can read more about it in the [Dynamic Pairs](../features/dynamic_pairs.md) reference.
 
 
 #### Status Filter

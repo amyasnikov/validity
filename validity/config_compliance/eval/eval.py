@@ -4,19 +4,31 @@ import deepdiff
 from simpleeval import EvalWithCompoundTypes, InvalidExpression
 
 from ..exceptions import EvalError
+from . import default_nameset, eval_defaults
 
 
 class ExplanationalEval(EvalWithCompoundTypes):
 
     do_not_explain = (ast.Constant, ast.Name, ast.Attribute, ast.Expr)
 
-    def __init__(self, operators=None, functions=None, names=None, deepdiff_types=None):
+    def __init__(self, operators=None, functions=None, names=None, deepdiff_types=None, *, load_defaults=False):
         if deepdiff_types is None:
             deepdiff_types = (list, dict, set, frozenset, tuple)
         self.deepdiff_types = deepdiff_types
         self.explanation = []
         self._deepdiff = []
+        if load_defaults:
+            operators, functions, names = self._load_defaults(operators=operators, functions=functions, names=names)
         super().__init__(operators, functions, names)
+
+    def _load_defaults(self, /, **kwargs):
+        kwargs = {k: {} if v is None else v for k, v in kwargs.items()}
+        kwargs["functions"] = {name: getattr(default_nameset, name) for name in default_nameset.__all__} | kwargs[
+            "functions"
+        ]
+        kwargs["operators"] = eval_defaults.DEFAULT_OPERATORS | kwargs["operators"]
+        kwargs["names"] = eval_defaults.DEFAULT_NAMES | kwargs["names"]
+        return kwargs["operators"], kwargs["functions"], kwargs["names"]
 
     def _eval(self, node):
         result = super()._eval(node)
