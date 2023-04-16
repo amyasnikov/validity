@@ -19,7 +19,6 @@ builtins = [
     "enumerate",
     "filter",
     "float",
-    "format",
     "frozenset",
     "hasattr",
     "hash",
@@ -51,5 +50,8 @@ builtins = [
 __all__ = ["jq"] + builtins
 
 
-def jq(expression, json):
-    return pyjq.all(expression, json)
+def jq(expression, object):
+    return pyjq.all(expression, object)
+
+
+jq.first = pyjq.first

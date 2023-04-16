@@ -53,7 +53,6 @@ class SeverityChoices(TextChoices, metaclass=ColoredChoiceMeta):
 
 class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
-    JSON = "JSON", "JSON", "orange"
     YAML = "YAML", "YAML", "info"
 
 

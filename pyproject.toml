@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "validity"
 version = "0.1.1"
-description = "NetBox plugin for vendor agnostic configuration compliance"
+description = "NetBox plugin for vendor-agnostic configuration compliance"
 authors = [
     {name = "Anton Miasnikov", email = "anton2008m@gmail.com"},
 ]
@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: Internet",
 ]
 requires-python = ">=3.10"
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "optional-dependencies"]
 
 [project.readme]
 file = "README.md"
@@ -41,8 +41,12 @@ include = ["validity"]
 [tool.setuptools.package-data]
 validity = ["*.html"]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements/base.txt"]}
+[tool.setuptools.dynamic.dependencies]
+file = ["requirements/base.txt"]
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = {file = ["requirements/dev.txt"]}
+docs = {file = ["requirements/docs.txt"]}
 
 
 [tool.black]

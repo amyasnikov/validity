@@ -2,8 +2,13 @@ import ast
 import operator
 import reprlib
 
+import simpleeval
 from simpleeval import DEFAULT_NAMES, DEFAULT_OPERATORS  # noqa
 
+
+simpleeval.DISALLOW_METHODS += ["delete", "save", "update", "bulk_update", "bulk_create"]
+simpleeval.MAX_COMPREHENSION_LENGTH = 100_000
+simpleeval.MAX_STRING_LENGTH = 1_000_000
 
 DEFAULT_OPERATORS |= {ast.BitOr: operator.or_, ast.BitAnd: operator.and_}
 

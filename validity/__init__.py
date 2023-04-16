@@ -1,3 +1,5 @@
+import logging
+import os
 from pathlib import Path
 
 from django.conf import settings as django_settings
@@ -5,13 +7,26 @@ from extras.plugins import PluginConfig
 from pydantic import BaseModel, DirectoryPath, Field
 
 
+logger = logging.getLogger(__name__)
+
+
 class NetBoxValidityConfig(PluginConfig):
     name = "validity"
     verbose_name = "Validity: Configuration Compliance"
-    description = "Vendor agnostic framework to build your own configuration compliance rule set"
+    description = "Vendor-agnostic framework to build your own configuration compliance rule set"
+    author = "Anton Miasnikov"
+    author_email = "anton2008m@gmail.com"
     version = "0.1.1"
     base_url = "validity"
     django_apps = ["bootstrap5"]
+
+    def ready(self):
+        try:
+            os.makedirs(settings.git_folder, exist_ok=True)
+        except OSError as e:
+            if not settings.git_folder.is_dir():
+                logger.error("Cannot create git_folder (%s), %s: %s", settings.git_folder, type(e).__name__, e)
+        return super().ready()
 
 
 config = NetBoxValidityConfig

@@ -12,7 +12,7 @@ from .test import ComplianceTest
 
 class DeepDiffEncoder(JSONEncoder):
     def encode(self, o) -> str:
-        return json_dumps(o)
+        return json_dumps(o, default_mapping={type({}.values()): list, type({}.keys()): list, object: str})
 
 
 class ComplianceTestResult(BaseReadOnlyModel):
@@ -38,5 +38,5 @@ class ComplianceTestResult(BaseReadOnlyModel):
         ordering = ("-created",)
 
     def __str__(self) -> str:
-        passed = "passed" if self.passed else "not passed"
+        passed = "passed" if self.passed else "failed"
         return f"{self.test.name}::{self.device}::{passed}"

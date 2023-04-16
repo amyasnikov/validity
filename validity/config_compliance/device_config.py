@@ -44,7 +44,7 @@ class DeviceConfig:
             assert getattr(device, "repo", None), f"{device} has no bound repository"
             assert getattr(device, "serializer", None), f"{device} has no bound serializer"
             return cls._config_classes[device.serializer.extraction_method]._from_device(device)
-        except AssertionError as e:
+        except (AssertionError, FileNotFoundError) as e:
             raise DeviceConfigError(str(e)) from e
 
     @classmethod

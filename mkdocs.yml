@@ -1,0 +1,27 @@
+site_name: Validity
+repo_url: https://github.com/amyasnikov/validity/
+theme: readthedocs
+nav:
+  - Intro: index.md
+  - Installation: installation.md
+  - Plugin Settings: plugin_settings.md
+  - Quickstart: quickstart.md
+  - Entities:
+    - Git Repositories: entities/git_repos.md
+    - Selectors: entities/selectors.md
+    - Config Serializers: entities/serializers.md
+    - Compliance Tests: entities/tests.md
+    - Name Sets: entities/namesets.md
+    - Results & Reports: entities/results_and_reports.md
+    - Scripts: entities/scripts.md
+  - Features & Tips:
+    - How to write the Tests: features/howto_write_tests.md
+    - Dynamic Pairs: features/dynamic_pairs.md
+    - Webhooks: features/webhooks.md
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc
+plugins:
+  - include-markdown
