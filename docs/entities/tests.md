@@ -25,7 +25,7 @@ Some examples:
 If you're still unsure, you always can use python built-in function `eval()` to check your expression. `eval()` works with expressions only and raises `SyntaxError` on all other syntax.
 
 !!! note
-    Your expression SHOULD return boolean value as a result. If it don't, the result will be converted to boolean using Python built-in function `bool()`
+    Your expression SHOULD return boolean value as a result. If it doesn't, the result will be converted to boolean using Python built-in function `bool()`
 
 
 ## Expressions Context

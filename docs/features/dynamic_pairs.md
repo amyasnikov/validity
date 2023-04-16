@@ -2,13 +2,13 @@
 
 Dynamic pairs is the convenient way to write tests that require some comparison between different devices.
 
-The concept of 2 similar network devices working together and providing redundancy is very common to modern networks (see VRRP, MC-LAG, EVPN Active-Active, BNG Session sync, etc). Dynamic pairs could be used in these scenarios to compare configuration (or any other param) between the devices.
+The concept of 2 similar network devices working together and providing redundancy is very common to modern networks (see VRRP, MC-LAG, EVPN Active-Active, BNG Session sync, etc.). Dynamic pairs could be used in these scenarios to compare configuration (or any other param) between the devices.
 
 
 ## How to define a dynamic pair
 
 Dynamic pairs are defined under **Selector** instance (**Dynamic Pairs** field).
-The main idea is to define some kind of a rule which can definitely match one device with another within one Selector.
+The main idea is to define some kind of rule which can definitely match one device with another within one Selector.
 
 #### By Name
 
@@ -60,7 +60,7 @@ If you want to make pairs asw01 - asw02, asw03 - asw04, asw05 - asw06 you can't 
 
 ## How to use dynamic pairs
 
-Simply call `device.dynamic_pair` in your test expression to have an access to dynamic pair.
+Simply call `device.dynamic_pair` in your test expression to have access to dynamic pair.
 **dynamic_pair** has all the same attributes as the device itself.
 
 For instance, the test that checks the configuration of **Port-Channel1** is exactly the same on both devices:

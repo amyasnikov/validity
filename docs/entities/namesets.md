@@ -2,7 +2,7 @@
 
 Name Sets is the method of creating some arbitrary Python functions or classes to later use them in Compliance Tests. Name Sets also could be used to inject some Python standard library functions into test expressions.
 
-One of the common approaches is to move complex expression from tests into nameset function with appropriate name.
+One of the common approaches is to move complex expression from tests into a nameset function with appropriate name.
 Consider this serialized config:
 ```yaml
 protocols:
@@ -58,14 +58,14 @@ Name Set is just a piece of Python code which may contain 4 types of statements 
 * `def func(arg1, arg2):` - function definition
 * `class MyClass:` - class definition
 * `from collections import Counter` - from-import statement
-* `__all__ = ["func", "MyClass", "Counter"]`  - definition  of `__all__` variable containing all the names that should be taken from this Name Set
+* `__all__ = ["func", "MyClass", "Counter"]` - definition of `__all__` variable containing all the names that should be taken from this Name Set
 
 The entities that are not listed in the `__all__` variable cannot be used in the test expression.
 
 You can use any Python syntax inside the functions/classes you create. These contents are not restricted or analyzed by Validity.
 
 !!! Warning
-    The contents of nameset functions/classes are not restricted in any way, so an user can execute arbitrary code inside them.
+    The contents of nameset functions/classes are not restricted in any way, so a user can execute arbitrary code inside them.
 
     **Be very careful with the permissions for adding/modifying Name Sets**. Give the permissions only to administrators or users you completely trust.
 

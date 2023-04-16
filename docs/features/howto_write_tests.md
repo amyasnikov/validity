@@ -1,6 +1,6 @@
 # How to write Test Expressions
 
-This article contains some of the possible approaches for writing effective Test Expressions.
+This article contains some possible approaches for writing effective Test Expressions.
 
 
 ### Use JQ to extract data from your config
@@ -163,7 +163,7 @@ jq.first(
 
 ### Use Config Contexts to compare desired state with operational state
 
-NetBox has a built-in feature called [Configuration Contexts](https://demo.netbox.dev/static/docs/features/context-data/). This feature could be leveraged for writing some kind of a device desired state. When we have desired state, we can compare it with the operational state (the real config from the device).
+NetBox has a built-in feature called [Configuration Contexts](https://demo.netbox.dev/static/docs/features/context-data/). This feature could be leveraged for writing some kind of device desired state. When we have desired state, we can compare it with the operational state (the real config from the device).
 
 Let's suppose that you are dealing with multicast routing via PIM SM. One of the requirements of the proper work of this protocol is to have the same Rendezvous-Point (RP) IP address on all the routers. So, we want to check it using Validity.
 

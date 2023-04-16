@@ -1,4 +1,4 @@
-# Quickstart
+# Quick start
 
 
 !!! note
@@ -190,13 +190,13 @@ This test checks the equality of 2 JQ expressions:
 1. List of interfaces (interface names) which have `description` parameter
 2. List of all interfaces
 
-So, if these 2 lists are equal, then each interface on the device has a description and the test would be marked as passed. Otherwise, the lists would not be equal and the test would fail.
+So, if these 2 lists are equal, then each interface on the device has a description and the test would be marked as passed. Otherwise, the lists would not be equal, and the test would fail.
 
 
 ## Running the script and evaluating the results
 
-Now all the required entities are created and you can execute the test you created.
-This could be done via RunTests script.
+Now all the required entities are created, and you can execute the test you created.
+This could be done via **RunTests** script.
 
 ```python
 resp = requests.post(

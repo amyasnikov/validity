@@ -23,7 +23,7 @@ pip install validity
 
 PLUGINS = [
     "validity",
-    # some other plugings here
+    # some other plugins here
 ]
 ```
 
@@ -40,6 +40,6 @@ These scripts must be placed inside **SCRIPTS_ROOT** directory (`/opt/netbox/net
 ```
 This command will create symbolic links inside **SCRIPTS_ROOT** for each validity script (originally resided in *validity/scripts*).
 !!! note
-    if you use [netbox-docker](https://github.com/netbox-community/netbox-docker) as a deployment mechanism, check and fix your volume permissions in **docker-compose.yml**. By default netbox-docker allows read-only access to SCRIPTS_ROOT, so `./manage.py linkscripts` will fail.
+    if you use [netbox-docker](https://github.com/netbox-community/netbox-docker) as a deployment mechanism, check and fix your volume permissions in **docker-compose.yml**. By default, netbox-docker allows read-only access to SCRIPTS_ROOT, so `./manage.py linkscripts` will fail.
 
 * Change plugin settings according to your needs via **PLUGINS_CONFIG** variable. Read more: [Plugin Settings](plugin_settings.md)

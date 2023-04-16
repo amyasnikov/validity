@@ -3,7 +3,7 @@
 As you may guess, this entity represents a link to some remote Git repository.
 Git Repositories serve 2 purposes inside Validity:
 
-* They provide an access to plain device configurations
+* They provide access to plain device configurations
 
 * They can be referenced by another entity containing any text information. By this moment, those entities are **Tests**, **Name Sets** and **Serializers**.
 

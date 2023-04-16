@@ -25,7 +25,7 @@ This variable should contain the path to folder where git repositories will be s
 
 The amount of seconds system will wait between executing each Compliance Test.
 
-Compliance Test execution may cause a lot of DB queries, because Compliance Test is dynamic by its nature and the system cannot prefetch all the required instances before the test. If you're realizing that `Run Compliance Tests` script overhelms your DB with a lot of queries, you can adjust this setting to spread the queries over time.
+Compliance Test execution may cause a lot of DB queries, because Compliance Test is dynamic by its nature and the system cannot prefetch all the required instances before the test. If you're realizing that `Run Compliance Tests` script overwhelms your DB with a lot of queries, you can adjust this setting to spread the queries over time.
 
 ### store_reports
 

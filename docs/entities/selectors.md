@@ -37,7 +37,7 @@ Name filter has an additional purpose: to make a rule for dynamic pairs creation
 
 
 #### Status Filter
-This filter allows to filter device by its `status` field.
+This filter allows filtering device by its `status` field.
 
 #### Other filters
 
@@ -49,12 +49,12 @@ This filter allows to filter device by its `status` field.
 * Site filter
 * Tenant filter
 
-All of this are some properties of the device that you can filter by. In any of these fields you can use multiple values. Multiple values in a single field have `OR` logic (and this is completely independent from Multi-filter operation).
+All of this are some properties of the device that you can filter by. In any of these fields you can use multiple values. Multiple values in a single field have `OR` logic (and this is completely independent of Multi-filter operation).
 For instance, if you have Location filter "`room-403`, `room-404`", this will select both the devices from room 403 and from 404.
 
 #### Dynamic Pairs
 This field manages the creation of dynamic pairs during the test.
-For now it has 2 possible values:
+For now, it has 2 possible values:
 
 * **NO** - dynamic pairs won't be created
 * **By name** - dynamic pairs will be created according to the **Device Name Filter** value

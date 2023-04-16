@@ -2,7 +2,7 @@
 
 NetBox has a built-in feature called [Webhooks](https://docs.netbox.dev/en/stable/integrations/webhooks/). This feature allows a user to provision a webhook to a custom endpoint when some NetBox model is created/updated/deleted.
 
-The webhook may be provisioned to capture Compliance Report creation. Using this approach you can notify some third party system (OSS/BSS/Monitoring/etc) about the overall compliance state of your network.
+The webhook may be provisioned to capture Compliance Report creation. Using this approach you can notify some third party system (OSS/BSS/Monitoring/etc.) about the overall compliance state of your network.
 
 Let's create a webhook using [pynetbox](https://github.com/netbox-community/pynetbox) library.
 
@@ -81,6 +81,6 @@ Results itself are not included in the data because there may be plenty of resul
 If you need it, you may download the results using the link provided in the webhook and possibly calculate your own statistics based on the raw results data.
 
 !!! info
-    Someone may ask why email notifications are not implemented. The answer is simple: NetBox itself has no email delivery subsystem and it's just not a purpose of Validity: to build this subsystem from scratch
+    Someone may ask why email notifications are not implemented. The answer is simple: NetBox itself has no email delivery subsystem, and it's just not a purpose of Validity: to build this subsystem from scratch
 
     You always can set up some other system for sending emails triggered by an incoming webhook from NetBox.

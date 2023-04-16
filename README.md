@@ -1,4 +1,4 @@
-# Validity: vendor agnostic configuration compliance
+# Validity: vendor-agnostic configuration compliance
 <!--mkdocs-start-->
 ## What?
 Validity is the [NetBox](https://netbox.dev) plugin to deal with configuration compliance. You define compliance tests and Validity checks network device configuration files against these tests. As a result you can find out which devices are provisioned properly (according to the tests you have written) and which are not.
