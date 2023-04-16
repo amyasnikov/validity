@@ -6,8 +6,6 @@ import pytest
 from factories import NameSetDBFactory, ReportFactory
 from simpleeval import InvalidExpression
 
-import validity.config_compliance.eval.default_nameset as default_nameset
-from validity.config_compliance.eval.eval_defaults import DEFAULT_NAMES, DEFAULT_OPERATORS
 from validity.config_compliance.exceptions import EvalError
 from validity.models import ComplianceReport
 from validity.scripts import run_tests
@@ -53,8 +51,7 @@ def test_nameset_functions(nameset_texts, extracted_fn_names, warning_calls, moc
     script = RunTestsScript()
     namesets = [NameSetDBFactory(definitions=d) for d in nameset_texts]
     functions = script.nameset_functions(namesets)
-    default_ns_names = set(default_nameset.__all__)
-    assert default_ns_names | extracted_fn_names == functions.keys()
+    assert extracted_fn_names == functions.keys()
     assert script.log_warning.call_count == warning_calls
     for fn_name, fn in functions.items():
         assert fn_name == fn.__name__
@@ -112,7 +109,7 @@ def test_run_test(monkeypatch):
     nm_functions.assert_called_once_with(test.namesets.all())
     make_device.assert_called_once_with(device_cfg, pair_cfg)
     evaluator_cls.assert_called_once_with(
-        DEFAULT_OPERATORS, nm_functions.return_value, DEFAULT_NAMES | {"device": make_device.return_value}
+        functions=nm_functions.return_value, names={"device": make_device.return_value}, load_defaults=True
     )
     evaluator_cls.return_value.eval.assert_called_once_with(test.effective_expression)
 

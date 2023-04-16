@@ -15,6 +15,7 @@ from netbox.context import webhooks_queue
 from simpleeval import InvalidExpression
 
 import validity
+import validity.config_compliance.eval.default_nameset as default_nameset
 from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.eval import ExplanationalEval
 from validity.config_compliance.exceptions import DeviceConfigError, EvalError
@@ -56,7 +57,9 @@ class RunTestsScript(SyncReposMixin, Script):
             return {k: v for k, v in locs.items() if k in __all__ and callable(v)}
 
         result = {}
-        globals_ = dict(getmembers(builtins)) | result
+        globals_ = dict(getmembers(builtins)) | {
+            name: getattr(default_nameset, name) for name in default_nameset.__all__
+        }
         for nameset in chain(namesets, self.global_namesets):
             if nameset.name not in self._nameset_functions:
                 try:
