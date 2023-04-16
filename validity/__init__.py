@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class NetBoxValidityConfig(PluginConfig):
     name = "validity"
     verbose_name = "Validity: Configuration Compliance"
-    description = "Vendor agnostic framework to build your own configuration compliance rule set"
+    description = "Vendor-agnostic framework to build your own configuration compliance rule set"
     author = "Anton Miasnikov"
     author_email = "anton2008m@gmail.com"
     version = "0.1.1"
