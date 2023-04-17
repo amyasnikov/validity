@@ -46,7 +46,7 @@ jobs:
 
       - name: Run Tests
         id: run_tests
-        run: echo "cov<<EOF" >> $GITHUB_OUTPUT && cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" | tee $GITHUB_OUTPUT
+        run: echo "cov<<EOF" >> $GITHUB_OUTPUT && cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" | tee $GITHUB_OUTPUT && echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Extract Coverage Level
         id: covlevel
