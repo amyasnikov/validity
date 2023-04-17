@@ -1,4 +1,8 @@
 # Validity: vendor-agnostic configuration compliance
+
+![CI](https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/amyasnikov/9e518ae8babd18b7edd8ee5aad58146b/raw/cov.json)
+
 <!--mkdocs-start-->
 ## What?
 Validity is the [NetBox](https://netbox.dev) plugin to deal with configuration compliance. You define compliance tests and Validity checks network device configuration files against these tests. As a result you can find out which devices are provisioned properly (according to the tests you have written) and which are not.

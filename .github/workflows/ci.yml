@@ -1,4 +1,4 @@
-name: validity-ci
+name: CI
 on:
   push:
     branches: ["**"]
@@ -29,13 +29,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Define .env
         run: cp development/.env.example development/.env 
+
       - name: docker version
         run: docker version && docker compose version
+
       - name: Build netbox
         run: cd development && docker compose build
+
       - name: Check missed migrations
         run: cd development && docker compose run netbox sh -c "./manage.py makemigrations --check --dry-run"
+
       - name: Run Tests
-        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
+        id: run_tests
+        run: >-
+          set -o pipefail
+          && cd development
+          && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
+          | tee /dev/stderr | grep -oP '(?<=Total coverage:\s)[0-9.]+'
+          | awk '{print "cov="$1}' > $GITHUB_OUTPUT
+
+      - name: Create Coverage Badge
+        if: always()
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 9e518ae8babd18b7edd8ee5aad58146b
+          filename: cov.json
+          label: Coverage
+          message: ${{ fromJSON(steps.run_tests.outputs.cov) }}%
+          valColorRange: ${{ fromJSON(steps.run_tests.outputs.cov) }}
+          maxColorRange: 90
+          minColorRange: 50

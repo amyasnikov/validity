@@ -1,4 +1,4 @@
-name: validity-pypi
+name: pypi
 on:
   release:
     types: [published]
