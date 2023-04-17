@@ -46,12 +46,12 @@ jobs:
 
       - name: Run Tests
         id: run_tests
-        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" | tee $GITHUB_OUTPUT
+        run: echo "cov<<EOF" >> $GITHUB_OUTPUT && cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" | tee $GITHUB_OUTPUT
 
       - name: Extract Coverage Level
         id: covlevel
         if: always()
-        run: echo '${{ steps.run_tests.outputs.* }}' | grep -oP '(?<=Total coverage:\s)[0-9.]' | jq '${{ env.cov_jq}}' > $GITHUB_OUTPUT
+        run:  echo "cov<<EOF" >> $GITHUB_OUTPUT && echo '${{ steps.run_tests.outputs.cov }}' | grep -oP '(?<=Total coverage:\s)[0-9.]' | jq '${{ env.cov_jq}}' >> $GITHUB_OUTPUT && echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Coverage Badge
         if: steps.covlevel.conclusion == 'success'
@@ -61,5 +61,5 @@ jobs:
           gistID: 9e518ae8babd18b7edd8ee5aad58146b
           filename: cov.json
           label: Coverage
-          message: ${{ fromJSON(steps.covlevel.outputs.*).percent }}
-          color: ${{ fromJSON(steps.covlevel.outputs.*).color }}
+          message: ${{ fromJSON(steps.covlevel.outputs.cov).percent }}
+          color: ${{ fromJSON(steps.covlevel.outputs.cov).color }}
