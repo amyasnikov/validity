@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git postgresql-client jq \
+    && apt-get install -y --no-install-recommends git postgresql-client \
     && pip install --upgrade pip
 
 # Install NetBox
