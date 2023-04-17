@@ -26,7 +26,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    vars:
+    env:
       cov_jq: >-
         {
           \"percent\": (.totals.percent_covered * 100 | round/100),
@@ -48,7 +48,7 @@ jobs:
       - name: Extract Coverage Level
         id: covlevel
         if: always()
-        run: cd development && docker compose run netbox sh -c  'cd /plugin/validity && coverage json -q -o /dev/stdout | jq '${{ vars.cov_jq }}'"
+        run: cd development && docker compose run netbox sh -c  'cd /plugin/validity && coverage json -q -o /dev/stdout | jq '${{ env.cov_jq }}'"
       - name: Create Coverage Badge
         if: steps.covlevel.conclusion == 'success'
         uses: schneegans/dynamic-badges-action@v1.6.0
