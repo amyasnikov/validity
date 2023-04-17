@@ -27,7 +27,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      cov_jq: '{"percent": ., "color": (if . < 80 then "orange" else "green" end)}
+      cov_jq: '{"percent": ., "color": (if . < 80 then "orange" else "green" end)}'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
