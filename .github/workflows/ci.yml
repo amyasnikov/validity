@@ -45,10 +45,14 @@ jobs:
       - name: Run Tests
         id: run_tests
         run: >-
-          cd development
+          set -o pipefail
+          && cd development
           && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
+          | tee /dev/stderr | grep -oP '(?<=Total coverage:\s)[0-9.]+'
+          | awk '{print "cov="$1}' > $GITHUB_OUTPUT
 
       - name: Create Coverage Badge
+        if: always()
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
