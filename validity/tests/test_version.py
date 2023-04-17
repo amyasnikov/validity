@@ -10,3 +10,7 @@ def test_version():
     with pyproject_path.open(mode="rb") as f:
         pyproject_content = tomli.load(f)
     assert validity.config.version == pyproject_content["project"]["version"]
+
+
+def test_fail():
+    assert False
