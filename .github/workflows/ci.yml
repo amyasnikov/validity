@@ -27,11 +27,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      cov_jq: >-
-        {
-          \"percent\": (.totals.percent_covered * 100 | round/100),
-          \"color\": (if .totals.percent_covered < 80 then \"orange\" else \"green\" end)
-        }
+      cov_jq: '{"percent": ., "color": (if . < 80 then "orange" else "green" end)}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -44,11 +40,12 @@ jobs:
       - name: Check missed migrations
         run: cd development && docker compose run netbox sh -c "./manage.py makemigrations --check --dry-run"
       - name: Run Tests
-        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
+        id run_tests
+        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" | tee $GITHUB_OUTPUT
       - name: Extract Coverage Level
         id: covlevel
         if: always()
-        run: cd development && docker compose run netbox sh -c  'cd /plugin/validity && coverage json -q -o /dev/stdout | jq '${{ env.cov_jq }}'"
+        run: echo '${{ steps.run_tests.outputs.* }}' | grep -oP '(?<=Total coverage:\s)[0-9.]' | jq '${{ env.cov_jq}}' > $GITHUB_OUTPUT
       - name: Create Coverage Badge
         if: steps.covlevel.conclusion == 'success'
         uses: schneegans/dynamic-badges-action@v1.6.0
@@ -57,5 +54,5 @@ jobs:
           gistID: 9e518ae8babd18b7edd8ee5aad58146b
           filename: cov.json
           label: Coverage
-          message: ${{ fromJSON(steps.covlevel.outputs).percent }}%
-          color: ${{ fromJSON(steps.covlevel.outputs).color }}
+          message: ${{ fromJSON(steps.covlevel.outputs.*).percent }}
+          color: ${{ fromJSON(steps.covlevel.outputs.*).color }}
