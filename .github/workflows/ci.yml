@@ -26,8 +26,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    env:
-      cov_jq: '{"percent": ., "color": (if . < 80 then "orange" else "green" end)}'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -49,24 +47,17 @@ jobs:
         run: >-
           cd development
           && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
-          | tee /dev/tty | grep -oP '(?<=Total coverage:\s)[0-9.]+'
+          | tee /dev/stderr | grep -oP '(?<=Total coverage:\s)[0-9.]+'
           | awk '{print "cov="$1}' > $GITHUB_OUTPUT
 
-      - name: Extract Coverage Level
-        id: covlevel
-        if: always()
-        run: >-
-          echo '${{ steps.run_tests.outputs.cov }}'
-          | jq -c '${{ env.cov_jq}}'
-          | awk '{print "cov="$1}' >> $GITHUB_OUTPUT
-
       - name: Create Coverage Badge
-        if: steps.covlevel.conclusion == 'success'
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
           gistID: 9e518ae8babd18b7edd8ee5aad58146b
           filename: cov.json
           label: Coverage
-          message: ${{ fromJSON(steps.covlevel.outputs.cov).percent }}
-          color: ${{ fromJSON(steps.covlevel.outputs.cov).color }}
+          message: ${{ fromJSON(steps.run_tests.outputs.cov) }}%
+          valColorRange: ${{ fromJSON(steps.run_tests.outputs.cov) }}
+          maxColorRange: 85
+          minColorRange: 50
