@@ -1,4 +1,4 @@
-name: validity-ci
+name: CI
 on:
   push:
     branches: ["**"]
@@ -26,6 +26,12 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    vars:
+      cov_jq: >-
+        {
+          \"percent\": (.totals.percent_covered * 100 | round/100),
+          \"color\": (if .totals.percent_covered < 80 then \"orange\" else \"green\" end)
+        }
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -39,3 +45,17 @@ jobs:
         run: cd development && docker compose run netbox sh -c "./manage.py makemigrations --check --dry-run"
       - name: Run Tests
         run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
+      - name: Extract Coverage Level
+        id: covlevel
+        if: always()
+        run: cd development && docker compose run netbox sh -c  'cd /plugin/validity && coverage json -q -o /dev/stdout | jq '${{ vars.cov_jq }}'"
+      - name: Create Coverage Badge
+        if: steps.covlevel.conclusion == 'success'
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 9e518ae8babd18b7edd8ee5aad58146b
+          filename: cov.json
+          label: Coverage
+          message: ${{ fromJSON(steps.covlevel.outputs).percent }}%
+          color: ${{ fromJSON(steps.covlevel.outputs).color }}

@@ -1,4 +1,4 @@
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-bullseye
 
 ARG NETBOX_VERSION=develop
 
@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git postgresql-client \
+    && apt-get install -y --no-install-recommends git postgresql-client jq \
     && pip install --upgrade pip
 
 # Install NetBox
