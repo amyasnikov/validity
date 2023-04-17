@@ -46,12 +46,19 @@ jobs:
 
       - name: Run Tests
         id: run_tests
-        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" | tee /dev/tty | grep -oP '(?<=Total coverage:\s)[0-9.]' | awk '{print "cov="$1}' > $GITHUB_OUTPUT
+        run: >-
+          cd development
+          && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
+          | tee /dev/tty | grep -oP '(?<=Total coverage:\s)[0-9.]+'
+          | awk '{print "cov="$1}' > $GITHUB_OUTPUT
 
       - name: Extract Coverage Level
         id: covlevel
         if: always()
-        run: echo '${{ steps.run_tests.outputs.cov }}' | jq -c '${{ env.cov_jq}}' | awk '{print "cov="$1}' >> $GITHUB_OUTPUT
+        run: >-
+          echo '${{ steps.run_tests.outputs.cov }}'
+          | jq -c '${{ env.cov_jq}}'
+          | awk '{print "cov="$1}' >> $GITHUB_OUTPUT
 
       - name: Create Coverage Badge
         if: steps.covlevel.conclusion == 'success'
