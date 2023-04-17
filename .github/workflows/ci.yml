@@ -40,8 +40,8 @@ jobs:
       - name: Check missed migrations
         run: cd development && docker compose run netbox sh -c "./manage.py makemigrations --check --dry-run"
       - name: Run Tests
-        id run_tests
-        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" | tee $GITHUB_OUTPUT
+        id: run_tests
+        run: cd development && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov" > $GITHUB_OUTPUT
       - name: Extract Coverage Level
         id: covlevel
         if: always()
