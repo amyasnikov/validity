@@ -47,8 +47,6 @@ jobs:
         run: >-
           cd development
           && docker compose run netbox sh -c "cd /plugin/validity && pytest --cov"
-          | tee /dev/stderr | grep -oP '(?<=Total coverage:\s)[0-9.]+'
-          | awk '{print "cov="$1}' > $GITHUB_OUTPUT
 
       - name: Create Coverage Badge
         uses: schneegans/dynamic-badges-action@v1.6.0

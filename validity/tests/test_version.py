@@ -13,4 +13,4 @@ def test_version():
 
 
 def test_fail():
-    assert False
+    assert False  # noqa
