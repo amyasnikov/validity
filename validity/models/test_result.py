@@ -6,8 +6,8 @@ from django.utils.translation import gettext_lazy as _
 
 from validity.managers import ComplianceTestResultQS
 from .base import BaseReadOnlyModel
-from .test import ComplianceTest
 from .device import VDevice
+from .test import ComplianceTest
 
 
 class DeepDiffEncoder(JSONEncoder):

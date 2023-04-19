@@ -68,7 +68,7 @@ __all__ = ['func']
     "definitions",
     [
         pytest.param(FUNC.format("def func(): return max(1, 10)"), id="max"),
-        pytest.param(FUNC.format('def func(): return jq(".data", {"data": [1,2,3]})'), id="jq"),
+        pytest.param(FUNC.format('def func(): return jq.first(".data", {"data": [1,2,3]})'), id="jq"),
     ],
 )
 @pytest.mark.django_db
@@ -136,7 +136,11 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
     devices = [Mock(name="device1"), Mock(name="device2")]
     monkeypatch.setattr(script, "run_tests_for_device", Mock(return_value=range(3)))
     selector = Mock(
-        name="selector", **{"devices.annotate_json_serializer.return_value.annotate_json_repo.return_value": devices}
+        name="selector",
+        **{
+            "devices.select_related.return_value"
+            ".annotate_json_serializer.return_value.annotate_json_repo.return_value": devices
+        }
     )
     report = Mock()
     list(script.run_tests_for_selector(selector, report))
