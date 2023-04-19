@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "validity"
+name = "netbox-validity"
 version = "1.0.0"
 description = "NetBox plugin for vendor-agnostic configuration compliance"
 authors = [

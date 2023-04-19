@@ -14,7 +14,7 @@ Once you have installed NetBox, you should follow these steps
 
 * Install validity using pip
 ```console
-pip install validity
+pip install netbox-validity
 ```
 
 * Add validity into your [configuration.py file](https://docs.netbox.dev/en/stable/configuration/)
