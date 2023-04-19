@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 
 from validity.choices import ConfigExtractionChoices
 from validity.managers import ConfigSerializerQS
-from validity.queries import DeviceQS
 from .base import BaseModel, GitRepoLinkMixin
 
 
@@ -44,9 +43,10 @@ class ConfigSerializer(GitRepoLinkMixin, BaseModel):
             raise ValidationError(_("TTP Template must be defined if extraction method is TTP"))
 
     def bound_devices(self) -> models.QuerySet[Device]:
+        from .device import VDevice
+
         return (
-            DeviceQS()
-            .annotate_serializer_id()
+            VDevice.objects.annotate_serializer_id()
             .filter(serializer_id=self.pk)
             .select_related("site", "device_role", "device_type__manufacturer")
         )

@@ -5,8 +5,8 @@ Tests are the main thing Validity was created for.
 In general, Tests are Python expressions that are bound to [Selectors](selectors.md). Inside test expression you can use:
 
 * Python built-ins like `str()`, `round()`, `map()` and so on
-* `device` variable. This variable represents NetBox `Device` instance plus 2 additional properties: `config` and `dynamic_pair`
-* `jq(expression, object)` function. This function allows you to use the full power of [JQ](https://stedolan.github.io/jq/manual/) expressions
+* `device` variable. This variable represents NetBox `Device` instance plus some additional properties: (see below)
+* `jq.all()` and `jq.first()` functions. These functions allow you to use the full power of [JQ](https://stedolan.github.io/jq/manual/) expressions
 * additional functions and classes from bound [Name Sets](namesets.md)
 
 
@@ -39,18 +39,18 @@ Introspection or other possibly dangerous functions like `type()`, `dir()`, `ope
 You can find the full list of available built-ins in [this source file](https://github.com/amyasnikov/validity/blob/master/validity/config_compliance/eval/default_nameset.py).
 
 
-#### jq
+#### jq.all(), jq.first()
 
 ```python
-jq(expression: str, object: dict | list | str) -> list
+jq.all(expression: str, json: dict | list | str | int | float) -> list
 ```
 
-This function applies `expression` to `object` and return the list of results.
+This function applies `expression` to `json` and return the list of results.
 
 If you want to get only the first result (e.g. your expression produces only one result), you may use
 
 ```python
-jq.first(expression: str, object: dict | list | str) -> Any
+jq.first(expression: str, json: dict | list | str | int | float) -> Any
 ```
 
 #### device
@@ -75,6 +75,30 @@ dir(device)
 ```
 
 This is how you can discover the whole list of device fields and methods.
+
+
+#### config()
+
+```python
+config(device: Device) -> dict | list
+```
+
+`config(device)` does exactly the same thing as `device.config`, it returns serialized config for the device.
+
+When you extract a particular *device* instance from the ORM, `.config` attribute is unreachable, because device from the ORM is just regular NetBox Device, it has no extra properties. Therefore, the only option to extract config from the ORM device is to use `config()`.
+
+Example:
+
+Let's suppose that 2 switches are connected to each other using interface ge0/0/1 on both sides. Let's check these interfaces have exactly the same configuration.
+
+```python
+jq.first(".interfaces.ge0/0/1", device.config) == jq.first(
+    ".interfaces.ge0/0/1",
+    config(device.interfaces.get(name='ge0/0/1').connected_endpoints[0].device)
+)
+```
+
+Here we used `config()` function, because the peering device obtained from ORM has no `.config` property
 
 
 #### Expression restrictions

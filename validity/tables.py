@@ -8,7 +8,6 @@ from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
 
 from validity import models
 from validity.utils.misc import colorful_percentage
-from .queries import count_devices_per_repo, count_devices_per_serializer
 
 
 class SelectorTable(NetBoxTable):
@@ -78,7 +77,7 @@ class GitRepoTable(NetBoxTable):
 
     def __init__(self, *args, extra_columns=None, **kwargs):
         super().__init__(*args, extra_columns=extra_columns, **kwargs)
-        self.total_devices_map = count_devices_per_repo()
+        self.total_devices_map = models.VDevice.objects.count_per_repo()
 
     def render_total_devices(self, record):
         return self.total_devices_map.get(record.id, 0)
@@ -96,7 +95,7 @@ class ConfigSerializerTable(NetBoxTable):
 
     def __init__(self, *args, extra_columns=None, **kwargs):
         super().__init__(*args, extra_columns=extra_columns, **kwargs)
-        self.total_devices_map = count_devices_per_serializer()
+        self.total_devices_map = models.VDevice.objects.count_per_serializer()
 
     def render_total_devices(self, record):
         return self.total_devices_map.get(record.id, 0)

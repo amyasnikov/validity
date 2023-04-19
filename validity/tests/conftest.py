@@ -3,8 +3,13 @@ import shutil
 from pathlib import Path
 
 import pytest
+from dcim.models import Device, DeviceType, Manufacturer
+from django.contrib.contenttypes.models import ContentType
+from extras.models import CustomField
+from tenancy.models import Tenant
 
 import validity
+from validity.models import ConfigSerializer, GitRepo
 
 
 pytest.register_assert_rewrite("base")
@@ -49,3 +54,31 @@ def temp_file_and_folder(temp_folder, temp_file):
         temp_file(base_dir / dirname / filename, file_content)
 
     return _temp_file_and_folder
+
+
+@pytest.fixture
+def create_custom_fields(db):
+    cfs = CustomField.objects.bulk_create(
+        [
+            CustomField(
+                name="serializer",
+                type="object",
+                object_type=ContentType.objects.get_for_model(ConfigSerializer),
+                required=False,
+            ),
+            CustomField(
+                name="repo",
+                type="object",
+                object_type=ContentType.objects.get_for_model(GitRepo),
+                required=False,
+            ),
+        ]
+    )
+    cfs[0].content_types.set(
+        [
+            ContentType.objects.get_for_model(Device),
+            ContentType.objects.get_for_model(DeviceType),
+            ContentType.objects.get_for_model(Manufacturer),
+        ]
+    )
+    cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])

@@ -3,11 +3,11 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
-from factories import NameSetDBFactory, ReportFactory
+from factories import CompTestDBFactory, DeviceFactory, NameSetDBFactory, ReportFactory, SelectorFactory
 from simpleeval import InvalidExpression
 
 from validity.config_compliance.exceptions import EvalError
-from validity.models import ComplianceReport
+from validity.models import ComplianceReport, ComplianceTestResult, VDevice
 from validity.scripts import run_tests
 from validity.scripts.run_tests import RunTestsScript
 from validity.utils.misc import null_request
@@ -68,7 +68,7 @@ __all__ = ['func']
     "definitions",
     [
         pytest.param(FUNC.format("def func(): return max(1, 10)"), id="max"),
-        pytest.param(FUNC.format('def func(): return jq(".data", {"data": [1,2,3]})'), id="jq"),
+        pytest.param(FUNC.format('def func(): return jq.first(".data", {"data": [1,2,3]})'), id="jq"),
     ],
 )
 @pytest.mark.django_db
@@ -79,37 +79,20 @@ def test_builtins_are_available_in_nameset(definitions):
     functions["func"]()
 
 
-@pytest.mark.parametrize("device_cfg, pair_cfg", [(Mock(), Mock()), (Mock(), None)])
-def test_make_device(device_cfg, pair_cfg):
-    script = RunTestsScript()
-    device = script.make_device(device_cfg, pair_cfg)
-    assert device == device_cfg.device
-    assert device.config == device_cfg.serialized
-    if pair_cfg is None:
-        assert device.dynamic_pair is None
-    else:
-        assert device.dynamic_pair == pair_cfg.device
-        assert device.dynamic_pair.config == pair_cfg.serialized
-
-
 def test_run_test(monkeypatch):
     script = RunTestsScript()
     nm_functions = Mock()
-    make_device = Mock()
     evaluator_cls = Mock(return_value=Mock(explanation=[("var1", "val1")]))
     monkeypatch.setattr(script, "nameset_functions", nm_functions)
-    monkeypatch.setattr(script, "make_device", make_device)
     monkeypatch.setattr(run_tests, "ExplanationalEval", evaluator_cls)
-    device_cfg = Mock()
-    pair_cfg = Mock()
+    device = Mock()
     test = Mock()
-    passed, explanation = script.run_test(device_cfg, pair_cfg, test)
+    passed, explanation = script.run_test(device, test)
     assert passed  # bool(Mock()) is True
     assert explanation
     nm_functions.assert_called_once_with(test.namesets.all())
-    make_device.assert_called_once_with(device_cfg, pair_cfg)
     evaluator_cls.assert_called_once_with(
-        functions=nm_functions.return_value, names={"device": make_device.return_value}, load_defaults=True
+        functions=nm_functions.return_value, names={"device": device}, load_defaults=True
     )
     evaluator_cls.return_value.eval.assert_called_once_with(test.effective_expression)
 
@@ -130,10 +113,9 @@ def test_run_tests_for_device(mock_script_logging, run_test_mock, monkeypatch):
     script._sleep_between_tests = 0
     monkeypatch.setattr(script, "run_test", run_test_mock)
     tests = ["test1", "test2", "test3"]
-    device_config = Mock()
-    pair_config = Mock()
+    device = Mock()
     report = Mock()
-    results = list(script.run_tests_for_device(tests, device_config, pair_config, report))
+    results = list(script.run_tests_for_device(tests, device, report))
     assert len(results) == len(tests)
     is_error = isinstance(run_test_mock.side_effect, Exception)
     for test, result in zip(tests, results):
@@ -151,17 +133,21 @@ def test_run_tests_for_device(mock_script_logging, run_test_mock, monkeypatch):
 
 def test_run_tests_for_selector(mock_script_logging, monkeypatch):
     script = RunTestsScript()
-    monkeypatch.setattr(script, "prepare_device_configs", Mock(return_value=("config", "pair_config")))
-    devices = ["device1", "device2"]
-    monkeypatch.setattr(script, "device_iterator", Mock(return_value=devices))
+    devices = [Mock(name="device1"), Mock(name="device2")]
     monkeypatch.setattr(script, "run_tests_for_device", Mock(return_value=range(3)))
-    selector = Mock()
+    selector = Mock(
+        name="selector",
+        **{
+            "devices.select_related.return_value"
+            ".annotate_json_serializer.return_value.annotate_json_repo.return_value": devices
+        }
+    )
     report = Mock()
     list(script.run_tests_for_selector(selector, report))
-    script.device_iterator.assert_called_once_with(selector.filter)
-    assert script.prepare_device_configs.call_count == len(devices)
     assert script.run_tests_for_device.call_count == len(devices)
-    script.run_tests_for_device.assert_called_with(selector.tests.all(), "config", "pair_config", report)
+    script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[0], report)
+    script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[1], report)
+    assert devices[0].selector == selector
 
 
 @pytest.mark.django_db
@@ -182,3 +168,24 @@ def test_fire_report_webhook(monkeypatch):
     report = ReportFactory()
     script.fire_report_webhook(report.pk)
     enq_obj.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_full_run(monkeypatch):
+    DeviceFactory(name="device1")
+    DeviceFactory(name="device2")
+    selector = SelectorFactory(name_filter="device([0-9])", dynamic_pairs="NAME")
+    monkeypatch.setattr(
+        VDevice,
+        "config",
+        property(lambda self: {"key2": "somevalue"} if self.name == "device2" else {"key1": "somevalue"}),
+    )
+    test = CompTestDBFactory(
+        expression='jq.first(".key1", device.config) == jq.first(".key2", device.dynamic_pair.config) != None'
+    )
+    test.selectors.set([selector])
+    script = RunTestsScript()
+    script.run(data={"make_report": False}, commit=True)
+    results = [*ComplianceTestResult.objects.order_by("device__name")]
+    assert len(results) == 2
+    assert results[0].passed and not results[1].passed

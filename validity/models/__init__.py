@@ -1,4 +1,5 @@
 from .base import GitRepoLinkMixin
+from .device import VDevice
 from .nameset import NameSet
 from .repo import GitRepo
 from .report import ComplianceReport

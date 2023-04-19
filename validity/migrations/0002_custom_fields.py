@@ -17,15 +17,17 @@ def forward_func(apps, schema_editor):
     cfs = CustomField.objects.using(db_alias).bulk_create(
         [
             CustomField(
-                name="config_serializer",
+                name="serializer",
                 label=_("Config Serializer"),
+                description=_("Required by Validity"),
                 type="object",
                 object_type=ContentType.objects.get_for_model(ConfigSerializer),
                 required=False,
             ),
             CustomField(
-                name="git_repo",
+                name="repo",
                 label=_("Git Repository"),
+                description=_("Required by Validity"),
                 type="object",
                 object_type=ContentType.objects.get_for_model(GitRepo),
                 required=False,
@@ -47,8 +49,8 @@ def reverse_func(apps, schema_editor):
     db_alias = schema_editor.connection.alias
     CustomField.objects.using(db_alias).filter(
         name__in=[
-            "config_serializer",
-            "config_path",
+            "serializer",
+            "repo",
         ]
     ).delete()
 

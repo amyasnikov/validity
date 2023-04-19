@@ -7,11 +7,6 @@ This article contains some possible approaches for writing effective Test Expres
 
 [JQ](https://stedolan.github.io/jq/) is super powerful in extracting/transforming various JSON data. In many cases write a JQ expression is shorter and easier than write a Python one.
 
-!!! note
-    `jq()` function always returns a list due to an original CLI tool which may return multiple answers.
-    For instance, `jq('2 + 2', {})` returns `[4]`.
-    To return a single answer you can use `jq.first(expression, object)`
-
 Let's write a test that finds all the unused routing policies on a device. "Unused" means the policy is created on a device but is not applied anywhere.
 The main problem here is the routing policy versatility. It can be applied to:
 
@@ -232,7 +227,7 @@ The final step is to check that all the values in the list are True. Python has 
 all([
     jq.first(
         f'.interfaces[] | select(.name=="{iface.connected_endpoints[0].name}")',
-        iface.connected_endpoints[0].device.config
+        config(iface.connected_endpoints[0].device)
     ) == jq.first(f'.interfaces[] | select(.name=="{iface.name}")', device.config)
     for iface in device.interfaces.filter(
         name__in=device.get_config_context()['trunk_ports']

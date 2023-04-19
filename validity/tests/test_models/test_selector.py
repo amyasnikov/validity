@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 
 import pytest
-from dcim.models import Device
 from django.db.models import Q
 from factories import (
     DeviceFactory,
@@ -14,7 +13,7 @@ from factories import (
     TagFactory,
 )
 
-from validity.models import selector
+from validity.models import VDevice, selector
 
 
 @pytest.mark.parametrize(
@@ -62,7 +61,7 @@ def test_multi_filter():
 
 @pytest.mark.django_db
 def test_devices(monkeypatch):
-    monkeypatch.setattr(Device.objects, "filter", device_mock := Mock())
+    monkeypatch.setattr(VDevice.objects, "filter", device_mock := Mock())
     monkeypatch.setattr(selector.ComplianceSelector, "filter", "filter_value")
     model = SelectorFactory()
     model.devices

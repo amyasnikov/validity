@@ -14,6 +14,7 @@ from tenancy.models import Tenant
 from validity.choices import BoolOperationChoices, DynamicPairsChoices
 from validity.config_compliance.dynamic_pairs import DynamicNamePairFilter, dpf_factory
 from .base import BaseModel
+from .device import VDevice
 
 
 class ComplianceSelector(BaseModel):
@@ -106,7 +107,7 @@ class ComplianceSelector(BaseModel):
 
     @property
     def devices(self) -> models.QuerySet:
-        return Device.objects.filter(self.filter)
+        return VDevice.objects.filter(self.filter)
 
     def dynamic_pair_filter(self, device: Device) -> models.Q | None:
         if dp_filter := dpf_factory(self, device).filter:

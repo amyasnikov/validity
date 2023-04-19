@@ -28,7 +28,7 @@ And the overall test:
 
 ```python
 set(
-  jq(
+  jq.all(
       '.protocols."spanning-tree".interfaces | map(select(.enabled==true).name | scan("[0-9/]+"))',
       device.config
   )
@@ -43,7 +43,7 @@ def stp_enabled_interfaces(device):
       '.protocols."spanning-tree".interfaces'
       ' | map(select(.enabled==true).name | scan("[0-9/]+"))'
     )
-    return set(jq(jq_expression, device.config))
+    return set(jq.all(jq_expression, device.config))
 ```
 
 **Test**:

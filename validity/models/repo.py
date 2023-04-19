@@ -9,7 +9,6 @@ from django.utils.translation import gettext_lazy as _
 from jinja2 import BaseLoader, Environment
 
 from validity.managers import GitRepoQS
-from validity.queries import DeviceQS
 from validity.utils.password import EncryptedString, PasswordField
 from .base import BaseModel, validate_file_path
 
@@ -78,9 +77,10 @@ class GitRepo(BaseModel):
         return super().save(**kwargs)
 
     def bound_devices(self) -> models.QuerySet[Device]:
+        from .device import VDevice
+
         return (
-            DeviceQS()
-            .annotate_git_repo_id()
+            VDevice.objects.annotate_git_repo_id()
             .filter(repo_id=self.pk)
             .select_related("site", "device_role", "device_type__manufacturer")
         )

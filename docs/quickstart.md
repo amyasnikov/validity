@@ -163,7 +163,7 @@ print(json.dumps(config_info['serialized_config'], indent=4))
 
 ### Compliance Test
 
-* Create a selector. Selector is used to gather some subset of devices to later apply compliance tests only to that subset. For now we just need a selector that gathers all the devices
+* Create a selector. Selector is used to gather some subset of devices to later apply compliance tests only to that subset. For now, we just need a selector that gathers all the devices
 
 ```python
 selector = nb.plugins.validity.selectors.create(name='all', name_filter='.*')
@@ -173,8 +173,8 @@ selector = nb.plugins.validity.selectors.create(name='all', name_filter='.*')
 
 ```python
 expression = '''
-jq('.interfaces[] | select(.description).interface', device.config) == \
-jq('.interfaces[].interface', device.config)
+jq.all('.interfaces[] | select(.description).interface', device.config) == \
+jq.all('.interfaces[].interface', device.config)
 '''
 
 test = nb.plugins.validity.tests.create(
@@ -236,21 +236,21 @@ print(
 #         "passed": true,
 #         "explanation": [
 #             [
-#                 "jq('.interfaces[] | select(.description).interface', device.config)",
+#                 "jq.all('.interfaces[] | select(.description).interface', device.config)",
 #                 [
 #                     "Loopback0",
 #                     "Vlan100"
 #                 ]
 #             ],
 #             [
-#                 "jq('.interfaces[].interface', device.config)",
+#                 "jq.all('.interfaces[].interface', device.config)",
 #                 [
 #                     "Loopback0",
 #                     "Vlan100"
 #                 ]
 #             ],
 #             [
-#                 "jq('.interfaces[] | select(.description).interface', device.config) == jq('.interfaces[].interface', device.config)",
+#                 "jq.all('.interfaces[] | select(.description).interface', device.config) == jq.all('.interfaces[].interface', device.config)",
 #                 true
 #             ]
 #         ],
@@ -269,20 +269,20 @@ print(
 #         "passed": false,
 #         "explanation": [
 #             [
-#                 "jq('.interfaces[] | select(.description).interface', device.config)",
+#                 "jq.all('.interfaces[] | select(.description).interface', device.config)",
 #                 [
 #                     "Loopback0"
 #                 ]
 #             ],
 #             [
-#                 "jq('.interfaces[].interface', device.config)",
+#                 "jq.all('.interfaces[].interface', device.config)",
 #                 [
 #                     "Loopback0",
 #                     "ge0/0/1"
 #                 ]
 #             ],
 #             [
-#                 "jq('.interfaces[] | select(.description).interface', device.config) == jq('.interfaces[].interface', device.config)",
+#                 "jq.all('.interfaces[] | select(.description).interface', device.config) == jq.all('.interfaces[].interface', device.config)",
 #                 false
 #             ],
 #             [
