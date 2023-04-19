@@ -2,6 +2,8 @@ from builtins import *  # noqa
 
 import jq as pyjq
 
+from validity.utils.misc import config  # noqa
+
 
 builtins = [
     "abs",
@@ -47,11 +49,12 @@ builtins = [
 ]
 
 
-__all__ = ["jq"] + builtins
+__all__ = ["jq", "config"] + builtins
 
 
-def jq(expression, object):
-    return pyjq.all(expression, object)
+class jq:
+    first = staticmethod(pyjq.first)
+    all = staticmethod(pyjq.all)
 
-
-jq.first = pyjq.first
+    def __init__(self, *args, **kwargs) -> None:
+        raise TypeError("jq is not callable")

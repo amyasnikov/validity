@@ -1,9 +1,12 @@
 import textwrap
+from http import HTTPStatus
 
+import pytest
 from base import ViewTest
 from factories import (
     CompTestDBFactory,
     CompTestResultFactory,
+    DeviceFactory,
     DeviceTypeFactory,
     GitRepoFactory,
     LocationFactory,
@@ -145,3 +148,10 @@ class TestGitTest(ViewTest):
         "repo": GitRepoFactory,
         "file_path": "some/file.txt",
     }
+
+
+@pytest.mark.django_db
+def test_device_results(admin_client):
+    device = DeviceFactory()
+    resp = admin_client.get(f"/dcim/devices/{device.pk}/serialized_config/")
+    assert resp.status_code == HTTPStatus.OK

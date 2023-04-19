@@ -1,10 +1,10 @@
 from itertools import chain
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, TypeVar
 
-from dcim.models import Device
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Case, Count, F, FloatField, Prefetch, Q, Value, When
-from django.db.models.functions import JSONObject
+from django.db.models import BigIntegerField, Case, Count, F, FloatField, OuterRef, Prefetch, Q, QuerySet, Value, When
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, JSONObject
 from netbox.models import RestrictedQuerySet
 
 from validity import settings
@@ -12,7 +12,7 @@ from validity.choices import DeviceGroupByChoices, SeverityChoices
 
 
 if TYPE_CHECKING:
-    from validity.models import ConfigSerializer, GitRepo
+    from validity.models.base import BaseModel
 
 
 class JSONObjMixin:
@@ -21,10 +21,7 @@ class JSONObjMixin:
 
 
 class GitRepoQS(JSONObjMixin, RestrictedQuerySet):
-    def from_device(self, device: Device) -> Optional["GitRepo"]:
-        if device.tenant and (git_repo := device.tenant.cf.get("git_repo")):
-            return git_repo
-        return self.filter(default=True).first()
+    pass
 
 
 class ComplianceTestQS(RestrictedQuerySet):
@@ -70,14 +67,7 @@ class ComplianceTestResultQS(RestrictedQuerySet):
 
 
 class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
-    def from_device(self, device: Device) -> Optional["ConfigSerializer"]:
-        if ser := device.cf.get("config_serializer"):
-            return ser
-        if ser := device.device_type.cf.get("config_serializer"):
-            return ser
-        if ser := device.device_type.manufacturer.cf.get("config_serializer"):
-            return ser
-        return None
+    pass
 
 
 class NameSetQS(JSONObjMixin, RestrictedQuerySet):
@@ -123,3 +113,73 @@ class ComplianceReportQS(RestrictedQuerySet):
         return self.filter(
             pk__in=self.values_list("pk", flat=True).order_by("-created")[settings.store_reports :]
         ).delete()
+
+
+_QS = TypeVar("_QS", bound=QuerySet)
+
+
+def annotate_json(qs: _QS, field: str, annotate_model: type["BaseModel"]) -> _QS:
+    return qs.annotate(**{f"json_{field}": annotate_model.objects.filter(pk=OuterRef(f"{field}_id")).as_json()})
+
+
+class VDeviceQS(RestrictedQuerySet):
+    def annotate_git_repo_id(self: _QS) -> _QS:
+        from validity.models import GitRepo
+
+        return self.annotate(
+            bound_repo=Cast(KeyTextTransform("repo", "tenant__custom_field_data"), BigIntegerField())
+        ).annotate(
+            repo_id=Case(
+                When(bound_repo__isnull=False, then=F("bound_repo")),
+                default=GitRepo.objects.filter(default=True).values("id")[:1],
+                output_field=BigIntegerField(),
+            )
+        )
+
+    def annotate_serializer_id(self: _QS) -> _QS:
+        return (
+            self.annotate(device_s=KeyTextTransform("serializer", "custom_field_data"))
+            .annotate(
+                devtype_s=KeyTextTransform("serializer", "device_type__custom_field_data"),
+            )
+            .annotate(manufacturer_s=KeyTextTransform("serializer", "device_type__manufacturer__custom_field_data"))
+            .annotate(
+                serializer_id=Case(
+                    When(device_s__isnull=False, then=Cast(F("device_s"), BigIntegerField())),
+                    When(devtype_s__isnull=False, then=Cast(F("devtype_s"), BigIntegerField())),
+                    When(manufacturer_s__isnull=False, then=Cast(F("manufacturer_s"), BigIntegerField())),
+                )
+            )
+        )
+
+    def annotate_json_serializer_repo(self: _QS) -> _QS:
+        from validity.models import GitRepo
+
+        return self.annotate(
+            json_serializer_repo=GitRepo.objects.filter(configserializer__pk=OuterRef("serializer_id")).as_json()
+        )
+
+    def annotate_json_repo(self: _QS) -> _QS:
+        from validity.models import GitRepo
+
+        qs = self.annotate_git_repo_id()
+        return annotate_json(qs, "repo", GitRepo)
+
+    def annotate_json_serializer(self: _QS) -> _QS:
+        from validity.models import ConfigSerializer
+
+        qs = self.annotate_serializer_id().annotate_json_serializer_repo()
+        return annotate_json(qs, "serializer", ConfigSerializer)
+
+    def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
+        qs = getattr(self, annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
+        result = {}
+        for values in qs:
+            result[values[field]] = values["cnt"]
+        return result
+
+    def count_per_repo(self) -> dict[int | None, int]:
+        return self._count_per_something("repo_id", "annotate_git_repo_id")
+
+    def count_per_serializer(self) -> dict[int | None, int]:
+        return self._count_per_something("serializer_id", "annotate_serializer_id")

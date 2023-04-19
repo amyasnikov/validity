@@ -5,8 +5,7 @@ from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
 import yaml
-from dcim.models import Device
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
 from extras.scripts import BooleanVar, MultiObjectVar, Script
@@ -16,11 +15,17 @@ from simpleeval import InvalidExpression
 
 import validity
 import validity.config_compliance.eval.default_nameset as default_nameset
-from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.eval import ExplanationalEval
 from validity.config_compliance.exceptions import DeviceConfigError, EvalError
-from validity.models import ComplianceReport, ComplianceSelector, ComplianceTest, ComplianceTestResult, GitRepo, NameSet
-from validity.queries import DeviceQS
+from validity.models import (
+    ComplianceReport,
+    ComplianceSelector,
+    ComplianceTest,
+    ComplianceTestResult,
+    GitRepo,
+    NameSet,
+    VDevice,
+)
 from validity.utils.git import SyncReposMixin
 from validity.utils.misc import null_request
 
@@ -71,81 +76,48 @@ class RunTestsScript(SyncReposMixin, Script):
             result |= self._nameset_functions[nameset.name]
         return result
 
-    @staticmethod
-    def make_device(device_config: DeviceConfig, pair_config: DeviceConfig | None) -> Device:
-        def device_from_cfg(device_cfg_obj):
-            if device_cfg_obj is not None:
-                d = device_cfg_obj.device
-                d.config = device_cfg_obj.serialized
-                return d
-
-        device = device_from_cfg(device_config)
-        device.dynamic_pair = device_from_cfg(pair_config)
-        return device
-
-    def run_test(
-        self, device_config: DeviceConfig, pair_config: DeviceConfig | None, test: ComplianceTest
-    ) -> tuple[bool, list[tuple[Any, Any]]]:
+    def run_test(self, device: VDevice, test: ComplianceTest) -> tuple[bool, list[tuple[Any, Any]]]:
         functions = self.nameset_functions(test.namesets.all())
-        device = self.make_device(device_config, pair_config)
         evaluator = ExplanationalEval(functions=functions, names={"device": device}, load_defaults=True)
         passed = bool(evaluator.eval(test.effective_expression))
         return passed, evaluator.explanation
 
-    @staticmethod
-    def device_iterator(filter_: Q | None):
-        if not filter_:
-            return
-        devices = DeviceQS().filter(filter_).annotate_json_serializer().annotate_json_repo()
-        yield from devices.json_iterator("serializer", "repo")
-
     def run_tests_for_device(
         self,
         tests_qs: QuerySet[ComplianceTest],
-        device_config: DeviceConfig,
-        pair_config: DeviceConfig | None,
+        device: VDevice,
         report: ComplianceReport | None,
     ) -> Generator[ComplianceTestResult, None, None]:
         for test in tests_qs:
             explanation = []
             try:
-                passed, explanation = self.run_test(device_config, pair_config, test)
+                passed, explanation = self.run_test(device, test)
             except (InvalidExpression, EvalError) as e:
-                self.log_failure(
-                    f"Failed to execute test {test} for device {device_config.device}, {type(e).__name__}: {e}"
-                )
+                self.log_failure(f"Failed to execute test *{test}* for device *{device}*, `{type(e).__name__}: {e}`")
                 passed = False
                 explanation.append((f"{type(e).__name__}: {e}", None))
             self.results_count += 1
             self.results_passed += int(passed)
             yield ComplianceTestResult(
                 test=test,
-                device=device_config.device,
+                device=device,
                 passed=passed,
                 explanation=explanation,
                 report=report,
-                dynamic_pair=getattr(pair_config, "device", None),
+                dynamic_pair=device.dynamic_pair,
             )
             time.sleep(self._sleep_between_tests)
-
-    def prepare_device_configs(
-        self, device: Device, selector: ComplianceSelector
-    ) -> tuple[DeviceConfig, DeviceConfig | None]:
-        config = DeviceConfig.from_device(device)
-        dynamic_pair = next(self.device_iterator(selector.dynamic_pair_filter(device)), None)
-        pair_config = DeviceConfig.from_device(dynamic_pair) if dynamic_pair else None
-        return config, pair_config
 
     def run_tests_for_selector(
         self, selector: ComplianceSelector, report: ComplianceReport | None
     ) -> Generator[ComplianceTestResult, None, None]:
-        for device in self.device_iterator(selector.filter):
+        for device in selector.devices.select_related().annotate_json_serializer().annotate_json_repo():
             try:
-                config, pair_config = self.prepare_device_configs(device, selector)
+                device.selector = selector
+                yield from self.run_tests_for_device(selector.tests.all(), device, report)
             except DeviceConfigError as e:
-                self.log_failure(str(e) + f", ignoring all tests for {device}")
+                self.log_failure(f"`{e}`, ignoring all tests for *{device}*")
                 continue
-            yield from self.run_tests_for_device(selector.tests.all(), config, pair_config, report)
 
     def fire_report_webhook(self, report_id: int) -> None:
         report = ComplianceReport.objects.filter(pk=report_id).annotate_result_stats().count_devices_and_tests().first()

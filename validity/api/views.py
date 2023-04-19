@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 
 from validity import filtersets, models
 from validity.config_compliance.device_config import DeviceConfig
-from validity.queries import DeviceQS
 from ..config_compliance.exceptions import DeviceConfigError
 from . import serializers
 
@@ -68,12 +67,12 @@ class ComplianceReportViewSet(ReadOnlyNetboxViewSet):
 
 
 class SerializedConfigView(APIView):
-    queryset = DeviceQS().annotate_json_repo().annotate_json_serializer()
+    queryset = models.VDevice.objects.all()
 
     def get_object(self, pk):
         try:
-            return next(self.queryset.filter(pk=pk).json_iterator("repo", "serializer"))
-        except StopIteration:
+            return self.queryset.get(pk=pk)
+        except models.VDevice.DoesNotExist:
             raise NotFound
 
     @swagger_auto_schema(

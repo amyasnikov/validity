@@ -1,5 +1,5 @@
 import factory
-from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from extras.models import Tag
 from factory.django import DjangoModelFactory
 from tenancy.models import Tenant
@@ -138,7 +138,7 @@ class DeviceFactory(DjangoModelFactory):
     device_role = factory.SubFactory(DeviceRoleFactory)
 
     class Meta:
-        model = Device
+        model = models.VDevice
 
 
 class TagFactory(DjangoModelFactory):
