@@ -37,11 +37,25 @@
     </div>
   </div>
 </div>
-<div class="row">
+<div class="row mb-2">
+  {% if not error %}
   <div class="card">
-    <div class="card-body">
-      <h5 class="card-title mb-2">Serialized Configuration</h5>
-      <pre class="bg-light">{{ config.serialized | yaml}}</pre>
+    <div class="card-header">
+      <div class="row">
+        <h5 class="col">Serialized Configuration</h5>
+        <div class="col">{% include 'extras/inc/configcontext_format.html' %}</div>
+      </div>
     </div>
+    <div class="card-body">
+      {% include 'extras/inc/configcontext_data.html' with data=config.serialized format=format %}
+    </div>
+  </div>
+  {% else %}
+  <div class="card bg-warning mt-3">
+    <div class="card-body">
+      <h6 class="card-title">{{ error }}</h6>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

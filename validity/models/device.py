@@ -34,7 +34,10 @@ class VDevice(Device):
         default = GitRepo.objects.filter(default=True).first()
         if default:
             return default
-        return self.tenant.cf.get("repo")
+        try:
+            return self.tenant.cf.get("repo")
+        except AttributeError:
+            return
 
     def annotated_serializer(self) -> ConfigSerializer | None:
         if not getattr(self, "json_serializer", None):

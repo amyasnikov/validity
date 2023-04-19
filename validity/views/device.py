@@ -23,13 +23,12 @@ class TestResultView(TestResultBaseView):
 class DeviceSerializedConfigView(generic.ObjectView):
     template_name = "validity/device_config.html"
     tab = ViewTab("Serialized Config", permission="dcim.view_device")
-    queryset = Device.objects.all()
+    queryset = VDevice.objects.all()
 
     def get_extra_context(self, request, instance):
         try:
-            vdevice = VDevice()
-            vdevice.__dict__ = instance.__dict__.copy()
-            return {"config": vdevice.config}
+            instance._meta = Device()._meta
+            return {"config": instance.device_config, "format": request.GET.get("format", "yaml")}
         except DeviceConfigError as e:
-            logger.warning("Cannot render serialized config, %s", e)
-            return {"config": None}
+            error = f"Cannot render serialized config, {e}"
+            return {"error": error}
