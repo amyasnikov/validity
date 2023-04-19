@@ -30,5 +30,5 @@ class DeviceSerializedConfigView(generic.ObjectView):
             instance._meta = Device()._meta
             return {"config": instance.device_config, "format": request.GET.get("format", "yaml")}
         except DeviceConfigError as e:
-            logger.warning("Cannot render serialized config, %s", e)
-            return {"config": None}
+            error = f"Cannot render serialized config, {e}"
+            return {"error": error}
