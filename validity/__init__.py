@@ -16,7 +16,7 @@ class NetBoxValidityConfig(PluginConfig):
     description = "Vendor-agnostic framework to build your own configuration compliance rule set"
     author = "Anton Miasnikov"
     author_email = "anton2008m@gmail.com"
-    version = "1.0.0"
+    version = "1.0.1"
     base_url = "validity"
     django_apps = ["bootstrap5"]
 

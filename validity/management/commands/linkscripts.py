@@ -27,8 +27,8 @@ class Command(BaseCommand):
                 continue
             try:
                 os.symlink(script_file, dst_file)
-                self.stdout.write(self.style.SUCCESS(f"Symlink created: {script_file} -> {dst_file}"))
+                self.stdout.write(self.style.SUCCESS(f"Symlink created: {dst_file} -> {script_file}"))
                 symlinks_created += 1
             except OSError as e:
-                raise CommandError(f"Cannot make the symlink {script_file} -> {dst_file}, {type(e).__name__}: {e}")
+                raise CommandError(f"Cannot make the symlink {dst_file} -> {script_file}, {type(e).__name__}: {e}")
         self.stdout.write(f"Symlinks created: {symlinks_created}")
