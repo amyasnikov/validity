@@ -41,3 +41,10 @@ Validity completely separates compliance test code from all other things like co
 
 ## Documentation
 Read the full documentation on [validity.readthedocs.io](https://validity.readthedocs.io)
+
+
+## Quick Start
+
+The short video about first steps with Validity:
+
+[![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)
