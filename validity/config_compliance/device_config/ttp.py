@@ -26,6 +26,8 @@ class TTPDeviceConfig(DeviceConfig):
 
     def serialize(self, override: bool = False) -> None:
         if not self.serialized or override:
+            if not self.config_path.is_file():
+                raise DeviceConfigError(f"{self.config_path} does not exist")
             parser = ttp(data=str(self.config_path), template=self._template.template)
             parser.parse()
             with reraise(
