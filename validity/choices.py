@@ -54,6 +54,7 @@ class SeverityChoices(TextChoices, metaclass=ColoredChoiceMeta):
 class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
     YAML = "YAML", "YAML", "info"
+    ROUTEROS = "ROUTEROS", "ROUTEROS", "green"
 
 
 class DeviceGroupByChoices(TextChoices):

@@ -2,7 +2,7 @@ from builtins import *  # noqa
 
 import jq as pyjq
 
-from validity.utils.misc import config  # noqa
+from validity.utils.config import config  # noqa
 
 
 builtins = [

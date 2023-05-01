@@ -1,10 +1,7 @@
 from contextlib import contextmanager
 
-from dcim.models import Device
 from django.utils.html import format_html
 from netbox.context import current_request
-
-from validity.models import VDevice
 
 
 def colorful_percentage(percent: float) -> str:
@@ -22,11 +19,21 @@ def colorful_percentage(percent: float) -> str:
 def null_request():
     ctx = current_request.get()
     current_request.set(None)
-    yield
-    current_request.set(ctx)
+    try:
+        yield
+    finally:
+        current_request.set(ctx)
 
 
-def config(device: Device) -> dict | list | None:
-    vdevice = VDevice()
-    vdevice.__dict__ = device.__dict__.copy()
-    return vdevice.config
+@contextmanager
+def reraise(catch: type[Exception] | tuple[type[Exception], ...], raise_: type[Exception], msg: str | None = None):
+    try:
+        yield
+    except raise_:
+        raise
+    except catch as e:
+        if msg:
+            msg = msg.format(str(e))
+        else:
+            msg = str(e)
+        raise raise_(msg) from e
