@@ -111,7 +111,7 @@ def parse_config(filename: str | Path) -> dict:
     prevlines = []
     with open(filename, "r") as cfgfile:
         for line_num, line in enumerate(cfgfile, start=1):
-            if line.startswith(("#", ":")):
+            if line.startswith(("#", ":")) or line == "\n":
                 continue
             if line.startswith("/"):
                 context_path = line[1:-1].split()
@@ -147,7 +147,7 @@ def parse_config(filename: str | Path) -> dict:
     return result
 
 
-class ROSDeviceConfig(DeviceConfig):
+class RouterOSDeviceConfig(DeviceConfig):
     extract_method: ClassVar[str] = "ROUTEROS"
 
     def serialize(self, override: bool = False) -> None:
