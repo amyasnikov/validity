@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        netbox_version: [3.4.10, 3.5.0]
+        netbox_version: [v3.4.10, v3.5.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -36,7 +36,7 @@ jobs:
       - name: Define .env
         run: >-
           cp development/.env.example development/.env
-          && sed -i "s/NETBOX_VERSION=develop/NETBOX_VERSION=${{ matrix.netbox_version }}/" .env
+          && sed -i "s/NETBOX_VERSION=develop/NETBOX_VERSION=${{ matrix.netbox_version }}/" development/.env
 
       - name: docker version
         run: docker version && docker compose version
