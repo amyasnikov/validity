@@ -9,6 +9,12 @@ from .repo import GitRepo
 from .serializer import ConfigSerializer
 
 
+def encrypted_password_to_field(json_repo: dict) -> None:
+    json_repo["encrypted_password"] = GitRepo._meta.get_field("encrypted_password").to_python(
+        json_repo["encrypted_password"]
+    )
+
+
 class VDevice(Device):
     objects = VDeviceQS.as_manager()
 
@@ -22,9 +28,7 @@ class VDevice(Device):
     def annotated_repo(self) -> GitRepo | None:
         if not getattr(self, "json_repo", None):
             return
-        self.json_repo["encrypted_password"] = GitRepo._meta.get_field("encrypted_password").to_python(
-            self.json_repo["encrypted_password"]
-        )
+        encrypted_password_to_field(self.json_repo)
         return GitRepo(**self.json_repo)
 
     @cached_property
@@ -43,6 +47,7 @@ class VDevice(Device):
         if not getattr(self, "json_serializer", None):
             return
         if getattr(self, "json_serializer_repo", None):
+            encrypted_password_to_field(self.json_serializer_repo)
             self.json_serializer["repo"] = GitRepo(**self.json_serializer_repo)
         return ConfigSerializer(**self.json_serializer)
 
