@@ -1,7 +1,7 @@
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import CharField, Form, NullBooleanField
+from django.forms import CharField, Form, NullBooleanField, Select
 from django.utils.translation import gettext_lazy as _
-from netbox.forms import NetBoxModelFilterSetForm, StaticSelect
+from netbox.forms import NetBoxModelFilterSetForm
 from tenancy.models import Tenant
 from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES
 from utilities.forms.fields import DynamicModelMultipleChoiceField
@@ -89,9 +89,7 @@ class ReportGroupByForm(Form):
 class NameSetFilterForm(NetBoxModelFilterSetForm):
     model = models.NameSet
     name = CharField(required=False)
-    _global = NullBooleanField(
-        label=_("Global"), required=False, widget=StaticSelect(choices=BOOLEAN_WITH_BLANK_CHOICES)
-    )
+    _global = NullBooleanField(label=_("Global"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES))
     repo_id = DynamicModelMultipleChoiceField(
         label=_("Git Repository"), queryset=models.GitRepo.objects.all(), required=False
     )
@@ -100,7 +98,7 @@ class NameSetFilterForm(NetBoxModelFilterSetForm):
 class GitRepoFilterForm(NetBoxModelFilterSetForm):
     model = models.GitRepo
     name = CharField(required=False)
-    default = NullBooleanField(required=False, widget=StaticSelect(choices=BOOLEAN_WITH_BLANK_CHOICES))
+    default = NullBooleanField(required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES))
     username = CharField(required=False)
     branch = CharField(required=False)
     head_hash = CharField(required=False)

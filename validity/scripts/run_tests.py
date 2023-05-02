@@ -91,6 +91,7 @@ class RunTestsScript(SyncReposMixin, Script):
         for test in tests_qs:
             explanation = []
             try:
+                device.config
                 passed, explanation = self.run_test(device, test)
             except (InvalidExpression, EvalError) as e:
                 self.log_failure(f"Failed to execute test *{test}* for device *{device}*, `{type(e).__name__}: {e}`")

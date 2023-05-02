@@ -71,12 +71,12 @@ class TestSerializer(BaseTestClean):
 
     right_kwargs = [
         {"extraction_method": "TTP", "ttp_template": "interface {{ interface }}", "repo": None, "file_path": ""},
-        {"extraction_method": "JSON", "repo": None, "file_path": ""},
+        {"extraction_method": "YAML", "repo": None, "file_path": ""},
     ]
     wrong_kwargs = [
         {"extraction_method": "TTP", "ttp_template": "", "repo": None, "file_path": ""},
         {"extraction_method": "TTP", "ttp_template": "qwerty", "file_path": ""},
-        {"extraction_method": "JSON"},
+        {"extraction_method": "YAML"},
     ]
 
 

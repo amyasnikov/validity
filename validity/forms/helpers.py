@@ -1,10 +1,13 @@
 from typing import Sequence
 
-from django.forms import ChoiceField
-from utilities.forms import StaticSelect
+from django.forms import ChoiceField, Select
 
 
-class SelectWithPlaceholder(StaticSelect):
+class SelectWithPlaceholder(Select):
+    def __init__(self, attrs=None, choices=()) -> None:
+        super().__init__(attrs, choices)
+        self.attrs["class"] = "netbox-static-select"
+
     def create_option(self, name, value, label, selected, index: int, subindex=..., attrs=...):
         option = super().create_option(name, value, label, selected, index, subindex, attrs)
         if index == 0:

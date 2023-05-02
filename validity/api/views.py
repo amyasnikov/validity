@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
-from drf_yasg.utils import swagger_auto_schema
 from netbox.api.viewsets import NetBoxModelViewSet
+from netbox.settings import VERSION
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,6 +10,12 @@ from validity import filtersets, models
 from validity.config_compliance.device_config import DeviceConfig
 from ..config_compliance.exceptions import DeviceConfigError
 from . import serializers
+
+
+if VERSION.split(".") < ["3", "5"]:
+    from drf_yasg.utils import swagger_auto_schema as extend_schema
+else:
+    from drf_spectacular.utils import extend_schema
 
 
 class ReadOnlyNetboxViewSet(NetBoxModelViewSet):
@@ -75,7 +81,7 @@ class SerializedConfigView(APIView):
         except models.VDevice.DoesNotExist:
             raise NotFound
 
-    @swagger_auto_schema(
+    @extend_schema(
         responses={200: serializers.SerializedConfigSerializer()}, operation_id="dcim_devices_serialized_config"
     )
     def get(self, request, pk):
