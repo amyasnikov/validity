@@ -7,7 +7,6 @@ from typing import Any, Callable, Generator, Iterable
 import yaml
 from dcim.models import Device
 from django.db.models import QuerySet
-from django.forms import ValidationError
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
 from extras.scripts import BooleanVar, MultiObjectVar, Script
@@ -43,7 +42,12 @@ class RunTestsScript(SyncReposMixin, Script):
         description=__("Pull updates from all available git repositories before running the tests"),
     )
     make_report = BooleanVar(default=True, label=__("Make Compliance Report"))
-    selectors = MultiObjectVar(model=ComplianceSelector, required=False, label=__("Specific selectors"))
+    selectors = MultiObjectVar(
+        model=ComplianceSelector,
+        required=False,
+        label=__("Specific selectors"),
+        description=__("Run the tests only for specific selectors"),
+    )
     devices = MultiObjectVar(
         model=Device,
         required=False,
@@ -163,17 +167,6 @@ class RunTestsScript(SyncReposMixin, Script):
             self.log_info(f"See [Compliance Report]({report.get_absolute_url()}) for detailed statistics")
             self.fire_report_webhook(report.pk)
         return yaml.dump(output, sort_keys=False)
-
-    def as_form(self, data=None, files=None, initial=None):
-        def clean(self):
-            result = super(type(self), self).clean()
-            if self.cleaned_data["devices"] and not self.cleaned_data["selectors"]:
-                raise ValidationError(__("You cannot specify devices without specifying selectors"))
-            return result
-
-        form = super().as_form(data, files, initial)
-        type(form).clean = clean
-        return form
 
 
 name = "Validity Compliance Tests"
