@@ -5,7 +5,9 @@ from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
 import yaml
+from dcim.models import Device
 from django.db.models import QuerySet
+from django.forms import ValidationError
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
 from extras.scripts import BooleanVar, MultiObjectVar, Script
@@ -42,6 +44,12 @@ class RunTestsScript(SyncReposMixin, Script):
     )
     make_report = BooleanVar(default=True, label=__("Make Compliance Report"))
     selectors = MultiObjectVar(model=ComplianceSelector, required=False, label=__("Specific selectors"))
+    devices = MultiObjectVar(
+        model=Device,
+        required=False,
+        label=__("Specific devices"),
+        description=__("Run the tests only for specific devices"),
+    )
 
     class Meta:
         name = __("Run Compliance Tests")
@@ -110,9 +118,15 @@ class RunTestsScript(SyncReposMixin, Script):
             time.sleep(self._sleep_between_tests)
 
     def run_tests_for_selector(
-        self, selector: ComplianceSelector, report: ComplianceReport | None
+        self,
+        selector: ComplianceSelector,
+        report: ComplianceReport | None,
+        device_ids: list[int],
     ) -> Generator[ComplianceTestResult, None, None]:
-        for device in selector.devices.select_related().annotate_json_serializer().annotate_json_repo():
+        qs = selector.devices.select_related().annotate_json_serializer().annotate_json_repo()
+        if device_ids:
+            qs = qs.filter(pk__in=device_ids)
+        for device in qs:
             try:
                 device.selector = selector
                 yield from self.run_tests_for_device(selector.tests.all(), device, report)
@@ -137,15 +151,29 @@ class RunTestsScript(SyncReposMixin, Script):
         with null_request():
             report = ComplianceReport.objects.create() if data.get("make_report") else None
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
+        device_ids = data.get("devices", [])
         if specific_selectors := data.get("selectors"):
             selectors = selectors.filter(pk__in=specific_selectors)
-        results = [*chain.from_iterable(self.run_tests_for_selector(selector, report) for selector in selectors)]
+        results = [
+            *chain.from_iterable(self.run_tests_for_selector(selector, report, device_ids) for selector in selectors)
+        ]
         self.save_to_db(results, report)
         output = {"results": {"all": self.results_count, "passed": self.results_passed}}
         if report:
             self.log_info(f"See [Compliance Report]({report.get_absolute_url()}) for detailed statistics")
             self.fire_report_webhook(report.pk)
         return yaml.dump(output, sort_keys=False)
+
+    def as_form(self, data=None, files=None, initial=None):
+        def clean(self):
+            result = super(type(self), self).clean()
+            if self.cleaned_data["devices"] and not self.cleaned_data["selectors"]:
+                raise ValidationError(__("You cannot specify devices without specifying selectors"))
+            return result
+
+        form = super().as_form(data, files, initial)
+        type(form).clean = clean
+        return form
 
 
 name = "Validity Compliance Tests"
