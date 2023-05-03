@@ -17,9 +17,9 @@ You can run this script for an individual Git Repository via `Sync` button at th
 
 #### Params
 
-| **Param**    | **Description**                | **Default Value** |
-|--------------|--------------------------------|-------------------|
-| Repositories | List of repositories to update | All               |
+| **Param**    | **Description**                         |
+|--------------|-----------------------------------------|
+| Repositories | Specific list of repositories to update |
 
 
 ## Run Compliance Tests
@@ -32,8 +32,9 @@ The script may generate a lot of DB queries. To spread the queries over time you
 
 #### Params
 
-| **Param**              | **Description**                                      | **Default Value** |
-|------------------------|------------------------------------------------------|-------------------|
-| Sync Repositories      | Update all Git Repositories before the run           | False             |
-| Make Compliance Report | Create Report together with Test Results             | True              |
-| Specific selectors     | Run the tests only for a limited number of selectors | All               |
+| **Param**              | **API Param** | **Description**                                              |
+|------------------------|---------------|--------------------------------------------------------------|
+| Sync Repositories      | repositories  | Update all Git Repositories before the run                   |
+| Make Compliance Report | make_report   | Create Report together with Test Results                     | 
+| Specific selectors     | selectors     | Run the tests only for a limited number of selectors         |
+| Specific devices       | devices       | Run the tests only for a limited number of devices.          |

@@ -143,7 +143,7 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
         }
     )
     report = Mock()
-    list(script.run_tests_for_selector(selector, report))
+    list(script.run_tests_for_selector(selector, report, []))
     assert script.run_tests_for_device.call_count == len(devices)
     script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[0], report)
     script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[1], report)

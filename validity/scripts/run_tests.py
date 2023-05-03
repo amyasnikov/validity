@@ -5,6 +5,7 @@ from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
 import yaml
+from dcim.models import Device
 from django.db.models import QuerySet
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
@@ -41,7 +42,18 @@ class RunTestsScript(SyncReposMixin, Script):
         description=__("Pull updates from all available git repositories before running the tests"),
     )
     make_report = BooleanVar(default=True, label=__("Make Compliance Report"))
-    selectors = MultiObjectVar(model=ComplianceSelector, required=False, label=__("Specific selectors"))
+    selectors = MultiObjectVar(
+        model=ComplianceSelector,
+        required=False,
+        label=__("Specific selectors"),
+        description=__("Run the tests only for specific selectors"),
+    )
+    devices = MultiObjectVar(
+        model=Device,
+        required=False,
+        label=__("Specific devices"),
+        description=__("Run the tests only for specific devices"),
+    )
 
     class Meta:
         name = __("Run Compliance Tests")
@@ -110,9 +122,15 @@ class RunTestsScript(SyncReposMixin, Script):
             time.sleep(self._sleep_between_tests)
 
     def run_tests_for_selector(
-        self, selector: ComplianceSelector, report: ComplianceReport | None
+        self,
+        selector: ComplianceSelector,
+        report: ComplianceReport | None,
+        device_ids: list[int],
     ) -> Generator[ComplianceTestResult, None, None]:
-        for device in selector.devices.select_related().annotate_json_serializer().annotate_json_repo():
+        qs = selector.devices.select_related().annotate_json_serializer().annotate_json_repo()
+        if device_ids:
+            qs = qs.filter(pk__in=device_ids)
+        for device in qs:
             try:
                 device.selector = selector
                 yield from self.run_tests_for_device(selector.tests.all(), device, report)
@@ -137,9 +155,12 @@ class RunTestsScript(SyncReposMixin, Script):
         with null_request():
             report = ComplianceReport.objects.create() if data.get("make_report") else None
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
+        device_ids = data.get("devices", [])
         if specific_selectors := data.get("selectors"):
             selectors = selectors.filter(pk__in=specific_selectors)
-        results = [*chain.from_iterable(self.run_tests_for_selector(selector, report) for selector in selectors)]
+        results = [
+            *chain.from_iterable(self.run_tests_for_selector(selector, report, device_ids) for selector in selectors)
+        ]
         self.save_to_db(results, report)
         output = {"results": {"all": self.results_count, "passed": self.results_passed}}
         if report:
