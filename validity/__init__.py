@@ -19,6 +19,7 @@ class NetBoxValidityConfig(PluginConfig):
     version = "1.1.0"
     base_url = "validity"
     django_apps = ["bootstrap5"]
+    min_version = '3.4.0'
 
     def ready(self):
         try:
