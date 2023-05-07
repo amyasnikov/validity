@@ -1,5 +1,12 @@
 # Quick start
 
+# Video Quick Start
+
+You can figure out how to work with Validity using NetBox Web UI in this video:
+
+[![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)
+
+# CLI Quick Start
 
 !!! note
     This guide uses [pynetbox](https://github.com/netbox-community/pynetbox) library and regular REST API to interact with NetBox. Going this way facilitates the readability and reproducibility of the guide. Moreover, it may be just more convenient way for an engineer to gather information from code examples rather than from GUI screenshots.
@@ -198,6 +205,9 @@ So, if these 2 lists are equal, then each interface on the device has a descript
 Now all the required entities are created, and you can execute the test you created.
 This could be done via **RunTests** script.
 
+!!! warning
+    Starting from NetBox 3.5 **job results** were renamed to just **jobs** and moved into **core** directory. Therefore, you have to use **nb.core.jobs** in the examples below instead of **nb.extras.job_results** if you have NetBox >=3.5
+
 ```python
 resp = requests.post(
     'http://127.0.0.1:8000/api/extras/scripts/validity_run_tests.RunTestsScript/',
@@ -300,10 +310,3 @@ print(
 #     }
 # ]
 ```
-
-
-## Video Quick Start
-
-You can figure out how to work with Validity using NetBox Web UI in this video:
-
-[![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)

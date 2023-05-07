@@ -62,7 +62,7 @@ When device has bound serializer and repository you can find out how serialized 
 
 ## MikroTik parsing
 
-Validity has an option to parse MikroTik RouterOS config files without TTP. You just need `ROUTEROS` method in serializer settings to do it. Why MikroTik instead of other vendors? There are reasons:
+Validity has an option to parse MikroTik RouterOS config files without TTP. You just need `ROUTEROS` method in serializer settings to do it. Why MikroTik instead of other vendors? There are 2 reasons:
 
 * MikroTik configuration is really difficult to parse with TTP. You have to take into account all possible configurations of each line with/without each of the parameters.
 * At the same time, MikroTik configuration has the same structure as JSON may have. So, it's very easy to translate it using simple Python tools.
