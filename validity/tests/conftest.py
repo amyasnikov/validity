@@ -6,6 +6,7 @@ import pytest
 from dcim.models import Device, DeviceType, Manufacturer
 from django.contrib.contenttypes.models import ContentType
 from extras.models import CustomField
+from graphene_django.utils.testing import graphql_query
 from tenancy.models import Tenant
 
 import validity
@@ -82,3 +83,11 @@ def create_custom_fields(db):
         ]
     )
     cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])
+
+
+@pytest.fixture
+def gql_query(admin_client):
+    def func(*args, **kwargs):
+        return graphql_query(*args, **kwargs, client=admin_client, graphql_url="/graphql/")
+
+    return func
