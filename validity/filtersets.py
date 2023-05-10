@@ -104,3 +104,9 @@ class NameSetFilterSet(SearchMixin, NetBoxModelFilterSet):
         model = models.NameSet
         fields = ("id", "name", "_global", "repo_id", "file_path")
         search_fields = ("name", "description", "definitions")
+
+    @classmethod
+    def get_filters(cls):
+        filters = super().get_filters()
+        filters["global"] = filters.pop("_global")
+        return filters

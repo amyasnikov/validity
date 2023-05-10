@@ -89,6 +89,20 @@ class ReportFactory(DjangoModelFactory):
     class Meta:
         model = models.ComplianceReport
 
+    @factory.post_generation
+    def passed_results(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        for _ in range(extracted):
+            CompTestResultFactory(report=self, passed=True)
+
+    @factory.post_generation
+    def failed_results(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        for _ in range(extracted):
+            CompTestResultFactory(report=self, passed=False)
+
 
 class ManufacturerFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"manufacturer-{n}")
