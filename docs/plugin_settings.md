@@ -13,7 +13,7 @@ Validity has some settings which could be changed through [PLUGINS_CONFIG](https
 This variable should contain the path to folder where git repositories will be stored.
 
 !!! warning
-    The contents of the **git_folder** MUST be shared between NetBox **Web app** and the **RQ Worker** (the instance which executes custom scripts).
+    The contents of the **git_folder** MUST be shared between NetBox **Web app** and the **RQ Worker** (the instance that executes custom scripts).
     For instance, if you use docker to deploy NetBox, a shared **docker volume** MUST be bound to **git_folder**.
 
 
@@ -33,9 +33,9 @@ Compliance Test execution may cause a lot of DB queries, because Compliance Test
 
 *Type:* `int`
 
-How many [Reports][entities/results_and_reports.md#reports] should the system store.
+How many [Reports](entities/results_and_reports.md#reports) should the system store.
 
-If the system creates a new Report and the overall reports count exceeds *store_reports*, then the oldest exceeding  reports will be deleted.
+If the system creates a new Report and the overall reports count exceeds *store_reports*, then the oldest exceeding report(s) will be deleted.
 
 !!! note
     Test Results bound to the Report will be deleted with this Report.
