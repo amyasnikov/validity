@@ -36,12 +36,33 @@ class ComplianceSelectorForm(NetBoxModelForm):
     site_filter = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False)
     tenant_filter = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), required=False)
 
+    fieldsets = (
+        (_("Common"), ("name", "tags")),
+        (_("Dynamic Pairs"), ("dynamic_pairs", "dp_tag_prefix")),
+        (
+            _("Filters"),
+            (
+                "filter_operation",
+                "name_filter",
+                "tag_filter",
+                "manufacturer_filter",
+                "type_filter",
+                "platform_filter",
+                "status_filter",
+                "location_filter",
+                "site_filter",
+                "tenant_filter",
+            ),
+        ),
+    )
+
     class Meta:
         model = models.ComplianceSelector
         fields = (
             "name",
             "filter_operation",
             "dynamic_pairs",
+            "dp_tag_prefix",
             "name_filter",
             "tag_filter",
             "manufacturer_filter",
@@ -55,9 +76,10 @@ class ComplianceSelectorForm(NetBoxModelForm):
         )
 
     def clean(self):
-        super().clean()
+        result = super().clean()
         if not self.cleaned_data.keys() & models.ComplianceSelector.filters.keys():
             raise ValidationError(_("You must specify at least one filter"))
+        return result
 
 
 class GitRepoForm(NetBoxModelForm):

@@ -57,6 +57,7 @@ selector_fields = (
     "site_filter",
     "tenant_filter",
     "dynamic_pairs",
+    "dp_tag_prefix",
     "tests",
     "created",
     "last_updated",

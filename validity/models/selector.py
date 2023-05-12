@@ -12,7 +12,8 @@ from extras.models import Tag
 from tenancy.models import Tenant
 
 from validity.choices import BoolOperationChoices, DynamicPairsChoices
-from validity.config_compliance.dynamic_pairs import DynamicNamePairFilter, dpf_factory
+from validity.config_compliance.dynamic_pairs import DynamicPairNameFilter, dpf_factory
+from validity.utils.misc import reraise
 from .base import BaseModel
 from .device import VDevice
 
@@ -39,6 +40,7 @@ class ComplianceSelector(BaseModel):
     dynamic_pairs = models.CharField(
         _("Dynamic Pairs"), max_length=20, choices=DynamicPairsChoices.choices, default="NO"
     )
+    dp_tag_prefix = models.CharField(_("Dynamic Pair Tag Prefix"), max_length=255, blank=True)
 
     clone_fields = (
         "filter_operation",
@@ -73,13 +75,17 @@ class ComplianceSelector(BaseModel):
         return self.name
 
     def clean(self):
-        try:
+        with reraise(re.error, ValidationError, {"name_filter": _("Invalid regular expression")}):
             re.compile(self.name_filter)
-        except re.error:
-            raise ValidationError({"name_filter": "Invalid regular expression"})
         if self.dynamic_pairs == DynamicPairsChoices.NAME:
-            if not DynamicNamePairFilter.extract_first_group(self.name_filter):
-                raise ValidationError({"name_filter": "You must define regexp group if dynamic_pairs is set to NAME"})
+            if not DynamicPairNameFilter.extract_first_group(self.name_filter):
+                raise ValidationError(
+                    {"name_filter": _("You must define regexp group if dynamic_pairs is set to NAME")}
+                )
+        elif self.dynamic_pairs == DynamicPairsChoices.TAG and not self.dp_tag_prefix:
+            raise ValidationError({"dp_tag_prefix": _("You must define Tag Prefix if dynamic_pairs is set to TAG")})
+        if self.dp_tag_prefix and self.dynamic_pairs != DynamicPairsChoices.TAG:
+            raise ValidationError({"dp_tag_prefix": _("This field may be used only if dynamic_pairs is set to TAG")})
 
     def get_filter_operation_color(self):
         return BoolOperationChoices.colors.get(self.filter_operation)
