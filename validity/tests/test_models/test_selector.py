@@ -71,9 +71,8 @@ def test_devices(monkeypatch):
 @pytest.mark.django_db
 def test_dynamic_pairs(monkeypatch):
     monkeypatch.setattr(selector, "dpf_factory", dpf_mock := Mock(return_value=Mock(filter=Q(dpf_filter=True))))
-    monkeypatch.setattr(selector.ComplianceSelector, "filter", Q(s_filter=True))
     selector_instance = SelectorFactory()
     device = DeviceFactory()
     dp_filter = selector_instance.dynamic_pair_filter(device)
     dpf_mock.assert_called_once_with(selector_instance, device)
-    assert dp_filter == Q(s_filter=True) & Q(dpf_filter=True) & ~Q(pk=device.pk)
+    assert dp_filter == Q(dpf_filter=True) & ~Q(pk=device.pk)
