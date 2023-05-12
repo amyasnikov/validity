@@ -43,6 +43,7 @@ class BoolOperationChoices(TextChoices, metaclass=ColoredChoiceMeta):
 class DynamicPairsChoices(TextChoices, metaclass=ColoredChoiceMeta):
     NO = "NO", _("NO"), "red"
     NAME = "NAME", _("By name"), "blue"
+    TAG = "TAG", _("By tag"), "purple"
 
 
 class SeverityChoices(TextChoices, metaclass=ColoredChoiceMeta):

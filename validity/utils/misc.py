@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import Any
 
 from django.utils.html import format_html
 from netbox.context import current_request
@@ -26,14 +27,14 @@ def null_request():
 
 
 @contextmanager
-def reraise(catch: type[Exception] | tuple[type[Exception], ...], raise_: type[Exception], msg: str | None = None):
+def reraise(catch: type[Exception] | tuple[type[Exception], ...], raise_: type[Exception], msg: Any = None):
     try:
         yield
     except raise_:
         raise
     except catch as e:
-        if msg:
+        if msg and isinstance(msg, str):
             msg = msg.format(str(e))
-        else:
+        if not msg:
             msg = str(e)
         raise raise_(msg) from e

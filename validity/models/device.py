@@ -83,4 +83,4 @@ class VDevice(Device):
         filter_ = self.selector.dynamic_pair_filter(self)
         if filter_ is None:
             return
-        return type(self).objects.filter(filter_).exclude(pk=self.pk).first()
+        return type(self).objects.filter(filter_).first()

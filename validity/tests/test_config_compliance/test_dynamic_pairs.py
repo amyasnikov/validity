@@ -4,10 +4,22 @@ import pytest
 from django.db.models import Q
 from factories import DeviceFactory, SelectorFactory
 
-from validity.config_compliance.dynamic_pairs import DynamicNamePairFilter, NoneFilter, dpf_factory
+from validity.config_compliance.dynamic_pairs import (
+    DynamicPairNameFilter,
+    DynamicPairTagFilter,
+    NoneFilter,
+    dpf_factory,
+)
 
 
-@pytest.mark.parametrize("dynamic_pairs, filter_cls", [("NAME", DynamicNamePairFilter), ("NO", NoneFilter)])
+@pytest.mark.parametrize(
+    "dynamic_pairs, filter_cls",
+    [
+        ("NAME", DynamicPairNameFilter),
+        ("NO", NoneFilter),
+        ("TAG", DynamicPairTagFilter),
+    ],
+)
 def test_dpf_factory(dynamic_pairs, filter_cls):
     selector = Mock(dynamic_pairs=dynamic_pairs)
     obj = dpf_factory(selector=selector, device=Mock())
@@ -30,7 +42,7 @@ def test_dpf_factory(dynamic_pairs, filter_cls):
 def test_name_filter(name_filter, device_name, dp_filter):
     device = DeviceFactory(name=device_name)
     selector = SelectorFactory(name_filter=name_filter)
-    filter_ = DynamicNamePairFilter(selector, device)
+    filter_ = DynamicPairNameFilter(selector, device)
     if dp_filter:
         assert filter_.filter == Q(name__regex=dp_filter)
     else:

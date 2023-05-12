@@ -30,8 +30,7 @@ class NoneFilter(DynamicPairFilter):
         return
 
 
-@dataclass
-class DynamicNamePairFilter(DynamicPairFilter):
+class DynamicPairNameFilter(DynamicPairFilter):
     @staticmethod
     def extract_first_group(regex: str) -> str | None:
         open_bracket_index = -1
@@ -67,7 +66,17 @@ class DynamicNamePairFilter(DynamicPairFilter):
         return Q(name__regex=filter_string)
 
 
-dynamic_pair_filters = {DynamicPairsChoices.NAME: DynamicNamePairFilter}
+class DynamicPairTagFilter(DynamicPairFilter):
+    @property
+    def filter(self) -> Q | None:
+        tags = self.device.tags.filter(slug__startswith=self.selector.dp_tag_prefix)
+        return Q(tags__in=tags)
+
+
+dynamic_pair_filters = {
+    DynamicPairsChoices.NAME: DynamicPairNameFilter,
+    DynamicPairsChoices.TAG: DynamicPairTagFilter,
+}
 
 
 def dpf_factory(selector: "ComplianceSelector", device: Device) -> DynamicPairFilter:

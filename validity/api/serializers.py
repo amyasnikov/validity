@@ -67,6 +67,7 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
             "site_filter",
             "tenant_filter",
             "dynamic_pairs",
+            "dp_tag_prefix",
             "tags",
             "custom_fields",
             "created",
