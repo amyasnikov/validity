@@ -2,7 +2,8 @@ from unittest.mock import Mock
 
 import pytest
 from django.db.models import Q
-from factories import DeviceFactory, SelectorFactory
+from extras.models import Tag
+from factories import DeviceFactory, SelectorFactory, TagFactory
 
 from validity.config_compliance.dynamic_pairs import (
     DynamicPairNameFilter,
@@ -47,3 +48,17 @@ def test_name_filter(name_filter, device_name, dp_filter):
         assert filter_.filter == Q(name__regex=dp_filter)
     else:
         assert filter_.filter is None
+
+
+@pytest.mark.django_db
+def test_tag_filter():
+    tags = [
+        TagFactory(name="tag-1_", slug="tag-1"),
+        TagFactory(name="tag-2_", slug="tag-2"),
+        TagFactory(name="sometag_", slug="sometag"),
+    ]
+    selector = SelectorFactory(dp_tag_prefix="tag-", name_filter=".*")
+    device = DeviceFactory()
+    device.tags.set([tags[0], tags[2]])
+    filter_ = DynamicPairTagFilter(selector, device).filter
+    assert repr(filter_) == repr(Q(tags__in=Tag.objects.filter(slug="tag-1")))

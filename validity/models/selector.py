@@ -117,4 +117,4 @@ class ComplianceSelector(BaseModel):
 
     def dynamic_pair_filter(self, device: Device) -> models.Q | None:
         if dp_filter := dpf_factory(self, device).filter:
-            return self.filter & dp_filter & ~models.Q(pk=device.pk)
+            return dp_filter & ~models.Q(pk=device.pk)
