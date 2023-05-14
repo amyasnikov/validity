@@ -66,10 +66,13 @@
       <div class="card">
         <h5 class="card-header">Bound Devices</h5>
         <div class="card-body">
-          <div class="table-responsive">
-            {% render_table device_table 'inc/table.html' %}
+          <div class="pt-0 mb-3 col col-md-3">
+            {% include 'validity/inc/search_form.html' with model='Device' %}
           </div>
-          {%include 'inc/paginator.html' with paginator=device_table.paginator page=device_table.page%}
+          <div class="table-responsive">
+            {% render_table table 'inc/table.html' %}
+          </div>
+          {%include 'inc/paginator.html' with paginator=table.paginator page=table.page%}
         </div>
       </div>
     </div>

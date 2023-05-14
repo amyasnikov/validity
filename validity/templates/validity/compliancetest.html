@@ -44,10 +44,13 @@
       <div class="card">
         <h5 class="card-header">Bound Namesets</h5>
         <div class="card-body">
-          <div class="table-responsive">
-            {% render_table nameset_table 'inc/table.html' %}
+          <div class="pt-0 mb-3 col col-md-3">
+            {% include 'validity/inc/search_form.html' with model='NameSet' %}
           </div>
-          {%include 'inc/paginator.html' with paginator=nameset_table.paginator page=nameset_table.page%}
+          <div class="table-responsive">
+            {% render_table table 'inc/table.html' %}
+          </div>
+          {%include 'inc/paginator.html' with paginator=table.paginator page=table.page%}
         </div>
       </div>
     </div>
