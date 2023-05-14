@@ -3,8 +3,7 @@ from netbox.views import generic
 from utilities.views import register_model_view
 
 from validity import filtersets, forms, models, tables
-from .base import TableMixin
-from .test_result import TestResultBaseView
+from .base import TableMixin, TestResultBaseView
 
 
 class ComplianceTestListView(generic.ObjectListView):
