@@ -1,4 +1,3 @@
-from dcim.tables import DeviceTable
 from netbox.views import generic
 from utilities.views import register_model_view
 
@@ -24,10 +23,14 @@ class ComplianceSelectorView(generic.ObjectView):
         "tenant_filter",
         "tags",
     )
+    max_paginate_by = 10
+    page_orphans = 1
 
     def get_extra_context(self, request, instance):
-        table = DeviceTable(instance.devices.all())
-        table.configure(request)
+        table = tables.DynamicPairsTable(instance.devices.all())
+        if instance.dynamic_pairs == "NO":
+            table.exclude += ("dynamic_pair",)
+        table.configure(request, max_paginate_by=self.max_paginate_by, orphans=self.page_orphans)
         return {"device_table": table}
 
 

@@ -1,10 +1,15 @@
+from functools import partial
+
+from dcim.models import Device
+from dcim.tables import DeviceTable
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django_tables2 import Column, Table
+from django_tables2 import Column, RequestConfig, Table
 from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
+from utilities.paginator import EnhancedPaginator
 
 from validity import models
 from validity.utils.misc import colorful_percentage
@@ -176,3 +181,33 @@ class ComplianceReportTable(NetBoxTable):
 
     def render_high_stats(self, record):
         return self._render_stats("high", record)
+
+
+class DynamicPairsTable(DeviceTable):
+    dynamic_pair = Column(verbose_name="Dynamic Pair", linkify=True)
+
+    class Meta(DeviceTable.Meta):
+        model = Device
+        fields = DeviceTable.Meta.fields + ("dynamic_pair",)
+        default_columns = DeviceTable.Meta.default_columns + ("dynamic_pair",)
+
+    def get_paginate_by(self, request, max_paginate_by) -> int:
+        try:
+            per_page = int(request.GET["per_page"])
+            if per_page > max_paginate_by:
+                per_page = max_paginate_by
+            return per_page
+        except (KeyError, ValueError):
+            return max_paginate_by // 2
+
+    def configure(self, request, max_paginate_by=None, orphans=None):
+        def get_page_lengths(self):
+            return (max_paginate_by // 2, max_paginate_by)
+
+        super().configure(request)
+        if max_paginate_by and orphans:
+            paginator_class = type("CustomPaginator", (EnhancedPaginator,), {"get_page_lengths": get_page_lengths})
+            paginator_class = partial(paginator_class, orphans=orphans)
+            paginate_by = self.get_paginate_by(request, max_paginate_by)
+            paginate = {"paginator_class": paginator_class, "per_page": paginate_by}
+            RequestConfig(request, paginate).configure(self)

@@ -132,7 +132,6 @@ class RunTestsScript(SyncReposMixin, Script):
             qs = qs.filter(pk__in=device_ids)
         for device in qs:
             try:
-                device.selector = selector
                 yield from self.run_tests_for_device(selector.tests.all(), device, report)
             except DeviceConfigError as e:
                 self.log_failure(f"`{e}`, ignoring all tests for *{device}*")

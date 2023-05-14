@@ -59,6 +59,7 @@ class TestResultBaseView(SingleTableMixin, FilterView):
     filterset_class = filtersets.ComplianceTestResultFilterSet
     filter_form_class = forms.TestResultFilterForm
     table_class = tables.ComplianceResultTable
+    permission_required = "validity.view_compliancetestresult."
 
     parent_model: type[Model]
     result_relation: str

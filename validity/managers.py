@@ -123,6 +123,26 @@ def annotate_json(qs: _QS, field: str, annotate_model: type["BaseModel"]) -> _QS
 
 
 class VDeviceQS(RestrictedQuerySet):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.selector = None
+
+    def _clone(self, *args, **kwargs):
+        c = super()._clone(*args, **kwargs)
+        c.selector = self.selector
+        return c
+
+    def set_selector(self, selector):
+        self.selector = selector
+        return self
+
+    def _fetch_all(self):
+        super()._fetch_all()
+        if self.selector:
+            for item in self._result_cache:
+                if isinstance(item, self.model):
+                    item.selector = self.selector
+
     def annotate_git_repo_id(self: _QS) -> _QS:
         from validity.models import GitRepo
 
