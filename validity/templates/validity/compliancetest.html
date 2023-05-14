@@ -45,7 +45,7 @@
         <h5 class="card-header">Bound Namesets</h5>
         <div class="card-body">
           <div class="table-responsive">
-            {% render_table nameset_table %}
+            {% render_table nameset_table 'inc/table.html' %}
           </div>
           {%include 'inc/paginator.html' with paginator=nameset_table.paginator page=nameset_table.page%}
         </div>
