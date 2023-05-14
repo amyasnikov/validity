@@ -41,7 +41,7 @@
         <h5 class="card-header">Bound Devices</h5>
         <div class="card-body">
           <div class="table-responsive">
-            {% render_table device_table %}
+            {% render_table device_table 'inc/table.html' %}
           </div>
           {%include 'inc/paginator.html' with paginator=device_table.paginator page=device_table.page%}
         </div>
