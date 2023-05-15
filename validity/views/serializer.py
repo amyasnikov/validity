@@ -1,8 +1,10 @@
+from dcim.filtersets import DeviceFilterSet
 from dcim.tables import DeviceTable
 from netbox.views import generic
 from utilities.views import register_model_view
 
 from validity import filtersets, forms, models, tables
+from .base import TableMixin
 
 
 class ConfigSerializerListView(generic.ObjectListView):
@@ -13,13 +15,11 @@ class ConfigSerializerListView(generic.ObjectListView):
 
 
 @register_model_view(models.ConfigSerializer)
-class ConfigSerializerView(generic.ObjectView):
+class ConfigSerializerView(TableMixin, generic.ObjectView):
     queryset = models.ConfigSerializer.objects.all()
-
-    def get_extra_context(self, request, instance):
-        table = DeviceTable(instance.bound_devices())
-        table.configure(request)
-        return {"device_table": table}
+    object_table_field = "bound_devices"
+    table = DeviceTable
+    filterset = DeviceFilterSet
 
 
 @register_model_view(models.ConfigSerializer, "delete")

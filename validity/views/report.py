@@ -5,7 +5,7 @@ from utilities.views import register_model_view
 
 from validity import forms, models, tables
 from validity.choices import DeviceGroupByChoices
-from .test_result import TestResultBaseView
+from .base import TestResultBaseView
 
 
 class ComplianceReportListView(generic.ObjectListView):

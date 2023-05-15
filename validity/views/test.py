@@ -3,7 +3,7 @@ from netbox.views import generic
 from utilities.views import register_model_view
 
 from validity import filtersets, forms, models, tables
-from .test_result import TestResultBaseView
+from .base import TableMixin, TestResultBaseView
 
 
 class ComplianceTestListView(generic.ObjectListView):
@@ -14,14 +14,13 @@ class ComplianceTestListView(generic.ObjectListView):
 
 
 @register_model_view(models.ComplianceTest)
-class ComplianceTestView(generic.ObjectView):
+class ComplianceTestView(TableMixin, generic.ObjectView):
     queryset = models.ComplianceTest.objects.prefetch_related("namesets")
+    table = tables.NameSetTable
+    filterset = filtersets.NameSetFilterSet
 
-    def get_extra_context(self, request, instance):
-        global_namesets = models.NameSet.objects.filter(_global=True)
-        table = tables.NameSetTable(instance.namesets.all() | global_namesets)
-        table.configure(request)
-        return {"nameset_table": table}
+    def get_table_qs(self, request, instance):
+        return models.NameSet.objects.filter(Q(_global=True) | Q(tests__pk=instance.pk))
 
 
 @register_model_view(models.ComplianceTest, "results")

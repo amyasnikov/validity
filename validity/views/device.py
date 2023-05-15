@@ -6,7 +6,7 @@ from utilities.views import ViewTab, register_model_view
 
 from validity.config_compliance.exceptions import DeviceConfigError
 from validity.models import VDevice
-from .test_result import TestResultBaseView
+from .base import TestResultBaseView
 
 
 logger = logging.getLogger(__name__)

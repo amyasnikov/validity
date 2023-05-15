@@ -42,6 +42,7 @@ class ConfigSerializer(GitRepoLinkMixin, BaseModel):
         if self.extraction_method == "TTP" and not (self.ttp_template or self.repo):
             raise ValidationError(_("TTP Template must be defined if extraction method is TTP"))
 
+    @property
     def bound_devices(self) -> models.QuerySet[Device]:
         from .device import VDevice
 
