@@ -61,11 +61,11 @@ def test_multi_filter():
 
 @pytest.mark.django_db
 def test_devices(monkeypatch):
-    monkeypatch.setattr(VDevice.objects, "filter", device_mock := Mock())
+    monkeypatch.setattr(VDevice.objects, "filter", filter_mock := Mock(name="filter"))
     monkeypatch.setattr(selector.ComplianceSelector, "filter", "filter_value")
     model = SelectorFactory()
-    model.devices
-    device_mock.assert_called_once_with("filter_value")
+    assert model.devices._extract_mock_name() == "filter().set_selector()"
+    filter_mock.assert_called_once_with("filter_value")
 
 
 @pytest.mark.django_db

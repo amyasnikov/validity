@@ -113,7 +113,7 @@ class ComplianceSelector(BaseModel):
 
     @property
     def devices(self) -> models.QuerySet:
-        return VDevice.objects.filter(self.filter)
+        return VDevice.objects.filter(self.filter).set_selector(self)
 
     def dynamic_pair_filter(self, device: Device) -> models.Q | None:
         if dp_filter := dpf_factory(self, device).filter:

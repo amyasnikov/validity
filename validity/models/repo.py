@@ -76,6 +76,7 @@ class GitRepo(BaseModel):
             self.name = self.git_url.split("://")[-1]
         return super().save(**kwargs)
 
+    @property
     def bound_devices(self) -> models.QuerySet[Device]:
         from .device import VDevice
 
