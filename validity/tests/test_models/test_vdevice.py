@@ -1,6 +1,6 @@
 import pytest
 from django.db import connection
-from factories import DeviceFactory, GitRepoFactory, SerializerDBFactory, TenantFactory
+from factories import DeviceFactory, GitRepoFactory, SelectorFactory, SerializerDBFactory, TenantFactory
 
 from validity.models import VDevice
 
@@ -71,3 +71,18 @@ def test_annotated_serializer(setup_device_and_serializer):
     queries_count = len(connection.queries)
     assert vdevice.serializer == serializer
     assert len(connection.queries) == queries_count
+
+
+@pytest.mark.parametrize("qs", [VDevice.objects.all(), VDevice.objects.filter(name__in=["d1", "d2"])])
+@pytest.mark.django_db
+def test_set_selector(qs, subtests):
+    for name in ["d1", "d2", "d3"]:
+        DeviceFactory(name=name)
+    selector = SelectorFactory()
+    some_model = qs.first()
+    assert some_model.selector is None
+    qs = qs.set_selector(selector)
+    for i, queryset in enumerate([qs, qs.select_related(), qs.filter(name="d1")]):
+        with subtests.test(id=f"qs-{i}"):
+            for model in queryset:
+                assert model.selector == selector

@@ -147,7 +147,6 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
     assert script.run_tests_for_device.call_count == len(devices)
     script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[0], report)
     script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[1], report)
-    assert devices[0].selector == selector
 
 
 @pytest.mark.django_db
