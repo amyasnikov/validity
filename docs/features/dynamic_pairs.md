@@ -51,11 +51,31 @@ Consider these devices:
 
 If you want to make pairs asw01 - asw02, asw03 - asw04, asw05 - asw06 you can't use **By Name** mechanism.
 
+This is where **By tag** comes to scene
 
 #### By Tag
 
-!!! warning
-    This feature is not implemented yet. It will be available in one of the upcoming releases.
+This way is more explicit comparing to the **By name**.
+You have to tie each pair of devices with its own unique **Tag** and then specify **tag prefix** value inside the selector.
+
+Consider the example:
+
+* asw01 - asw02 pair
+* asw03 - asw04 pair
+
+To make dynamic pairs we have to:
+* create **dp-pair1** tag and bind it to both asw01 and asw02
+* create **dp-pair2** tag and bind it to both asw03 and asw04
+* set **Dynamic Pair Tag Prefix** value to **dp-**. This is how selector understands which tags to consider for dynamic pairs bindings.
+
+!!! note
+    Tag prefix is just a condition to select the tags (device may have a lot of tags and most of them should not be used for dynamic pairs). You can use any value you want but **dp-** is a good default approach.
+
+
+### How to check dynamic pairs
+Dynamic pair values can be checked via web GUI at selector detail page, **Bound Devices** table.
+
+Moreover, each [Test Result](../entities/results_and_reports.md) outputs the dynamic pair value.
 
 
 ## How to use dynamic pairs
