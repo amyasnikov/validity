@@ -48,3 +48,7 @@ Read the full documentation on [validity.readthedocs.io](https://validity.readth
 The short video about first steps with Validity:
 
 [![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)
+
+## Contributing
+
+Feel free to ask a [Question](https://github.com/amyasnikov/validity/discussions), report an [Issue](https://github.com/amyasnikov/validity/issues) or even make a [PR](CONTRIBUTING.md). Read more about contribution in the [CONTRIBUTING](CONTRIBUTING.md) guide.
