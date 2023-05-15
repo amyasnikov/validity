@@ -4,7 +4,7 @@
 {% load render_table from django_tables2 %}
 {% block content %}
   <div class="row mb-3">
-    <div class="col col-md-6">
+    <div class="col col-md-5">
       <div class="card">
         <h5 class="card-header">Compliance Selector</h5>
         <div class="card-body">
@@ -12,46 +12,6 @@
             <tr>
               <th scope="row">Name</th>
               <td>{{ object.name }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Multi-filter operation</th>
-              <td>{{ object | colored_choice:"filter_operation" }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Device Name Filter</th>
-              <td><code>{{ object.name_filter | placeholder }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Tag Filter</th>
-              <td><code>{{ object.tag_filter.all | linkify_list }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Manufacturer Filter</th>
-              <td><code>{{ object.manufacturer_filter.all | linkify_list }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Device Type Filter</th>
-              <td><code>{{ object.type_filter.all | linkify_list }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Platform Filter</th>
-              <td><code>{{ object.platform_filter.all | linkify_list }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Status Filter</th>
-              <td><code>{{ object | colored_choice:"status_filter" | placeholder }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Location Filter</th>
-              <td><code>{{ object.location_filter.all | linkify_list }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Site Filter</th>
-              <td><code>{{ object.site_filter.all | linkify_list }}</code></td>
-            </tr>
-            <tr>
-              <th scope="row">Tenant Filter</th>
-              <td><code>{{ object.tenant_filter.all | linkify_list }}</code></td>
             </tr>
             <tr>
               <th scope="row">Dynamic Pairs</th>
@@ -64,9 +24,56 @@
           </table>
         </div>
       </div>
-    </div>
-    <div class="col col-md-6">
       {% include 'inc/panels/tags.html' %}
+    </div>
+    <div class="col col-md-7">
+      <div class="card">
+        <h5 class="card-header">Filters</h5>
+        <div class="card-body">
+          <table class="table table-hover attr-table">
+            <tr>
+              <th scope="row">Multi-filter operation</th>
+              <td>{{ object | colored_choice:"filter_operation" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Device Name Filter</th>
+              <td><code>{{ object.name_filter | placeholder }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Device Type Filter</th>
+              <td><code>{{ object.type_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Location Filter</th>
+              <td><code>{{ object.location_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Manufacturer Filter</th>
+              <td><code>{{ object.manufacturer_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Platform Filter</th>
+              <td><code>{{ object.platform_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Site Filter</th>
+              <td><code>{{ object.site_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Status Filter</th>
+              <td><code>{{ object | colored_choice:"status_filter" | placeholder }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Tag Filter</th>
+              <td><code>{{ object.tag_filter.all | linkify_list }}</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Tenant Filter</th>
+              <td><code>{{ object.tenant_filter.all | linkify_list }}</code></td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
   <div class="row">
