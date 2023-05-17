@@ -1,13 +1,17 @@
-# Validity: vendor-agnostic configuration compliance
-
-![CI](https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg)
-![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/amyasnikov/9e518ae8babd18b7edd8ee5aad58146b/raw/cov.json)
-![Python version](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![NetBox version](https://img.shields.io/badge/NetBox-3.4|3.5-blue.svg)
+<div align="center">
+    <a target="_blank" href="https://validity.readthedocs.io"><img src="https://raw.githubusercontent.com/amyasnikov/validity/master/docs/validity_logo.png" alt="Click to view Validity docs" width="450"/></a>
+    <h1>Validity: vendor-agnostic configuration compliance</h1>
+    <p>
+        <img src="https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg" alt="CI">
+        <img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/amyasnikov/9e518ae8babd18b7edd8ee5aad58146b/raw/cov.json" alt="Coverage">
+        <img src="https://img.shields.io/badge/Python-3.10+-blue.svg" alt="Python version">
+        <img src="https://img.shields.io/badge/NetBox-3.4|3.5-blue.svg" alt="NetBox version">
+    </p>
+</div>
 
 <!--mkdocs-start-->
 ## What?
-Validity is the [NetBox](https://netbox.dev) plugin to deal with configuration compliance. You define compliance tests and Validity checks network device configuration files against these tests. As a result you can find out which devices are provisioned properly (according to the tests you have written) and which are not.
+Validity is the [NetBox](https://netbox.dev) plugin to write "auto tests" for configuration. You define compliance tests and Validity checks network device configuration files against these tests. As a result you can find out which devices are provisioned properly (according to the tests you have written) and which are not.
 
 To use validity you need:
 
@@ -27,7 +31,7 @@ Configuration compliance is one of the very common problems that arises in every
 Validity completely separates compliance test code from all other things like config serialization. This one encourages you to write short, clean and understandable compliance tests together with the mandatory description.
 
 
-## Key features
+## Key Features
 * Truly vendor-agnostic. You can easily integrate any vendor config format using [TTP](https://github.com/dmulyalin/ttp)
 * Writing compliance tests using Python expressions and [JQ](https://stedolan.github.io/jq/manual/)
 * Flexible selector system to apply the tests only to a specific subset of devices
@@ -37,6 +41,14 @@ Validity completely separates compliance test code from all other things like co
 * **Reports and webhooks**. After execution of some bunch of tests you can get the report with passed/failed statistics grouped by some Location/Site/Manufacturer/etc. Moreover, you can provision the webhook to notify an external system when compliance report is generated.
 * **Test extensibility**. You can define your own python functions or classes to reuse the code between multiple compliance tests.
 * Possibility to store all heavy text-based entities (like compliance tests or TTP Templates) in a **Git repository**
+
+## Download and Install
+
+You can download Validity via **pip**
+```
+pip install netbox-validity
+```
+After that follow the [installation guide](https://validity.readthedocs.io/en/latest/installation/) to correctly add Validity to your NetBox.
 <!--mkdocs-end-->
 
 ## Documentation
