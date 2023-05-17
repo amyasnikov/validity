@@ -5,9 +5,9 @@ Validity is the [NetBox](https://netbox.dev/) plugin. So, before installing vali
 
 ## System Requirements
 
-| **Python** | **NetBox** |
-|------------|------------|
-| >=3.10     | 3.4 | 3.5  |
+| **Python** | **NetBox**      |
+|------------|-----------------|
+| >=3.10     | 3.4 &#124; 3.5  |
 
 ## Installation steps
 Once you have installed NetBox, you should follow these steps
