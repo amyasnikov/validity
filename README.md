@@ -1,5 +1,5 @@
 <div align="center">
-    <a target="_blank" href="https://validity.readthedocs.io"><img src="https://raw.githubusercontent.com/amyasnikov/validity/master/docs/validity_logo.png" alt="Click to view Validity docs" width="450"/></a>
+    <a href="https://validity.readthedocs.io"><img src="https://raw.githubusercontent.com/amyasnikov/validity/master/docs/validity_logo.png" alt="Click to view Validity docs"/></a>
     <h1>Validity: vendor-agnostic configuration compliance</h1>
     <p>
         <img src="https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg" alt="CI">
