@@ -28,24 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        netbox_version: [v3.4.10, v3.5.1]
+        netbox_version: [v3.4.10, v3.5.2]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Define .env
-        run: >-
-          cp development/.env.example development/.env
-          && sed -i "s/NETBOX_VERSION=develop/NETBOX_VERSION=${{ matrix.netbox_version }}/" development/.env
-
-      - name: docker version
-        run: docker version && docker compose version
-
-      - name: Build netbox
-        run: cd development && docker compose build
-
-      - name: Check missed migrations
-        run: cd development && docker compose run netbox sh -c "./manage.py makemigrations --check --dry-run"
+      - name: Build NetBox
+        uses: ./.github/actions/build_netbox.yml
+        with:
+          netbox_version: ${{ matrix.netbox_version }}
 
       - name: Run Tests
         id: run_tests
@@ -68,3 +59,24 @@ jobs:
           valColorRange: ${{ fromJSON(steps.run_tests.outputs.cov) }}
           maxColorRange: 90
           minColorRange: 50
+
+
+  test_migrations:
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          netbox_version: [v3.4.10, v3.5.2]
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+
+        - name: Build NetBox
+          uses: ./.github/actions/build_netbox.yml
+          with:
+            netbox_version: ${{ matrix.netbox_version }}
+
+        - name: Check missed migrations
+          run: cd development && docker compose run netbox sh -c "./manage.py makemigrations --check --dry-run"
+
+        - name: Check migrations run
+          run: cd development && docker compose run netbox sh -c "./manage.py migrate"
