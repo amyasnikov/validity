@@ -14,6 +14,9 @@ class Command(BaseCommand):
     script_prefix = "validity_"
 
     def handle(self, *args, **options):
+        if (ver := validity.config.netbox_version) >= 3.5:
+            self.stdout.write(f"You do not need this command for NetBox {ver}, ignoring")
+            return
         validity_scripts = Path(validity.__file__).parent.absolute() / self.plugin_scripts_dir
         self.symlink_scripts(Path(validity_scripts), Path(settings.SCRIPTS_ROOT))
 
