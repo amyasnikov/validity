@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build NetBox
-        uses: ./.github/actions/build_netbox.yml
+        uses: ./.github/build_netbox
         with:
           netbox_version: ${{ matrix.netbox_version }}
 
@@ -71,7 +71,7 @@ jobs:
           uses: actions/checkout@v3
 
         - name: Build NetBox
-          uses: ./.github/actions/build_netbox.yml
+          uses: ./.github/build_netbox
           with:
             netbox_version: ${{ matrix.netbox_version }}
 
