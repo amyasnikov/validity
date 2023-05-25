@@ -4,7 +4,10 @@ from pathlib import Path
 
 from django.conf import settings as django_settings
 from extras.plugins import PluginConfig
+from netbox.settings import VERSION
 from pydantic import BaseModel, DirectoryPath, Field
+
+from validity.utils.misc import NetboxVersion
 
 
 logger = logging.getLogger(__name__)
@@ -20,6 +23,9 @@ class NetBoxValidityConfig(PluginConfig):
     base_url = "validity"
     django_apps = ["bootstrap5"]
     min_version = "3.4.0"
+
+    # custom field
+    netbox_version = NetboxVersion(VERSION)
 
     def ready(self):
         try:

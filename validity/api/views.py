@@ -1,18 +1,17 @@
 from http import HTTPStatus
 
 from netbox.api.viewsets import NetBoxModelViewSet
-from netbox.settings import VERSION
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from validity import filtersets, models
+from validity import config, filtersets, models
 from validity.config_compliance.device_config import DeviceConfig
 from ..config_compliance.exceptions import DeviceConfigError
 from . import serializers
 
 
-if VERSION.split(".") < ["3", "5"]:
+if config.netbox_version < "3.5.0":
     from drf_yasg.utils import swagger_auto_schema as extend_schema
 else:
     from drf_spectacular.utils import extend_schema
