@@ -1,8 +1,9 @@
+import operator
 from contextlib import nullcontext
 
 import pytest
 
-from validity.utils.misc import reraise
+from validity.utils.misc import NetboxVersion, reraise
 
 
 class Error1(Exception):
@@ -31,3 +32,17 @@ def test_reraise(internal_exc, external_exc, msg):
         with reraise(type(internal_exc), type(external_exc), msg):
             if internal_exc is not None:
                 raise internal_exc
+
+
+@pytest.mark.parametrize(
+    "obj1, obj2, compare_results",
+    [
+        (NetboxVersion("3.5"), 3.5, [False, True, True, True, False]),
+        (NetboxVersion("3.5.0"), NetboxVersion(3.5), [False, True, True, True, False]),
+        (NetboxVersion(3), "1.5.2", [False, False, False, True, True]),
+    ],
+)
+def test_netbox_version(obj1, obj2, compare_results):
+    operators = [operator.lt, operator.le, operator.eq, operator.ge, operator.gt]
+    for op, expected_result in zip(operators, compare_results):
+        assert op(obj1, obj2) is expected_result
