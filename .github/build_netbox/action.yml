@@ -10,9 +10,12 @@ runs:
     run: >-
       cp development/.env.example development/.env
       && sed -i "s/NETBOX_VERSION=develop/NETBOX_VERSION=${{ inputs.netbox_version }}/" development/.env
+    shell: bash
 
   - name: docker version
     run: docker version && docker compose version
+    shell: bash
 
   - name: Build netbox
     run: cd development && docker compose build
+    shell: bash
