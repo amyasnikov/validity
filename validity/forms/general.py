@@ -1,6 +1,5 @@
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import PasswordInput, ValidationError
-from django.forms.fields import CharField
+from django.forms import CharField, PasswordInput, Textarea, ValidationError
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
@@ -13,6 +12,7 @@ from validity import models
 class ComplianceTestForm(NetBoxModelForm):
     selectors = DynamicModelMultipleChoiceField(queryset=models.ComplianceSelector.objects.all())
     repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
+    expression = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
         (_("Compliance Test"), ("name", "severity", "description", "selectors", "tags")),
@@ -112,6 +112,7 @@ class GitRepoForm(NetBoxModelForm):
 
 class ConfigSerializerForm(NetBoxModelForm):
     repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
+    ttp_template = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
         (_("Config Serializer"), ("name", "extraction_method", "tags")),
@@ -127,6 +128,7 @@ class ConfigSerializerForm(NetBoxModelForm):
 class NameSetForm(NetBoxModelForm):
     tests = DynamicModelMultipleChoiceField(queryset=models.ComplianceTest.objects.all(), required=False)
     repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
+    definitions = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
         (_("Name Set"), ("name", "description", "_global", "tests", "tags")),
