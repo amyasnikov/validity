@@ -1,6 +1,11 @@
 {% extends 'generic/object.html' %}
 {% load validity %}
 {% load render_table from django_tables2 %}
+{% block head %}
+  {{ block.super }}
+  {% include "validity/inc/prism.html" with header=True only %}
+{% endblock head %}
+
 {% block content %}
   <div class="row">
     <div class="col col-md-4">
@@ -34,7 +39,7 @@
       <div class="card mb-3">
         <h5 class="card-header">Expression [source: {{ object | data_source }}]</h5>
         <div class="card-body">
-          <pre>{{ object.effective_expression }}</pre>
+          <pre><code class="language-python">{{ object.effective_expression }}</code></pre>
         </div>
       </div>
     </div>
@@ -56,3 +61,8 @@
     </div>
   </div>
 {% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+{% include "validity/inc/prism.html" %}
+{% endblock %}

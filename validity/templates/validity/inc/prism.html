@@ -1,0 +1,11 @@
+{% load static %}
+{% if header|default:False %}
+<link id="prism-theme" href="{% static 'validity/prism-light.css' %}" rel="stylesheet" />
+{% else %}
+<script>
+    if (document.documentElement.getAttribute("data-netbox-color-mode") === "dark") {
+      document.getElementById("prism-theme").href="{% static 'validity/prism-dark.css' %}";
+    }
+  </script>
+  <script src="{% static 'validity/prism.js' %}"></script>
+{% endif %}

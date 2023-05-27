@@ -108,7 +108,7 @@ class ConfigSerializerTable(NetBoxTable):
 
 class ExplanationColumn(Column):
     def render(self, value):
-        return format_html("<code>{}</code>", value)
+        return format_html('<code class="language-python">{}</code>', value)
 
 
 class ExplanationTable(Table):
