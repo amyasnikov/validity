@@ -29,15 +29,6 @@ if TYPE_CHECKING:
     from validity.models.base import BaseModel
 
 
-class JSONObjMixin:
-    def as_json(self):
-        return self.values(json=JSONObject(**{f: f for f in self.model.json_fields}))
-
-
-class GitRepoQS(JSONObjMixin, RestrictedQuerySet):
-    pass
-
-
 class ComplianceTestQS(RestrictedQuerySet):
     def pf_latest_results(self) -> "ComplianceTestQS":
         from validity.models import ComplianceTestResult
@@ -80,6 +71,11 @@ class ComplianceTestResultQS(RestrictedQuerySet):
         return self.filter(report=None).last_more_than(settings.store_last_results).delete()
 
 
+class JSONObjMixin:
+    def as_json(self):
+        return self.values(json=JSONObject(**{f: f for f in self.model.json_fields}))
+
+
 class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
     pass
 
@@ -94,6 +90,10 @@ def percentage(field1: str, field2: str) -> Case:
         default=100.0,
         output_field=FloatField(),
     )
+
+
+class VDataFileQS(JSONObjMixin, RestrictedQuerySet):
+    pass
 
 
 class ComplianceReportQS(RestrictedQuerySet):
@@ -158,15 +158,15 @@ class VDeviceQS(RestrictedQuerySet):
                 if isinstance(item, self.model):
                     item.selector = self.selector
 
-    def annotate_git_repo_id(self: _QS) -> _QS:
-        from validity.models import GitRepo
+    def annotate_datasource_id(self: _QS) -> _QS:
+        from validity.models import VDataSource
 
         return self.annotate(
-            bound_repo=Cast(KeyTextTransform("repo", "tenant__custom_field_data"), BigIntegerField())
+            bound_source=Cast(KeyTextTransform("config_data_source", "tenant__custom_field_data"), BigIntegerField())
         ).annotate(
-            repo_id=Case(
-                When(bound_repo__isnull=False, then=F("bound_repo")),
-                default=GitRepo.objects.filter(default=True).values("id")[:1],
+            datasource_id=Case(
+                When(bound_source__isnull=False, then=F("bound_source")),
+                default=VDataSource.objects.filter(custom_field_data__device_config_default=True).values("id")[:1],
                 output_field=BigIntegerField(),
             )
         )
@@ -187,18 +187,12 @@ class VDeviceQS(RestrictedQuerySet):
             )
         )
 
-    def annotate_json_serializer_repo(self: _QS) -> _QS:
-        from validity.models import GitRepo
+    def annotate_serializer_data_file(self: _QS) -> _QS:
+        from validity.models import VDataFile
 
         return self.annotate(
-            json_serializer_repo=GitRepo.objects.filter(configserializer__pk=OuterRef("serializer_id")).as_json()
+            serializer_data=VDataFile.objects.filter(configserializer__pk=OuterRef("serializer_id")).values('data')[:1]
         )
-
-    def annotate_json_repo(self: _QS) -> _QS:
-        from validity.models import GitRepo
-
-        qs = self.annotate_git_repo_id()
-        return annotate_json(qs, "repo", GitRepo)
 
     def annotate_json_serializer(self: _QS) -> _QS:
         from validity.models import ConfigSerializer
@@ -212,9 +206,6 @@ class VDeviceQS(RestrictedQuerySet):
         for values in qs:
             result[values[field]] = values["cnt"]
         return result
-
-    def count_per_repo(self) -> dict[int | None, int]:
-        return self._count_per_something("repo_id", "annotate_git_repo_id")
 
     def count_per_serializer(self) -> dict[int | None, int]:
         return self._count_per_something("serializer_id", "annotate_serializer_id")

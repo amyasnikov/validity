@@ -38,9 +38,9 @@ class ConfigSerializer(GitRepoLinkMixin, BaseModel):
         super().clean()
         if self.extraction_method != "TTP" and self.ttp_template:
             raise ValidationError({"ttp_template": _("TTP Template must be empty if extraction method is not TTP")})
-        if self.extraction_method != "TTP" and (self.repo or self.file_path):
+        if self.extraction_method != "TTP" and (self.data_source or self.data_file):
             raise ValidationError(_("Git properties may be set only if extraction method is TTP"))
-        if self.extraction_method == "TTP" and not (self.ttp_template or self.repo):
+        if self.extraction_method == "TTP" and not (self.ttp_template or self.data_source):
             raise ValidationError(_("TTP Template must be defined if extraction method is TTP"))
 
     @property

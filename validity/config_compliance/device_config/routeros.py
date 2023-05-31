@@ -1,7 +1,7 @@
 import logging
 import re
 from dataclasses import dataclass, field
-from pathlib import Path
+import io
 from typing import ClassVar, Generator, Literal
 
 from validity.utils.misc import reraise
@@ -105,45 +105,45 @@ class ParsedLine:
         return cls(method=method, find_by=find, properties=properties, implicit_name=implicit_name)
 
 
-def parse_config(filename: str | Path) -> dict:
+def parse_config(plain_config: str) -> dict:
     result = {}
     context_path = []
     prevlines = []
-    with open(filename, "r") as cfgfile:
-        for line_num, line in enumerate(cfgfile, start=1):
-            if line.startswith(("#", ":")) or line == "\n":
-                continue
-            if line.startswith("/"):
-                context_path = line[1:-1].split()
-                continue
-            if line.endswith("\\\n"):
-                prevlines.append(line)
-                continue
-            if prevlines:
-                line = "".join(prevlines) + line
-                prevlines = []
+    cfgfile = io.StringIO(plain_config)
+    for line_num, line in enumerate(cfgfile, start=1):
+        if line.startswith(("#", ":")) or line == "\n":
+            continue
+        if line.startswith("/"):
+            context_path = line[1:-1].split()
+            continue
+        if line.endswith("\\\n"):
+            prevlines.append(line)
+            continue
+        if prevlines:
+            line = "".join(prevlines) + line
+            prevlines = []
+        try:
+            parsed_line = ParsedLine.from_plain_text(line)
+        except LineParsingError as e:
+            e.args = (e.args[0] + f", config line {line_num}",) + e.args[1:]
+            raise
+        current_context = result
+        for key in context_path:
             try:
-                parsed_line = ParsedLine.from_plain_text(line)
-            except LineParsingError as e:
-                e.args = (e.args[0] + f", config line {line_num}",) + e.args[1:]
-                raise
-            current_context = result
-            for key in context_path:
-                try:
-                    current_context = current_context[key]
-                except KeyError:
-                    current_context[key] = {}
-                    current_context = current_context[key]
-            if parsed_line.find_by or parsed_line.method == "add" or parsed_line.implicit_name:
-                if "values" not in current_context:
-                    current_context["values"] = []
-                current_context["values"].append(parsed_line.properties)
-                if parsed_line.find_by:
-                    current_context["values"][-1]["find_by"] = [
-                        {"key": parsed_line.find_by[0], "value": parsed_line.find_by[1]}
-                    ]
-            else:
-                current_context["properties"] = parsed_line.properties
+                current_context = current_context[key]
+            except KeyError:
+                current_context[key] = {}
+                current_context = current_context[key]
+        if parsed_line.find_by or parsed_line.method == "add" or parsed_line.implicit_name:
+            if "values" not in current_context:
+                current_context["values"] = []
+            current_context["values"].append(parsed_line.properties)
+            if parsed_line.find_by:
+                current_context["values"][-1]["find_by"] = [
+                    {"key": parsed_line.find_by[0], "value": parsed_line.find_by[1]}
+                ]
+        else:
+            current_context["properties"] = parsed_line.properties
     return result
 
 
@@ -153,4 +153,4 @@ class RouterOSDeviceConfig(DeviceConfig):
     def serialize(self, override: bool = False) -> None:
         if not self.serialized or override:
             with reraise(Exception, DeviceConfigError):
-                self.serialized = parse_config(self.config_path)
+                self.serialized = parse_config(self.plain_config)

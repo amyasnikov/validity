@@ -1,7 +1,6 @@
 django-bootstrap-v5==1.0.*
 pydantic==1.10.*
 ttp==0.9.*
-pygit2==1.11.*
 jq==1.4.*
 deepdiff==6.2.*
 simpleeval==0.9.*
