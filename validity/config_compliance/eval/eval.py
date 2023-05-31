@@ -1,4 +1,5 @@
 import ast
+import re
 
 import deepdiff
 from simpleeval import EvalWithCompoundTypes, InvalidExpression
@@ -34,10 +35,13 @@ class ExplanationalEval(EvalWithCompoundTypes):
         result = super()._eval(node)
         unparsed = ast.unparse(node)
         if not isinstance(node, self.do_not_explain) and str(result) != unparsed and unparsed:
-            self.explanation.append((unparsed, result))
+            self.explanation.append((self._format_unparsed(unparsed), result))
         self.explanation.extend(self._deepdiff)
         self._deepdiff = []
         return result
+
+    def _format_unparsed(self, unparsed) -> str:
+        return re.sub(r" *\\n *", "", unparsed)
 
     def _eval_compare(self, node):
         right = self._eval(node.left)
