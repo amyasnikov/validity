@@ -16,7 +16,7 @@ class ColoredChoiceMeta(ChoicesMeta):
     def __new__(cls, name, bases, namespace, **kwargs):
         colors = {}
         member_names = namespace._member_names
-        namespace._member_names = []
+        namespace._member_names = type(namespace._member_names)()  # clean container
         for key in member_names:
             attr = namespace.pop(key)
             if isinstance(attr, str):
@@ -26,13 +26,12 @@ class ColoredChoiceMeta(ChoicesMeta):
                 colors[key] = attr[-1]
                 attr = attr[:-1]
             namespace[key] = attr
-        namespace["_colors"] = colors
-        namespace._member_names.remove("_colors")
+        namespace["__colors__"] = colors
         return super().__new__(cls, name, bases, namespace, **kwargs)
 
     @property
     def colors(self):
-        return self._colors
+        return self.__colors__
 
 
 class BoolOperationChoices(TextChoices, metaclass=ColoredChoiceMeta):
