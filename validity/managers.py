@@ -230,11 +230,10 @@ class VDeviceQS(RestrictedQuerySet):
 
     @staticmethod
     def _severity_filter(severity: SeverityChoices, query_base: str = "") -> Q:
-        severity_index = SeverityChoices.labels.index(severity.label)
         query_path = "test__severity__in"
         if query_base:
             query_path = f"{query_base}__{query_path}"
-        return Q(**{query_path: SeverityChoices.labels[severity_index:]})
+        return Q(**{query_path: SeverityChoices.ge(severity)})
 
     def prefetch_results(self, report_id: int, severity_ge: SeverityChoices = SeverityChoices.LOW):
         from validity.models import ComplianceTestResult

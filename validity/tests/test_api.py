@@ -160,3 +160,15 @@ def test_get_serialized_config(monkeypatch, admin_client):
     }
     assert resp.json()["serialized_config"] == {"key1": "value1"}
     assert resp.json()["local_copy_last_updated"] == lm.isoformat().replace("+00:00", "Z")
+
+
+@pytest.mark.django_db
+def test_report_devices(admin_client):
+    report = ReportFactory(passed_results=2, failed_results=1)
+    resp = admin_client.get(f"/api/plugins/validity/reports/{report.pk}/devices/")
+    assert resp.status_code == HTTPStatus.OK
+    results = resp.json()["results"]
+    assert len(results) == 3
+    for device in results:
+        assert len(device["results"]) == 1
+        assert device["results_count"] == 1

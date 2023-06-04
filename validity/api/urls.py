@@ -15,7 +15,9 @@ router.register("serializers", views.ConfigSerializerViewSet)
 router.register("namesets", views.NameSetViewSet)
 router.register("reports", views.ComplianceReportViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    path("reports/<int:pk>/devices/", views.DeviceReportView.as_view(), name="report_devices"),
+] + router.urls
 
 app_name = "validity"
 

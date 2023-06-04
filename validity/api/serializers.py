@@ -295,3 +295,20 @@ class SerializedConfigSerializer(serializers.Serializer):
 
     def get_config_web_link(self, obj):
         return urljoin(obj.device.repo.web_url, obj.config_path.as_posix())
+
+
+class DeviceReportSerializer(NestedDeviceSerializer):
+    compliance_passed = serializers.BooleanField()
+    results_passed = serializers.IntegerField()
+    results_count = serializers.IntegerField()
+    results = SerializedPKRelatedField(
+        serializer=NestedComplianceTestResultSerializer, many=True, required=False, read_only=True
+    )
+
+    class Meta(NestedDeviceSerializer.Meta):
+        fields = NestedDeviceSerializer.Meta.fields + [
+            "compliance_passed",
+            "results_passed",
+            "results_count",
+            "results",
+        ]
