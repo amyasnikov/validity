@@ -1,44 +1,14 @@
-{% extends 'generic/object.html' %}
-{% load helpers %}
-{% load bootstrap5 %}
-{% load render_table from django_tables2 %}
-{% block head %}
-{% endblock %}
+{% extends 'validity/aux_tab_table.html' %}
+
 {% block title %}{{ object }}: Test Results{% endblock %}
-{% block subtitle %}
-<div class="object-subtitle"></div>
+
+{% block extra_button %}
+  <a
+    class="btn btn-primary"
+    target="_blank"
+    href="{% url 'plugins:validity:compliancetestresult_list' %}?{{ result_relation }}_id={{ object.pk }}"
+  >Advanced Search ⤴
+  </a>
 {% endblock %}
-{% block controls %}
-{%if read_only %}
-<div class="controls"></div>
-{% else %}
-{{ block.super }}
-{% endif %}
-{% endblock %}
-{% block content %}
-  <div class="row mb-3">
-    <div class="col-auto">
-    <form role="form" class="row" method="get">
-      {% bootstrap_form filterset_form layout="inline" %}
-      <div class="col-auto">{% buttons submit="Search" %}{% endbuttons %}</div>
-      <div class="col-auto">
-        <a
-          class="btn btn-primary"
-          target="_blank"
-          href="{% url 'plugins:validity:compliancetestresult_list' %}?{{ result_relation }}_id={{ object.pk }}"
-        >
-          Advanced Search ⤴
-        </a>
-      </div>
-    </form>
-  </div>
-</div>
-<div class="card mb-3">
-  <div class="card-body">
-    <h5 class="card-title mb-2">All Results related to {{ object }}</h5>
-    <div class="table-responsive">
-      {% render_table table 'inc/table.html' %}
-    </div>
-    {%include 'inc/paginator.html' with paginator=table.paginator page=table.page%}
-  </div>
-  {% endblock %}
+
+{% block table_title %}All Results related to {{ object }}{% endblock %}

@@ -3,6 +3,7 @@ from .filterset import (
     ComplianceTestFilterForm,
     ComplianceTestResultFilterForm,
     ConfigSerializerFilterForm,
+    DeviceReportFilterForm,
     GitRepoFilterForm,
     NameSetFilterForm,
     ReportGroupByForm,

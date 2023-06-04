@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional, TypeVar
 
 from django.db.models import TextChoices
 from django.db.models.enums import ChoicesMeta
@@ -34,6 +34,15 @@ class ColoredChoiceMeta(ChoicesMeta):
         return self.__colors__
 
 
+_Type = TypeVar("_Type")
+
+
+class MemberMixin:
+    @classmethod
+    def member(cls: type[_Type], value: Any) -> Optional[_Type]:
+        return cls._value2member_map_.get(value)  # type: ignore
+
+
 class BoolOperationChoices(TextChoices, metaclass=ColoredChoiceMeta):
     OR = "OR", _("OR"), "purple"
     AND = "AND", _("AND"), "blue"
@@ -45,7 +54,7 @@ class DynamicPairsChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TAG = "TAG", _("By tag"), "purple"
 
 
-class SeverityChoices(TextChoices, metaclass=ColoredChoiceMeta):
+class SeverityChoices(MemberMixin, TextChoices, metaclass=ColoredChoiceMeta):
     LOW = "LOW", _("LOW"), "green"
     MIDDLE = "MIDDLE", _("MIDDLE"), "yellow"
     HIGH = "HIGH", _("HIGH"), "red"
@@ -57,7 +66,7 @@ class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
     ROUTEROS = "ROUTEROS", "ROUTEROS", "green"
 
 
-class DeviceGroupByChoices(TextChoices):
+class DeviceGroupByChoices(MemberMixin, TextChoices):
     DEVICE = "device__name", _("Device")
     DEVICE_TYPE = "device__device_type__slug", _("Device Type")
     MANUFACTURER = "device__device_type__manufacturer__slug", _("Manufacturer")
@@ -71,10 +80,6 @@ class DeviceGroupByChoices(TextChoices):
     @classmethod
     def contains(cls, value: str) -> bool:
         return value in cls._value2member_map_
-
-    @classmethod
-    def member(cls, value: str) -> Optional["DeviceGroupByChoices"]:
-        return cls._value2member_map_.get(value)  # type: ignore
 
     def viewname(self) -> str:
         view_prefixes = {self.TENANT: "tenancy:", self.TEST: "plugins:validity:compliance"}

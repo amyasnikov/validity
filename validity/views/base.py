@@ -1,4 +1,7 @@
+from typing import Any, Dict
+
 from django.db.models import Model
+from django.forms import Form
 from django.shortcuts import get_object_or_404
 from django_filters import FilterSet
 from django_filters.views import FilterView
@@ -36,14 +39,40 @@ class TableMixin:
         return {"table": table, "search_value": request.GET.get("q", "")}
 
 
-class TestResultBaseView(SingleTableMixin, FilterView):
+class FilterViewWithForm(FilterView):
+    filterform_class: type[Form]
+    exclude_form_fields: tuple[str, ...] = ()
+
+    def get_filterform_exclude(self):
+        return self.exclude_form_fields
+
+    def get_filterform_initial(self):
+        if not hasattr(self.filterset.form, "cleaned_data"):
+            initial = {}
+        else:
+            initial = {
+                k: v for k, v in self.filterset.form.cleaned_data.items() if k in self.filterform_class.base_fields
+            }
+        return initial
+
+    def get_filterform(self):
+        initial = self.get_filterform_initial()
+        exclude = {"exclude": exclude_fields} if (exclude_fields := self.get_filterform_exclude()) else {}
+        form = self.filterform_class(initial=initial, **exclude)
+        return form
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        return super().get_context_data(**kwargs) | {"filterset_form": self.get_filterform()}
+
+
+class TestResultBaseView(SingleTableMixin, FilterViewWithForm):
     template_name = "validity/compliance_results.html"
     tab = ViewTab("Test Results", badge=lambda obj: obj.results.count())
     model = models.ComplianceTestResult
     filterset_class = filtersets.ComplianceTestResultFilterSet
-    filter_form_class = forms.TestResultFilterForm
+    filterform_class = forms.TestResultFilterForm
     table_class = tables.ComplianceResultTable
-    permission_required = "validity.view_compliancetestresult."
+    permission_required = "validity.view_compliancetestresult"
 
     parent_model: type[Model]
     result_relation: str
@@ -51,7 +80,9 @@ class TestResultBaseView(SingleTableMixin, FilterView):
     exclude_form_fields: tuple[str, ...] = ()
 
     def get_table(self, **kwargs):
-        table = super().get_table(**kwargs)
+        table_class = self.get_table_class()
+        table = table_class(data=self.get_table_data(), **kwargs)
+        table.configure(request=self.request)
         table.exclude = (self.result_relation,)
         return table
 
@@ -63,22 +94,12 @@ class TestResultBaseView(SingleTableMixin, FilterView):
     def get_object(self):
         return get_object_or_404(self.parent_model, pk=self.kwargs["pk"])
 
-    def get_filterform(self):
-        if not hasattr(self.filterset.form, "cleaned_data"):
-            initial = {}
-        else:
-            initial = {
-                k: v for k, v in self.filterset.form.cleaned_data.items() if k in self.filter_form_class.base_fields
-            }
-        form = self.filter_form_class(
-            initial=initial, exclude=self.exclude_form_fields + (self.result_relation + "_id",)
-        )
-        return form
+    def get_filterform_exclude(self):
+        return super().get_filterform_exclude() + (self.result_relation + "_id",)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context | {
-            "filterset_form": self.get_filterform(),
             "object": self.get_object(),
             "tab": self.tab,
             "read_only": self.read_only,

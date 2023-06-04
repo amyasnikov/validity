@@ -2,7 +2,21 @@ from itertools import chain
 from typing import TYPE_CHECKING, TypeVar
 
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import BigIntegerField, Case, Count, F, FloatField, OuterRef, Prefetch, Q, QuerySet, Value, When
+from django.db.models import (
+    BigIntegerField,
+    BooleanField,
+    Case,
+    Count,
+    ExpressionWrapper,
+    F,
+    FloatField,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast, JSONObject
 from netbox.models import RestrictedQuerySet
@@ -74,15 +88,16 @@ class NameSetQS(JSONObjMixin, RestrictedQuerySet):
     pass
 
 
+def percentage(field1: str, field2: str) -> Case:
+    return Case(
+        When(Q(**{f"{field2}__gt": 0}), then=Value(100.0) * F(field1) / F(field2)),
+        default=100.0,
+        output_field=FloatField(),
+    )
+
+
 class ComplianceReportQS(RestrictedQuerySet):
     def annotate_result_stats(self, groupby_field: DeviceGroupByChoices | None = None):
-        def percentage(field1: str, field2: str) -> Case:
-            return Case(
-                When(Q(**{f"{field2}__gt": 0}), then=Value(100.0) * F(field1) / F(field2)),
-                default=100.0,
-                output_field=FloatField(),
-            )
-
         qs = self
         if groupby_field:
             qs = self.values(f"results__{groupby_field.pk_field()}", f"results__{groupby_field}")
@@ -203,3 +218,32 @@ class VDeviceQS(RestrictedQuerySet):
 
     def count_per_serializer(self) -> dict[int | None, int]:
         return self._count_per_something("serializer_id", "annotate_serializer_id")
+
+    def annotate_result_stats(self, report_id: int, severity_ge: SeverityChoices = SeverityChoices.LOW):
+        results_filter = Q(results__report__pk=report_id) & self._severity_filter(severity_ge, "results")
+        return self.annotate(
+            results_count=Count("results", filter=results_filter),
+            results_passed=Count("results", filter=results_filter & Q(results__passed=True)),
+            results_percentage=percentage("results_passed", "results_count"),
+            compliance_passed=ExpressionWrapper(Q(results_count=F("results_passed")), output_field=BooleanField()),
+        )
+
+    @staticmethod
+    def _severity_filter(severity: SeverityChoices, query_base: str = "") -> Q:
+        severity_index = SeverityChoices.labels.index(severity.label)
+        query_path = "test__severity__in"
+        if query_base:
+            query_path = f"{query_base}__{query_path}"
+        return Q(**{query_path: SeverityChoices.labels[severity_index:]})
+
+    def prefetch_results(self, report_id: int, severity_ge: SeverityChoices = SeverityChoices.LOW):
+        from validity.models import ComplianceTestResult
+
+        return self.prefetch_related(
+            Prefetch(
+                "results",
+                queryset=ComplianceTestResult.objects.filter(self._severity_filter(severity_ge), report__pk=report_id)
+                .select_related("test")
+                .order_by("test__name"),
+            )
+        )
