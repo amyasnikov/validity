@@ -19,10 +19,10 @@ class ComplianceTestResult(BaseReadOnlyModel):
     test = models.ForeignKey(ComplianceTest, verbose_name=_("Test"), related_name="results", on_delete=models.CASCADE)
     device = models.ForeignKey(VDevice, verbose_name=_("Device"), related_name="results", on_delete=models.CASCADE)
     dynamic_pair = models.ForeignKey(
-        VDevice, verbose_name=_("Dynamic Pair"), related_name="+", on_delete=models.CASCADE, null=True
+        VDevice, verbose_name=_("Dynamic Pair"), related_name="+", on_delete=models.CASCADE, null=True, blank=True
     )
     passed = models.BooleanField(_("Passed"))
-    explanation = models.JSONField(_("Explanation"), default=list, encoder=DeepDiffEncoder)
+    explanation = models.JSONField(_("Explanation"), default=list, encoder=DeepDiffEncoder, blank=True)
     report = models.ForeignKey(
         "ComplianceReport",
         verbose_name=_("Report"),

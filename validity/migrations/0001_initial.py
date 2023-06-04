@@ -211,7 +211,10 @@ class Migration(migrations.Migration):
                 ("created", models.DateTimeField(auto_now_add=True, null=True)),
                 ("last_updated", models.DateTimeField(auto_now=True, null=True)),
                 ("passed", models.BooleanField()),
-                ("explanation", models.JSONField(default=list, encoder=validity.models.test_result.DeepDiffEncoder)),
+                (
+                    "explanation",
+                    models.JSONField(blank=True, default=list, encoder=validity.models.test_result.DeepDiffEncoder),
+                ),
                 (
                     "device",
                     models.ForeignKey(
@@ -221,7 +224,11 @@ class Migration(migrations.Migration):
                 (
                     "dynamic_pair",
                     models.ForeignKey(
-                        null=True, on_delete=django.db.models.deletion.CASCADE, related_name="+", to="validity.vdevice"
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="+",
+                        to="validity.vdevice",
                     ),
                 ),
                 (
