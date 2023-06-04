@@ -204,7 +204,6 @@ class ComplianceReportDeviceTable(NetBoxTable):
         transform=lambda obj: str(obj.test),
         filter=lambda qs: (obj for obj in qs.all() if obj.passed),
         accessor="results",
-        default="-",
     )
     failed_results = FilteredM2MColumn(
         linkify_item=True,
@@ -212,7 +211,6 @@ class ComplianceReportDeviceTable(NetBoxTable):
         transform=lambda obj: str(obj.test),
         filter=lambda qs: (obj for obj in qs.all() if not obj.passed),
         accessor="results",
-        default="-",
     )
 
     class Meta(NetBoxTable.Meta):
