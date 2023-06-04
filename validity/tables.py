@@ -181,6 +181,16 @@ class ComplianceReportTable(NetBoxTable):
         default_columns = fields
 
 
+class FilteredM2MColumn(ManyToManyColumn):
+    """
+    Default implementation does not draw "-" when all the results are filtered out
+    """
+
+    def render(self, value):
+        result = super().render(value)
+        return result if result else "—"
+
+
 class ComplianceReportDeviceTable(NetBoxTable):
     device = TemplateColumn(order_by=("_name",), template_code=DEVICE_LINK, linkify=True, accessor="name")
     compliance_passed = BooleanColumn(
@@ -188,21 +198,21 @@ class ComplianceReportDeviceTable(NetBoxTable):
         empty_values=(),
     )
     result_stats = StatsColumn(data_prefix="results", empty_values=(), verbose_name=_("Result Statistics"))
-    passed_results = ManyToManyColumn(
+    passed_results = FilteredM2MColumn(
         linkify_item=True,
         verbose_name=_("Passed Tests"),
         transform=lambda obj: str(obj.test),
         filter=lambda qs: (obj for obj in qs.all() if obj.passed),
         accessor="results",
-        empty_values=(),
+        default="-",
     )
-    failed_results = ManyToManyColumn(
+    failed_results = FilteredM2MColumn(
         linkify_item=True,
         verbose_name=_("Failed Tests"),
         transform=lambda obj: str(obj.test),
         filter=lambda qs: (obj for obj in qs.all() if not obj.passed),
         accessor="results",
-        empty_values=(),
+        default="-",
     )
 
     class Meta(NetBoxTable.Meta):
