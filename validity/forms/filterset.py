@@ -17,6 +17,16 @@ from validity.choices import (
 from .helpers import ExcludeMixin, PlaceholderChoiceField
 
 
+class DeviceReportFilterForm(ExcludeMixin, Form):
+    q = CharField(label=_("Device Search"), required=False)
+    compliance_passed = PlaceholderChoiceField(
+        required=False, placeholder=_("Compliance Passed"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:]
+    )
+    severity_ge = PlaceholderChoiceField(
+        required=False, placeholder=_("Minimum Severity"), choices=SeverityChoices.choices[1:]
+    )
+
+
 class TestResultFilterForm(ExcludeMixin, Form):
     latest = PlaceholderChoiceField(required=False, placeholder=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
     passed = PlaceholderChoiceField(

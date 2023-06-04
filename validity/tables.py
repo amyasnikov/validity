@@ -2,11 +2,12 @@ from functools import partial
 
 from dcim.models import Device
 from dcim.tables import DeviceTable
+from dcim.tables.template_code import DEVICE_LINK
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django_tables2 import Column, RequestConfig, Table
+from django_tables2 import Column, RequestConfig, Table, TemplateColumn
 from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
 from utilities.paginator import EnhancedPaginator
@@ -63,6 +64,7 @@ class ComplianceResultTable(NetBoxTable):
     id = Column(linkify=True)
     test = Column(linkify=True)
     device = Column(linkify=True)
+    passed = BooleanColumn()
 
     class Meta(NetBoxTable.Meta):
         model = models.ComplianceTestResult
@@ -74,6 +76,7 @@ class ComplianceResultTable(NetBoxTable):
 class GitRepoTable(NetBoxTable):
     name = Column(linkify=True)
     total_devices = Column(empty_values=())
+    default = BooleanColumn()
 
     class Meta(NetBoxTable.Meta):
         model = models.GitRepo
@@ -122,11 +125,29 @@ class ExplanationTable(Table):
 class NameSetTable(NetBoxTable):
     name = Column(linkify=True)
     tests = ManyToManyColumn(linkify_item=True)
+    _global = BooleanColumn()
 
     class Meta(NetBoxTable.Meta):
         model = models.NameSet
         fields = ("name", "_global", "tests")
         default_columns = fields
+
+
+class StatsColumn(Column):
+    def __init__(self, data_prefix: str, **kwargs):
+        super().__init__(**kwargs)
+        self.data_prefix = data_prefix
+
+    def render(self, value, record):
+        def get_table_attr(obj, attr_name):
+            return getattr(obj, attr_name) if hasattr(obj, attr_name) else obj.get(attr_name)
+
+        count = get_table_attr(record, f"{self.data_prefix}_count")
+        if not count:
+            return "—"
+        passed = get_table_attr(record, f"{self.data_prefix}_passed")
+        percentage = get_table_attr(record, f"{self.data_prefix}_percentage")
+        return mark_safe(f"{passed}/{count} ") + colorful_percentage(percentage)
 
 
 class ComplianceReportTable(NetBoxTable):
@@ -138,10 +159,10 @@ class ComplianceReportTable(NetBoxTable):
     )
     device_count = Column(verbose_name=_("Devices"), empty_values=())
     test_count = Column(verbose_name=_("Unique Tests"), empty_values=())
-    total_stats = Column(verbose_name=_("Overall Passed"), empty_values=())
-    low_stats = Column(verbose_name=_("Low Severity"), empty_values=())
-    middle_stats = Column(verbose_name=_("Middle Severity"), empty_values=())
-    high_stats = Column(verbose_name=_("High Severity"), empty_values=())
+    total_stats = StatsColumn(data_prefix="total", verbose_name=_("Overall Passed"), empty_values=())
+    low_stats = StatsColumn(data_prefix="low", verbose_name=_("Low Severity"), empty_values=())
+    middle_stats = StatsColumn(data_prefix="middle", verbose_name=_("Middle Severity"), empty_values=())
+    high_stats = StatsColumn(data_prefix="high", verbose_name=_("High Severity"), empty_values=())
 
     class Meta(NetBoxTable.Meta):
         model = models.ComplianceReport
@@ -159,28 +180,36 @@ class ComplianceReportTable(NetBoxTable):
         exclude = ("actions",)
         default_columns = fields
 
-    def _render_stats(self, severity, record):
-        def get_table_attr(obj, attr_name):
-            return getattr(obj, attr_name) if hasattr(obj, attr_name) else obj.get(attr_name)
 
-        count = get_table_attr(record, f"{severity}_count")
-        if not count:
-            return "—"
-        passed = get_table_attr(record, f"{severity}_passed")
-        percentage = get_table_attr(record, f"{severity}_percentage")
-        return mark_safe(f"{passed}/{count} ") + colorful_percentage(percentage)
+class ComplianceReportDeviceTable(NetBoxTable):
+    device = TemplateColumn(order_by=("_name",), template_code=DEVICE_LINK, linkify=True, accessor="name")
+    compliance_passed = BooleanColumn(
+        verbose_name=_("Compliance Passed"),
+        empty_values=(),
+    )
+    result_stats = StatsColumn(data_prefix="results", empty_values=(), verbose_name=_("Result Statistics"))
+    passed_results = ManyToManyColumn(
+        linkify_item=True,
+        verbose_name=_("Passed Tests"),
+        transform=lambda obj: str(obj.test),
+        filter=lambda qs: (obj for obj in qs.all() if obj.passed),
+        accessor="results",
+        empty_values=(),
+    )
+    failed_results = ManyToManyColumn(
+        linkify_item=True,
+        verbose_name=_("Failed Tests"),
+        transform=lambda obj: str(obj.test),
+        filter=lambda qs: (obj for obj in qs.all() if not obj.passed),
+        accessor="results",
+        empty_values=(),
+    )
 
-    def render_total_stats(self, record):
-        return self._render_stats("total", record)
-
-    def render_low_stats(self, record):
-        return self._render_stats("low", record)
-
-    def render_middle_stats(self, record):
-        return self._render_stats("middle", record)
-
-    def render_high_stats(self, record):
-        return self._render_stats("high", record)
+    class Meta(NetBoxTable.Meta):
+        model = models.VDevice
+        fields = ("device", "compliance_passed", "result_stats", "passed_results", "failed_results")
+        default_columns = fields
+        exclude = ("actions",)
 
 
 class DynamicPairsTable(DeviceTable):

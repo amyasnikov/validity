@@ -2,6 +2,7 @@ import operator
 from functools import reduce
 from typing import Sequence
 
+from dcim.filtersets import DeviceFilterSet
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.db.models import Q
 from django_filters import BooleanFilter, ChoiceFilter, ModelMultipleChoiceFilter
@@ -110,3 +111,7 @@ class NameSetFilterSet(SearchMixin, NetBoxModelFilterSet):
         filters = super().get_filters()
         filters["global"] = filters.pop("_global")
         return filters
+
+
+class DeviceReportFilterSet(DeviceFilterSet):
+    compliance_passed = BooleanFilter()
