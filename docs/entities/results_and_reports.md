@@ -66,3 +66,11 @@ At the report page you can observe test result statistics (total and grouped by 
 
 Another one feature is webhook generation after creation of the report. It may be useful for Validity integration with some other OSS/BSS/Monitoring systems. Read more: [Webhooks](../features/webhooks.md)
 
+
+## Per Device Reports
+
+Starting from 1.3.0 per device reports are available. You can access per device reports via **Devices** tab at Report page or via `/api/plugins/validity/reports/{report_id}/devices/` REST API handle.
+
+Per device report can show you compliance result per each device (passed or failed) together with the tests results bound to the device.
+
+**Minimum Severity** filter parameter (or **severity_ge** via API) can exclude test results with severity LOWER that needed from consideration by the report.
