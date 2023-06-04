@@ -77,14 +77,8 @@ class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
     def object(self):
         return get_object_or_404(models.ComplianceReport, pk=self.kwargs["pk"])
 
-    def get_severity_ge(self) -> SeverityChoices:
-        severity_ge = SeverityChoices.member(self.request.GET.get("severity_ge"))
-        if not severity_ge:
-            severity_ge = SeverityChoices.LOW
-        return severity_ge
-
     def get_queryset(self) -> QuerySet[models.VDevice]:
-        severity_ge = self.get_severity_ge()
+        severity_ge = SeverityChoices.from_request(self.request)
         return (
             models.VDevice.objects.filter(results__report=self.object)
             .annotate_result_stats(self.object.pk, severity_ge)
@@ -92,7 +86,7 @@ class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
         )
 
     def get_filterform_initial(self):
-        return super().get_filterform_initial() | {"severity_ge": self.get_severity_ge()}
+        return super().get_filterform_initial() | {"severity_ge": SeverityChoices.from_request(self.request)}
 
     def get_table(self, **kwargs):
         table_class = self.get_table_class()

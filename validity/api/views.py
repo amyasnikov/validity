@@ -2,12 +2,14 @@ from http import HTTPStatus
 
 from netbox.api.viewsets import NetBoxModelViewSet
 from rest_framework.exceptions import NotFound
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from validity import config, filtersets, models
 from validity.config_compliance.device_config import DeviceConfig
-from ..config_compliance.exceptions import DeviceConfigError
+from validity.config_compliance.exceptions import DeviceConfigError
+from ..choices import SeverityChoices
 from . import serializers
 
 
@@ -69,6 +71,21 @@ class NameSetViewSet(NetBoxModelViewSet):
 class ComplianceReportViewSet(ReadOnlyNetboxViewSet):
     queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
     serializer_class = serializers.ComplianceReportSerializer
+
+
+class DeviceReportView(ListAPIView):
+    serializer_class = serializers.DeviceReportSerializer
+    filterset_class = filtersets.DeviceReportFilterSet
+    queryset = models.VDevice.objects.all()
+
+    def get_queryset(self):
+        severity_ge = SeverityChoices.from_request(self.request)
+        pk = self.kwargs["pk"]
+        return (
+            self.queryset.filter(results__report__pk=pk)
+            .annotate_result_stats(pk, severity_ge)
+            .prefetch_results(pk, severity_ge)
+        )
 
 
 class SerializedConfigView(APIView):

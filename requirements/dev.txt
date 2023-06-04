@@ -11,3 +11,4 @@ pytest-subtests==0.10.0
 pytest-cov==4.0.0
 ipython
 debugpy==1.6.7
+tomli==2.0.1

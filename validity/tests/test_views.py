@@ -155,3 +155,10 @@ def test_device_results(admin_client):
     device = DeviceFactory()
     resp = admin_client.get(f"/dcim/devices/{device.pk}/serialized_config/")
     assert resp.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db
+def test_report_devices(admin_client):
+    report = ReportFactory(passed_results=4, failed_results=2)
+    resp = admin_client.get(f"/plugins/validity/reports/{report.pk}/devices/")
+    assert resp.status_code == HTTPStatus.OK

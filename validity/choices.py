@@ -59,6 +59,21 @@ class SeverityChoices(MemberMixin, TextChoices, metaclass=ColoredChoiceMeta):
     MIDDLE = "MIDDLE", _("MIDDLE"), "yellow"
     HIGH = "HIGH", _("HIGH"), "red"
 
+    @classmethod
+    def from_request(cls, request):
+        severity_query = request.GET.get("severity_ge")
+        if isinstance(severity_query, str):
+            severity_query = severity_query.upper()
+        severity_ge = SeverityChoices.member(severity_query)
+        if not severity_ge:
+            severity_ge = SeverityChoices.LOW
+        return severity_ge
+
+    @classmethod
+    def ge(cls, severity: "SeverityChoices") -> list[str]:
+        index = SeverityChoices.labels.index(severity.label)
+        return cls.labels[index:]
+
 
 class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
