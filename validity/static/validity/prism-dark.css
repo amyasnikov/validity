@@ -48,7 +48,8 @@ code[class*=language-] ::selection,code[class*=language-]::selection,pre[class*=
     border-radius:.3em;
     border:.1em solid #545454;
     box-shadow:1px 1px .3em -.1em #000 inset;
-    padding: 1.5px 5px;
+    padding: 0.45em 5px;
+    line-height: 2.2em;
     white-space:normal;
 	font-size: 0.96em;
 

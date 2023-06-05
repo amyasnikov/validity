@@ -1,3 +1,4 @@
+import itertools
 from functools import partial
 
 from dcim.models import Device
@@ -115,8 +116,13 @@ class ExplanationColumn(Column):
 
 
 class ExplanationTable(Table):
+    counter = Column(verbose_name="#", empty_values=(), orderable=False)
     left = ExplanationColumn(empty_values=(), verbose_name=_("Expression"))
     right = ExplanationColumn(empty_values=(), verbose_name=_("Value"))
+
+    def render_counter(self):
+        self.row_counter = getattr(self, "row_counter", itertools.count(start=1))
+        return format_html('<b class="mr-5">{}</b>', next(self.row_counter))
 
     class Meta:
         template_name = "django_tables2/bootstrap.html"
