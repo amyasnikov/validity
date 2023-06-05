@@ -206,7 +206,9 @@ class DeviceReportM2MColumn(ManyToManyColumn):
 
 
 class ComplianceReportDeviceTable(NetBoxTable):
-    device = TemplateColumn(order_by=("_name",), template_code=DEVICE_LINK, linkify=True, accessor="name", attrs={"th": {'class': 'col-2'}})
+    device = TemplateColumn(
+        order_by=("_name",), template_code=DEVICE_LINK, linkify=True, accessor="name", attrs={"th": {"class": "col-2"}}
+    )
     compliance_passed = BooleanColumn(
         verbose_name=_("Compliance Passed"),
         empty_values=(),
