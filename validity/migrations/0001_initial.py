@@ -87,6 +87,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "abstract": False,
+                "ordering": ("name",),
             },
             bases=(validity.models.base.URLMixin, models.Model),
         ),

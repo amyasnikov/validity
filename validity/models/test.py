@@ -23,6 +23,9 @@ class ComplianceTest(GitRepoLinkMixin, BaseModel):
 
     objects = ComplianceTestQS.as_manager()
 
+    class Meta:
+        ordering = ("name",)
+
     def clean(self):
         super().clean()
         if self.expression:

@@ -188,7 +188,7 @@ class DeviceReportM2MColumn(ManyToManyColumn):
                 "a": {"class": f"mb-1 badge rounded-pill text-{badge_color} border border-{badge_color}"}
             }
             kwargs["separator"] = " "
-        kwargs["transform"] = lambda obj: str(obj.test)
+        kwargs.setdefault("transform", lambda obj: str(obj.test))
         super().__init__(*args, **kwargs)
 
     def render(self, value):
