@@ -1,5 +1,5 @@
 <div align="center">
-    <a href="https://validity.readthedocs.io"><img src="https://raw.githubusercontent.com/amyasnikov/validity/master/docs/validity_logo.png" alt="Click to view Validity docs"/></a>
+    <a href="https://validity.readthedocs.io"><img src="https://raw.githubusercontent.com/amyasnikov/validity/master/docs/images/validity_logo.png" alt="Click to view Validity docs"/></a>
     <h1>Validity: vendor-agnostic configuration compliance</h1>
     <p>
         <img src="https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg" alt="CI">
@@ -57,10 +57,21 @@ Read the full documentation on [validity.readthedocs.io](https://validity.readth
 
 ## Quick Start
 
-The short video about first steps with Validity:
+A short video about first steps with Validity:
 
 [![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)
+
 
 ## Contributing
 
 Feel free to ask a [Question](https://github.com/amyasnikov/validity/discussions), report an [Issue](https://github.com/amyasnikov/validity/issues) or even make a [PR](CONTRIBUTING.md). Read more about contribution in the [CONTRIBUTING](CONTRIBUTING.md) guide.
+
+## Screenshots
+
+![Report Per Device](docs/images/screen_report.png)
+
+![Compliance Test](docs/images/screen_test.png)
+
+![Compliance Test Result](docs/images/screen_result.png)
+
+![Device Serialized Configuration](docs/images/screen_config.png)
