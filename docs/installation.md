@@ -32,10 +32,15 @@ PLUGINS = [
 ./manage.py migrate validity
 ```
 
+* Collect static files
+```console
+./manage.py collectstatic
+```
+
 * Change plugin settings according to your needs via **PLUGINS_CONFIG** variable. Read more: [Plugin Settings](plugin_settings.md)
 
 !!! warning
-    The instruction below is for **NetBox 3.4.x only**. Do not execute it for NetBox 3.5.x or above
+    The final instruction below is for **NetBox 3.4.x only**. Do not execute it for NetBox 3.5.x or above
 
 * To place Validity [custom scripts](https://docs.netbox.dev/en/stable/customization/custom-scripts/) inside **SCRIPTS_ROOT** directory run
 ```console
