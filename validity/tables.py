@@ -181,12 +181,20 @@ class ComplianceReportTable(NetBoxTable):
         default_columns = fields
 
 
-class FilteredM2MColumn(ManyToManyColumn):
-    """
-    Default implementation does not draw "-" when all the results are filtered out
-    """
+class DeviceReportM2MColumn(ManyToManyColumn):
+    def __init__(self, *args, badge_color: str = "", **kwargs):
+        if badge_color:
+            kwargs["attrs"] = kwargs.get("attrs", {}) | {
+                "a": {"class": f"mb-1 badge rounded-pill text-{badge_color} border border-{badge_color}"}
+            }
+            kwargs["separator"] = " "
+        kwargs["transform"] = lambda obj: str(obj.test)
+        super().__init__(*args, **kwargs)
 
     def render(self, value):
+        """
+        Default implementation does not draw "-" when all the results are filtered out
+        """
         result = super().render(value)
         return result if result else "—"
 
@@ -198,19 +206,19 @@ class ComplianceReportDeviceTable(NetBoxTable):
         empty_values=(),
     )
     result_stats = StatsColumn(data_prefix="results", empty_values=(), verbose_name=_("Result Statistics"))
-    passed_results = FilteredM2MColumn(
+    passed_results = DeviceReportM2MColumn(
         linkify_item=True,
         verbose_name=_("Passed Tests"),
-        transform=lambda obj: str(obj.test),
         filter=lambda qs: (obj for obj in qs.all() if obj.passed),
         accessor="results",
+        badge_color="success",
     )
-    failed_results = FilteredM2MColumn(
+    failed_results = DeviceReportM2MColumn(
         linkify_item=True,
         verbose_name=_("Failed Tests"),
-        transform=lambda obj: str(obj.test),
         filter=lambda qs: (obj for obj in qs.all() if not obj.passed),
         accessor="results",
+        badge_color="danger",
     )
 
     class Meta(NetBoxTable.Meta):
