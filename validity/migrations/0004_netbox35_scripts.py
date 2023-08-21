@@ -24,7 +24,7 @@ def forward_func(apps, schema_editor):
     )
     data_source.sync()
     for data_file in data_source.datafiles.using(db_alias).all():
-        if data_file.path.endswith("__init__.py"):
+        if data_file.path.endswith("__init__.py") or data_file.path.endswith(".pyc"):
             continue
         module = ScriptModule(data_source=data_source, data_file=data_file, file_root="scripts", auto_sync_enabled=True)
         module.clean()
