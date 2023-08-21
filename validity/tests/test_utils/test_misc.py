@@ -40,6 +40,7 @@ def test_reraise(internal_exc, external_exc, msg):
         (NetboxVersion("3.5"), 3.5, [False, True, True, True, False]),
         (NetboxVersion("3.5.0"), NetboxVersion(3.5), [False, True, True, True, False]),
         (NetboxVersion(3), "1.5.2", [False, False, False, True, True]),
+        (NetboxVersion("3.6-beta2"), "3.6.1", [True, False, False, False, False]),
     ],
 )
 def test_netbox_version(obj1, obj2, compare_results):

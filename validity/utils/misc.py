@@ -45,11 +45,13 @@ def reraise(catch: type[Exception] | tuple[type[Exception], ...], raise_: type[E
 @total_ordering
 class NetboxVersion:
     def __init__(self, version: str | float | int) -> None:
-        if isinstance(version, (float, int)):
-            version = str(version)
+        version = str(version)
+        version, *suffix = version.split("-", maxsplit=1)
         splitted_version = [int(i) for i in version.split(".")]
         while len(splitted_version) < 3:
             splitted_version.append(0)
+        if suffix:
+            splitted_version.append(suffix[0])
         self.version = tuple(splitted_version)
 
     def _compare(self, operator_, other):
