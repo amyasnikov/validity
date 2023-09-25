@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from validity.choices import ConfigExtractionChoices
 from validity.managers import ConfigSerializerQS
+from validity.netbox_changes import DEVICE_ROLE_RELATION
 from .base import BaseModel, GitRepoLinkMixin
 
 
@@ -49,7 +50,7 @@ class ConfigSerializer(GitRepoLinkMixin, BaseModel):
         return (
             VDevice.objects.annotate_serializer_id()
             .filter(serializer_id=self.pk)
-            .select_related("site", "device_role", "device_type__manufacturer")
+            .select_related("site", DEVICE_ROLE_RELATION, "device_type__manufacturer")
         )
 
     @property

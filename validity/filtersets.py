@@ -11,6 +11,7 @@ from tenancy.models import Tenant
 
 from validity import models
 from validity.choices import SeverityChoices
+from validity.netbox_changes import DEVICE_ROLE_RELATION
 
 
 class SearchMixin:
@@ -52,7 +53,9 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     manufacturer_id = ModelMultipleChoiceFilter(
         field_name="device__device_type__manufacturer", queryset=Manufacturer.objects.all()
     )
-    device_role_id = ModelMultipleChoiceFilter(field_name="device__device_role", queryset=DeviceRole.objects.all())
+    device_role_id = ModelMultipleChoiceFilter(
+        field_name=f"device__{DEVICE_ROLE_RELATION}", queryset=DeviceRole.objects.all()
+    )
     tenant_id = ModelMultipleChoiceFilter(field_name="device__tenant", queryset=Tenant.objects.all())
     platform_id = ModelMultipleChoiceFilter(field_name="device__platform", queryset=Platform.objects.all())
     location_id = ModelMultipleChoiceFilter(field_name="device__location", queryset=Location.objects.all())

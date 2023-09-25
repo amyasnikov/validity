@@ -4,6 +4,8 @@ from django.db.models import TextChoices
 from django.db.models.enums import ChoicesMeta
 from django.utils.translation import gettext_lazy as _
 
+from validity.netbox_changes import DEVICE_ROLE_RELATION
+
 
 class ColoredChoiceMeta(ChoicesMeta):
     """
@@ -85,7 +87,7 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
     DEVICE = "device__name", _("Device")
     DEVICE_TYPE = "device__device_type__slug", _("Device Type")
     MANUFACTURER = "device__device_type__manufacturer__slug", _("Manufacturer")
-    DEVICE_ROLE = "device__device_role__slug", _("Device Role")
+    DEVICE_ROLE = f"device__{DEVICE_ROLE_RELATION}__slug", _("Device Role")
     TENANT = "device__tenant__slug", _("Tenant")
     PLATFORM = "device__platform__slug", _("Platform")
     LOCATION = "device__location__slug", _("Location")

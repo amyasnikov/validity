@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from jinja2 import BaseLoader, Environment
 
 from validity.managers import GitRepoQS
+from validity.netbox_changes import DEVICE_ROLE_RELATION
 from validity.utils.password import EncryptedString, PasswordField
 from .base import BaseModel, validate_file_path
 
@@ -83,7 +84,7 @@ class GitRepo(BaseModel):
         return (
             VDevice.objects.annotate_git_repo_id()
             .filter(repo_id=self.pk)
-            .select_related("site", "device_role", "device_type__manufacturer")
+            .select_related("site", DEVICE_ROLE_RELATION, "device_type__manufacturer")
         )
 
     @property
