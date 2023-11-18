@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from validity import config, filtersets, models
+from validity.choices import SeverityChoices
 from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.exceptions import DeviceConfigError
-from ..choices import SeverityChoices
 from . import serializers
 
 
@@ -39,7 +39,9 @@ class ComplianceSelectorViewSet(NetBoxModelViewSet):
 
 
 class ComplianceTestViewSet(NetBoxModelViewSet):
-    queryset = models.ComplianceTest.objects.select_related("repo").prefetch_related("selectors", "tags")
+    queryset = models.ComplianceTest.objects.select_related("data_source", "data_file").prefetch_related(
+        "selectors", "tags"
+    )
     serializer_class = serializers.ComplianceTestSerializer
     filterset_class = filtersets.ComplianceTestFilterSet
 
@@ -50,20 +52,14 @@ class ComplianceTestResultViewSet(ReadOnlyNetboxViewSet):
     filterset_class = filtersets.ComplianceTestResultFilterSet
 
 
-class GitRepoViewSet(NetBoxModelViewSet):
-    queryset = models.GitRepo.objects.prefetch_related("tags")
-    serializer_class = serializers.GitRepoSerializer
-    filterset_class = filtersets.GitRepoFilterSet
-
-
 class ConfigSerializerViewSet(NetBoxModelViewSet):
-    queryset = models.ConfigSerializer.objects.select_related("repo").prefetch_related("tags")
+    queryset = models.ConfigSerializer.objects.select_related("data_source", "data_file").prefetch_related("tags")
     serializer_class = serializers.ConfigSerializerSerializer
     filterset_class = filtersets.ConfigSerializerFilterSet
 
 
 class NameSetViewSet(NetBoxModelViewSet):
-    queryset = models.NameSet.objects.select_related("repo").prefetch_related("tags")
+    queryset = models.NameSet.objects.select_related("data_source", "data_file").prefetch_related("tags")
     serializer_class = serializers.NameSetSerializer
     filterset_class = filtersets.NameSetFilterSet
 
@@ -89,7 +85,7 @@ class DeviceReportView(ListAPIView):
 
 
 class SerializedConfigView(APIView):
-    queryset = models.VDevice.objects.all()
+    queryset = models.VDevice.objects.prefetch_datasource().prefetch_serializer()
 
     def get_object(self, pk):
         try:

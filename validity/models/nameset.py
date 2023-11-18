@@ -5,11 +5,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity.managers import NameSetQS
-from .base import BaseModel, GitRepoLinkMixin
+from .base import BaseModel, DataSourceMixin
 from .test import ComplianceTest
 
 
-class NameSet(GitRepoLinkMixin, BaseModel):
+class NameSet(DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     description = models.TextField()
     _global = models.BooleanField(_("Global"), blank=True, default=False)
@@ -20,8 +20,7 @@ class NameSet(GitRepoLinkMixin, BaseModel):
 
     objects = NameSetQS.as_manager()
 
-    clone_fields = ("description", "_global", "tests", "definitions", "repo", "file_path")
-    json_fields = ("id", "name", "description", "_global", "definitions", "file_path")
+    clone_fields = ("description", "_global", "tests", "definitions", "data_source", "data_file")
     text_db_field_name = "definitions"
 
     class Meta:

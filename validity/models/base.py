@@ -1,6 +1,6 @@
 import logging
+from collections.abc import Iterable
 
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -23,43 +23,26 @@ class URLMixin:
         return reverse(f"plugins:validity:{self._meta.model_name}", kwargs={"pk": self.pk})
 
 
-class GitRepoLinkMixin(models.Model):
+class DataSourceMixin(models.Model):
+    text_db_field_name: str
+
     data_source = models.ForeignKey(
-        to='core.DataSource',
+        to="validity.VDataSource",
         on_delete=models.PROTECT,
         blank=True,
         null=True,
-        related_name='+',
-        help_text=_("Remote data source")
+        related_name="+",
+        help_text=_("Remote data source"),
     )
     data_file = models.ForeignKey(
-        to='core.DataFile',
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name='+'
+        to="validity.VDataFile", on_delete=models.SET_NULL, blank=True, null=True, related_name="+"
     )
-
-    text_db_field_name: str
 
     class Meta:
         abstract = True
 
-    def _validate_db_or_git_filled(self) -> bool:
+    def _validate_db_or_git_filled(self) -> bool:  # TODO: add this to self.clean
         return True
-
-    def clean(self) -> None:
-        text_value = getattr(self, self.text_db_field_name)
-        if text_value and (self.data_source or self.data_file):
-            raise ValidationError(_(f"You cannot set both: Data Source and {self.text_db_field_name}"))
-        if self._validate_db_or_git_filled() and not text_value and (not self.data_source or not self.data_file):
-            raise ValidationError(
-                {
-                    self.text_db_field_name: _(
-                        f"You must set either {self.text_db_field_name} or both: Data Source and Data File"
-                    )
-                }
-            )
 
     def effective_text_field(self) -> str:
         text_db_value = getattr(self, self.text_db_field_name)

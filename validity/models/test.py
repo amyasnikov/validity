@@ -6,10 +6,10 @@ from django.utils.translation import gettext_lazy as _
 
 from validity.choices import SeverityChoices
 from validity.managers import ComplianceTestQS
-from .base import BaseModel, GitRepoLinkMixin
+from .base import BaseModel, DataSourceMixin
 
 
-class ComplianceTest(GitRepoLinkMixin, BaseModel):
+class ComplianceTest(DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     description = models.TextField(_("Description"))
     severity = models.CharField(
@@ -18,7 +18,7 @@ class ComplianceTest(GitRepoLinkMixin, BaseModel):
     expression = models.TextField(_("Expression"), blank=True)
     selectors = models.ManyToManyField(to="ComplianceSelector", related_name="tests", verbose_name=_("Selectors"))
 
-    clone_fields = ("expression", "selectors", "severity", "repo", "file_path")
+    clone_fields = ("expression", "selectors", "severity", "data_source", "data_file")
     text_db_field_name = "expression"
 
     objects = ComplianceTestQS.as_manager()

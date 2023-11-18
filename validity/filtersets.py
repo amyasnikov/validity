@@ -35,11 +35,11 @@ class ComplianceSelectorFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 class ComplianceTestFilterSet(SearchMixin, NetBoxModelFilterSet):
     selector_id = ModelMultipleChoiceFilter(field_name="selectors", queryset=models.ComplianceSelector.objects.all())
-    repo_id = ModelMultipleChoiceFilter(field_name="repo", queryset=models.GitRepo.objects.all())
+    datasource_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
 
     class Meta:
         model = models.ComplianceTest
-        fields = ("id", "name", "selector_id", "severity", "repo_id", "file_path")
+        fields = ("id", "name", "selector_id", "severity", "datasource_id")
         search_fields = ("name", "description", "expression")
 
 
@@ -85,28 +85,21 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
         return queryset.only_latest(exclude=not value)
 
 
-class GitRepoFilterSet(SearchMixin, NetBoxModelFilterSet):
-    class Meta:
-        model = models.GitRepo
-        fields = ("id", "name", "default", "username", "branch", "head_hash")
-        search_fields = ("name", "repo_path", "device_config_path")
-
-
 class ConfigSerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
-    repo_id = ModelMultipleChoiceFilter(field_name="repo", queryset=models.GitRepo.objects.all())
+    datasource_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
 
     class Meta:
         model = models.ConfigSerializer
-        fields = ("id", "name", "extraction_method", "repo_id", "file_path")
+        fields = ("id", "name", "extraction_method", "datasource_id")
         search_fields = ("name",)
 
 
 class NameSetFilterSet(SearchMixin, NetBoxModelFilterSet):
-    repo_id = ModelMultipleChoiceFilter(field_name="repo", queryset=models.GitRepo.objects.all())
+    datasource_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
 
     class Meta:
         model = models.NameSet
-        fields = ("id", "name", "_global", "repo_id", "file_path")
+        fields = ("id", "name", "_global")
         search_fields = ("name", "description", "definitions")
 
     @classmethod

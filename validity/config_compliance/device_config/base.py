@@ -1,17 +1,19 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import ClassVar
-
-from dcim.models import Device
+from typing import TYPE_CHECKING, ClassVar
 
 from validity.utils.misc import reraise
 from ..exceptions import DeviceConfigError
 
 
+if TYPE_CHECKING:
+    from validity.models import VDevice
+
+
 @dataclass
 class BaseDeviceConfig:
-    device: Device
+    device: "VDevice"
     plain_config: str
     last_modified: datetime | None = None
     serialized: dict | list | None = None
@@ -19,10 +21,10 @@ class BaseDeviceConfig:
     _config_classes: ClassVar[dict[str, type]] = {}
 
     @classmethod
-    def from_device(cls, device: Device) -> "BaseDeviceConfig":
+    def from_device(cls, device: "VDevice") -> "BaseDeviceConfig":
         """
         Get DeviceConfig from dcim.models.Device
-        Device MUST be annotated with ".plain_config"
+        Device MUST be annotated with ".data_file"
         Device MUST be annotated with ".serializer" pointing to appropriate config serializer instance
         """
         with reraise((AssertionError, FileNotFoundError, AttributeError), DeviceConfigError):
@@ -31,7 +33,7 @@ class BaseDeviceConfig:
             return cls._config_classes[device.serializer.extraction_method]._from_device(device)
 
     @classmethod
-    def _from_device(cls, device: Device) -> "BaseDeviceConfig":         
+    def _from_device(cls, device: "VDevice") -> "BaseDeviceConfig":
         instance = cls(device, device.data_file.data_as_string, device.data_file.last_updated)
         instance.serialize()
         return instance

@@ -1,7 +1,7 @@
+import io
 import logging
 import re
 from dataclasses import dataclass, field
-import io
 from typing import ClassVar, Generator, Literal
 
 from validity.utils.misc import reraise

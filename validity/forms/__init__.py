@@ -4,9 +4,8 @@ from .filterset import (
     ComplianceTestResultFilterForm,
     ConfigSerializerFilterForm,
     DeviceReportFilterForm,
-    GitRepoFilterForm,
     NameSetFilterForm,
     ReportGroupByForm,
     TestResultFilterForm,
 )
-from .general import ComplianceSelectorForm, ComplianceTestForm, ConfigSerializerForm, GitRepoForm, NameSetForm
+from .general import ComplianceSelectorForm, ComplianceTestForm, ConfigSerializerForm, NameSetForm

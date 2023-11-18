@@ -26,7 +26,7 @@
               <th scope="row">Global</th>
               <td>{{ global | checkmark }}</td>
             </tr>
-            {% include "validity/inc/git_link.html" %}
+            {% include "validity/inc/datasource_link.html" %}
             <tr>
               <th scope="row">Bound Tests</th>
               <td>{{ object.tests.all | linkify_list }}</td>

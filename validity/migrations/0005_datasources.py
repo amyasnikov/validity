@@ -1,5 +1,9 @@
+from itertools import chain
 from django.db import migrations
 from django.utils.translation import gettext_lazy as _
+from validity.utils.password import EncryptedString
+from django.db import migrations, models
+import django.db.models.deletion
 
 
 def setup_datasource_cf(apps, schema_editor):
@@ -27,8 +31,8 @@ def setup_datasource_cf(apps, schema_editor):
                 validation_regex=r"^[^/].*$",
             ),
             CustomField(
-                name="web_url_template",
-                label=_("Web URL Template"),
+                name="web_url",
+                label=_("Web URL"),
                 description=_("Required by Validity. You may use {{branch}} substitution"),
                 type="string",
                 required=False,
@@ -36,16 +40,16 @@ def setup_datasource_cf(apps, schema_editor):
         ]
     )
     for cf in datasource_cfs:
-        cf.content_types.set([ContentType.objects.using(db).get_for_model(DataSource)])
+        cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
     tenant_cf = CustomField.objects.using(db).create(
-        name='config_data_source',
-        label=_('Config Data Source'),
+        name="config_data_source",
+        label=_("Config Data Source"),
         description=_("Required by Validity"),
-        type='object',
+        type="object",
         object_type=ContentType.objects.get_for_model(DataSource),
         required=False,
     )
-    tenant_cf.content_types.set([ContentType.objects.using(db).get_for_model(Tenant)])
+    tenant_cf.content_types.set([ContentType.objects.get_for_model(Tenant)])
 
 
 def delete_datasource_cf(apps, schema_editor):
@@ -54,7 +58,7 @@ def delete_datasource_cf(apps, schema_editor):
         name__in=[
             "device_config_default",
             "device_config_path",
-            "web_url_template",
+            "web_url",
         ],
         content_types__model="datasource",
     ).delete()
@@ -79,22 +83,29 @@ def setup_datasources(apps, schema_editor):
             cf = get_fields(
                 repo,
                 {
-                    "web_url": "web_url_template",
+                    "web_url": "web_url",
                     "device_config_path": "device_config_path",
                     "default": "device_config_default",
                 },
             )
+            parameters = get_fields(repo, ["username", "branch", "encrypted_password"])
+            if encrypted_password := parameters.pop("encrypted_password", None):
+                parameters["password"] = EncryptedString.deserialize(encrypted_password).decrypt()
             datasource = DataSource.objects.using(db).create(
                 type="git",
-                name=repo.name,
-                description=repo.description,
+                name="validity_" + repo.name,
+                description=f"Auto-created by Validity from Git Repository {repo.name}",
                 source_url=repo.git_url,
-                parameters=get_fields(repo, ["username", "password", "branch"]),
+                parameters=parameters,
                 custom_field_data=cf,
             )
             datasource.sync()
         except Exception as e:
-            print(f"An error occured while creating Data Source for {repo}, skipping.", type(e).__name__, e)  # noqa
+            print(
+                f"\nAn error occured while creating Data Source for {repo.name}, skipping...",
+                f"{type(e).__name__}: {e}",
+                sep="\n",
+            )  # noqa
 
 
 def delete_repo_cf(apps, schema_editor):
@@ -123,27 +134,140 @@ def setup_repo_cf(apps, schema_editor):
 
 def switch_git_links(apps, schema_editor):
     db = schema_editor.connection.alias
-    DataSource = apps.get_model('core', 'DataSource')
-    DataFile = apps.get_model('core', 'DataFile')
-    models = [apps.get_model('validity', m) for m in ('ComplianceTest', 'NameSet', 'ConfigSerializer')]
-    for model in models:
-        if model.repo is None:
+    DataSource = apps.get_model("core", "DataSource")
+    DataFile = apps.get_model("core", "DataFile")
+    models = [apps.get_model("validity", m) for m in ("ComplianceTest", "NameSet", "ConfigSerializer")]
+    objects = chain.from_iterable(model.objects.all() for model in models)
+    for obj in objects:
+        if obj.repo is None:
             continue
-        if not (data_source := DataSource.objects.using(db).filter(name=model.repo.name).first()):
+        if not (
+            data_source := DataSource.objects.using(db).filter(name="validity_" + obj.repo.name, type="git").first()
+        ):
             continue
-        model.data_source = data_source
-        if data_file := DataFile.objects.using(db).filter(source=data_source, path=model.repo.file_path).first():
-            model.data_file = data_file
-        model.save()
+        obj.data_source = data_source
+        if data_file := DataFile.objects.using(db).filter(source=data_source, path=obj.file_path).first():
+            obj.data_file = data_file
+        obj.save()
 
 
 class Migration(migrations.Migration):
     dependencies = [("validity", "0004_netbox35_scripts"), ("core", "0001_initial")]
 
     operations = [
+        migrations.CreateModel(
+            name="VDataFile",
+            fields=[],
+            options={
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
+            },
+            bases=("core.datafile",),
+        ),
+        migrations.CreateModel(
+            name="VDataSource",
+            fields=[],
+            options={
+                "proxy": True,
+                "indexes": [],
+                "constraints": [],
+            },
+            bases=("core.datasource",),
+        ),
+        migrations.AddField(
+            model_name="compliancetest",
+            name="data_file",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="+",
+                to="validity.vdatafile",
+            ),
+        ),
+        migrations.AddField(
+            model_name="compliancetest",
+            name="data_source",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="+",
+                to="validity.vdatasource",
+            ),
+        ),
+        migrations.AddField(
+            model_name="configserializer",
+            name="data_file",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="+",
+                to="validity.vdatafile",
+            ),
+        ),
+        migrations.AddField(
+            model_name="configserializer",
+            name="data_source",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="+",
+                to="validity.vdatasource",
+            ),
+        ),
+        migrations.AddField(
+            model_name="nameset",
+            name="data_file",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="+",
+                to="validity.vdatafile",
+            ),
+        ),
+        migrations.AddField(
+            model_name="nameset",
+            name="data_source",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="+",
+                to="validity.vdatasource",
+            ),
+        ),
         migrations.RunPython(setup_datasource_cf, delete_datasource_cf),
         migrations.RunPython(setup_datasources, migrations.RunPython.noop),
         migrations.RunPython(switch_git_links, migrations.RunPython.noop),
         migrations.RunPython(delete_repo_cf, setup_repo_cf),
+        migrations.RemoveField(
+            model_name="compliancetest",
+            name="file_path",
+        ),
+        migrations.RemoveField(
+            model_name="compliancetest",
+            name="repo",
+        ),
+        migrations.RemoveField(
+            model_name="configserializer",
+            name="file_path",
+        ),
+        migrations.RemoveField(
+            model_name="configserializer",
+            name="repo",
+        ),
+        migrations.RemoveField(
+            model_name="nameset",
+            name="file_path",
+        ),
+        migrations.RemoveField(
+            model_name="nameset",
+            name="repo",
+        ),
         migrations.DeleteModel(name="GitRepo"),
     ]

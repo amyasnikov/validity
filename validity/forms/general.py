@@ -1,3 +1,5 @@
+from core.forms.mixins import SyncedDataMixin
+from core.models import DataSource
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
 from django.forms import CharField, PasswordInput, Textarea, ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -9,20 +11,19 @@ from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultiple
 from validity import models
 
 
-class ComplianceTestForm(NetBoxModelForm):
+class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
     selectors = DynamicModelMultipleChoiceField(queryset=models.ComplianceSelector.objects.all())
-    repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
     expression = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
         (_("Compliance Test"), ("name", "severity", "description", "selectors", "tags")),
-        (_("Expression from Git"), ("repo", "file_path")),
+        (_("Expression from Data Source"), ("data_source", "data_file")),
         (_("Expression from DB"), ("expression",)),
     )
 
     class Meta:
         model = models.ComplianceTest
-        fields = ("name", "severity", "description", "expression", "selectors", "repo", "file_path", "tags")
+        fields = ("name", "severity", "description", "expression", "selectors", "data_source", "data_file", "tags")
 
 
 class ComplianceSelectorForm(NetBoxModelForm):
@@ -82,60 +83,30 @@ class ComplianceSelectorForm(NetBoxModelForm):
         return result
 
 
-class GitRepoForm(NetBoxModelForm):
-    password = CharField(widget=PasswordInput(), required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            self.fields["password"].disabled = True
-
-    class Meta:
-        model = models.GitRepo
-        fields = (
-            "name",
-            "git_url",
-            "web_url",
-            "device_config_path",
-            "default",
-            "username",
-            "password",
-            "branch",
-            "tags",
-        )
-
-    def save(self, commit: bool = ...):
-        if password := self.cleaned_data.pop("password", None):
-            self.instance.password = password
-        return super().save(commit)
-
-
-class ConfigSerializerForm(NetBoxModelForm):
-    repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
+class ConfigSerializerForm(SyncedDataMixin, NetBoxModelForm):
     ttp_template = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
         (_("Config Serializer"), ("name", "extraction_method", "tags")),
-        (_("Template from Git"), ("repo", "file_path")),
+        (_("Template from Data Source"), ("data_source", "data_file")),
         (_("Template from DB"), ("ttp_template",)),
     )
 
     class Meta:
         model = models.ConfigSerializer
-        fields = ("name", "extraction_method", "ttp_template", "repo", "file_path", "tags")
+        fields = ("name", "extraction_method", "ttp_template", "data_source", "data_file", "tags")
 
 
 class NameSetForm(NetBoxModelForm):
     tests = DynamicModelMultipleChoiceField(queryset=models.ComplianceTest.objects.all(), required=False)
-    repo = DynamicModelChoiceField(queryset=models.GitRepo.objects.all(), required=False, label=_("Git Repository"))
     definitions = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
         (_("Name Set"), ("name", "description", "_global", "tests", "tags")),
-        (_("Definitions from Git"), ("repo", "file_path")),
+        (_("Definitions from Data Source"), ("data_source", "data_file")),
         (_("Definitions from DB"), ("definitions",)),
     )
 
     class Meta:
         model = models.NameSet
-        fields = ("name", "description", "_global", "tests", "definitions", "repo", "file_path", "tags")
+        fields = ("name", "description", "_global", "tests", "definitions", "data_source", "data_file", "tags")

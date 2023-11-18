@@ -1,3 +1,4 @@
+from core.models import DataSource
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.forms import CharField, Form, NullBooleanField, Select
 from django.utils.translation import gettext_lazy as _
@@ -100,18 +101,9 @@ class NameSetFilterForm(NetBoxModelFilterSetForm):
     model = models.NameSet
     name = CharField(required=False)
     _global = NullBooleanField(label=_("Global"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES))
-    repo_id = DynamicModelMultipleChoiceField(
-        label=_("Git Repository"), queryset=models.GitRepo.objects.all(), required=False
+    datasource_id = DynamicModelMultipleChoiceField(
+        label=_("Data Source"), queryset=DataSource.objects.all(), required=False
     )
-
-
-class GitRepoFilterForm(NetBoxModelFilterSetForm):
-    model = models.GitRepo
-    name = CharField(required=False)
-    default = NullBooleanField(required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES))
-    username = CharField(required=False)
-    branch = CharField(required=False)
-    head_hash = CharField(required=False)
 
 
 class ComplianceSelectorFilterForm(NetBoxModelFilterSetForm):
@@ -131,8 +123,8 @@ class ConfigSerializerFilterForm(NetBoxModelFilterSetForm):
     extraction_method = PlaceholderChoiceField(
         required=False, placeholder=_("Extraction Method"), choices=ConfigExtractionChoices.choices
     )
-    repo_id = DynamicModelMultipleChoiceField(
-        label=_("Git Repository"), queryset=models.GitRepo.objects.all(), required=False
+    datasource_id = DynamicModelMultipleChoiceField(
+        label=_("Data Source"), queryset=DataSource.objects.all(), required=False
     )
 
 
@@ -143,6 +135,6 @@ class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
     selector_id = DynamicModelMultipleChoiceField(
         label=_("Selector"), queryset=models.ComplianceSelector.objects.all(), required=False
     )
-    repo_id = DynamicModelMultipleChoiceField(
-        label=_("Git Repository"), queryset=models.GitRepo.objects.all(), required=False
+    datasource_id = DynamicModelMultipleChoiceField(
+        label=_("Data Source"), queryset=DataSource.objects.all(), required=False
     )

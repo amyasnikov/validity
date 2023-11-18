@@ -7,7 +7,6 @@ import taggit.managers
 import utilities.json
 import validity.models.base
 import validity.models.test_result
-import validity.utils.password
 
 
 class Migration(migrations.Migration):
@@ -78,7 +77,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "file_path",
-                    models.CharField(blank=True, max_length=255, validators=[validity.models.base.validate_file_path]),
+                    models.CharField(blank=True, max_length=255, validators=[]),
                 ),
                 ("name", models.CharField(max_length=255, unique=True)),
                 ("description", models.TextField()),
@@ -106,11 +105,11 @@ class Migration(migrations.Migration):
                 ("web_url", models.CharField(blank=True, max_length=255)),
                 (
                     "device_config_path",
-                    models.CharField(max_length=255, validators=[validity.models.base.validate_file_path]),
+                    models.CharField(max_length=255, validators=[]),
                 ),
                 ("default", models.BooleanField(default=False)),
                 ("username", models.CharField(blank=True, max_length=255)),
-                ("encrypted_password", validity.utils.password.PasswordField(blank=True, default=None, null=True)),
+                ("encrypted_password", models.CharField(blank=True, default=None, null=True)),
                 (
                     "branch",
                     models.CharField(
@@ -151,7 +150,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "file_path",
-                    models.CharField(blank=True, max_length=255, validators=[validity.models.base.validate_file_path]),
+                    models.CharField(blank=True, max_length=255, validators=[]),
                 ),
                 ("name", models.CharField(max_length=255, unique=True)),
                 ("description", models.TextField()),
@@ -183,7 +182,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "file_path",
-                    models.CharField(blank=True, max_length=255, validators=[validity.models.base.validate_file_path]),
+                    models.CharField(blank=True, max_length=255, validators=[]),
                 ),
                 ("name", models.CharField(max_length=255, unique=True)),
                 ("extraction_method", models.CharField(default="TTP", max_length=10)),

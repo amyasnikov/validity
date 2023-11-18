@@ -6,10 +6,10 @@ from django.utils.translation import gettext_lazy as _
 from validity.choices import ConfigExtractionChoices
 from validity.managers import ConfigSerializerQS
 from validity.netbox_changes import DEVICE_ROLE_RELATION
-from .base import BaseModel, GitRepoLinkMixin
+from .base import BaseModel, DataSourceMixin
 
 
-class ConfigSerializer(GitRepoLinkMixin, BaseModel):
+class ConfigSerializer(DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     extraction_method = models.CharField(
         _("Config Extraction Method"), max_length=10, choices=ConfigExtractionChoices.choices, default="TTP"
@@ -18,8 +18,7 @@ class ConfigSerializer(GitRepoLinkMixin, BaseModel):
 
     objects = ConfigSerializerQS.as_manager()
 
-    clone_fields = ("ttp_template", "extraction_method", "repo", "file_path")
-    json_fields = ("id", "name", "ttp_template", "extraction_method", "file_path")
+    clone_fields = ("ttp_template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "ttp_template"
 
     class Meta:

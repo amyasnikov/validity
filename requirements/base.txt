@@ -4,3 +4,5 @@ ttp==0.9.*
 jq==1.4.*
 deepdiff==6.2.*
 simpleeval==0.9.*
+
+dulwich # Core NetBox "optional" requirement

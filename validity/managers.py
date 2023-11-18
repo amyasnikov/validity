@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import (
@@ -23,10 +23,41 @@ from netbox.models import RestrictedQuerySet
 
 from validity import settings
 from validity.choices import DeviceGroupByChoices, SeverityChoices
+from validity.utils.orm import QuerySetMap, RegexpReplace
 
 
 if TYPE_CHECKING:
     from validity.models.base import BaseModel
+
+
+class CustomPrefetchMixin(QuerySet):
+    """
+    Allows to prefetch objects without direct relations
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.custom_prefetches = {}
+
+    def custom_prefetch(self, field: str, prefetch_qs: QuerySet):
+        pk_field = field + "_id"
+        pk_values = self.values_list(pk_field, flat=True)
+        prefetched_objects = prefetch_qs.filter(pk__in=pk_values)
+        self.custom_prefetches[field] = QuerySetMap(prefetched_objects)
+        return self
+
+    def _clone(self, *args, **kwargs):
+        c = super()._clone(*args, **kwargs)
+        c.custom_prefetches = self.custom_prefetches
+        return c
+
+    def _fetch_all(self):
+        super()._fetch_all()
+        for item in self._result_cache:
+            if not isinstance(item, self.model):
+                continue
+            for prefetched_field, qs_dict in self.custom_prefetches.items():
+                setattr(item, prefetched_field, qs_dict[item.pk])
 
 
 class ComplianceTestQS(RestrictedQuerySet):
@@ -92,8 +123,21 @@ def percentage(field1: str, field2: str) -> Case:
     )
 
 
-class VDataFileQS(JSONObjMixin, RestrictedQuerySet):
+class VDataFileQS(RestrictedQuerySet):
     pass
+
+
+class VDataSourceQS(RestrictedQuerySet):
+    def annotate_config_path(self):
+        return self.annotate(device_config_path=KeyTextTransform("device_config_path", "custom_field_data"))
+
+    def prefetch_config_files(self):
+        from validity.models import VDataFile
+
+        config_path = RegexpReplace(OuterRef("device_config_path"), Value("{{.+?}}"), Value(".+?"))
+        return self.annotate_config_path().prefetch_related(
+            Prefetch("datafiles", VDataFile.objects.filter(path__regex=config_path), to_attr="config_files")
+        )
 
 
 class ComplianceReportQS(RestrictedQuerySet):
@@ -137,7 +181,7 @@ def annotate_json(qs: _QS, field: str, annotate_model: type["BaseModel"]) -> _QS
     return qs.annotate(**{f"json_{field}": annotate_model.objects.filter(pk=OuterRef(f"{field}_id")).as_json()})
 
 
-class VDeviceQS(RestrictedQuerySet):
+class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.selector = None
@@ -164,12 +208,17 @@ class VDeviceQS(RestrictedQuerySet):
         return self.annotate(
             bound_source=Cast(KeyTextTransform("config_data_source", "tenant__custom_field_data"), BigIntegerField())
         ).annotate(
-            datasource_id=Case(
+            data_source_id=Case(
                 When(bound_source__isnull=False, then=F("bound_source")),
                 default=VDataSource.objects.filter(custom_field_data__device_config_default=True).values("id")[:1],
                 output_field=BigIntegerField(),
             )
         )
+
+    def prefetch_datasource(self: _QS) -> _QS:
+        from validity.models import VDataSource
+
+        return self.annotate_datasource_id().custom_prefetch("data_source", VDataSource.objects.prefetch_config_files())
 
     def annotate_serializer_id(self: _QS) -> _QS:
         return (
@@ -187,18 +236,12 @@ class VDeviceQS(RestrictedQuerySet):
             )
         )
 
-    def annotate_serializer_data_file(self: _QS) -> _QS:
-        from validity.models import VDataFile
-
-        return self.annotate(
-            serializer_data=VDataFile.objects.filter(configserializer__pk=OuterRef("serializer_id")).values('data')[:1]
-        )
-
-    def annotate_json_serializer(self: _QS) -> _QS:
+    def prefetch_serializer(self: _QS) -> _QS:
         from validity.models import ConfigSerializer
 
-        qs = self.annotate_serializer_id().annotate_json_serializer_repo()
-        return annotate_json(qs, "serializer", ConfigSerializer)
+        return self.annotate_serializer_id().custom_prefetch(
+            "serializer", ConfigSerializer.objects.prefetch_related("data_file")
+        )
 
     def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
         qs = getattr(self, annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
