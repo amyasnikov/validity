@@ -34,6 +34,7 @@ from validity.utils.misc import null_request
 class RunTestsScript(SyncReposMixin, Script):
 
     _sleep_between_tests = validity.settings.sleep_between_tests
+    _result_batch_size = validity.settings.result_batch_size
 
     sync_repos = BooleanVar(
         required=False,
@@ -142,8 +143,8 @@ class RunTestsScript(SyncReposMixin, Script):
         queue = webhooks_queue.get()
         enqueue_object(queue, report, self.request.user, self.request.id, ObjectChangeActionChoices.ACTION_CREATE)
 
-    def save_to_db(self, results: list[ComplianceTestResult], report: ComplianceReport | None) -> None:
-        ComplianceTestResult.objects.bulk_create(results)
+    def save_to_db(self, results: Iterable[ComplianceTestResult], report: ComplianceReport | None) -> None:
+        ComplianceTestResult.objects.bulk_create(results, batch_size=self._result_batch_size)
         ComplianceTestResult.objects.delete_old()
         if report:
             ComplianceReport.objects.delete_old()
@@ -157,9 +158,9 @@ class RunTestsScript(SyncReposMixin, Script):
         device_ids = data.get("devices", [])
         if specific_selectors := data.get("selectors"):
             selectors = selectors.filter(pk__in=specific_selectors)
-        results = [
-            *chain.from_iterable(self.run_tests_for_selector(selector, report, device_ids) for selector in selectors)
-        ]
+        results = chain.from_iterable(
+            self.run_tests_for_selector(selector, report, device_ids) for selector in selectors
+        )
         self.save_to_db(results, report)
         output = {"results": {"all": self.results_count, "passed": self.results_passed}}
         if report:

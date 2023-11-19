@@ -44,6 +44,7 @@ class ValiditySettings(BaseModel):
     store_reports: int = Field(default=5, gt=0, lt=1001)
     git_folder: DirectoryPath = Path("/opt/git_repos")
     sleep_between_tests: float = 0
+    result_batch_size: int = 500
 
 
 settings = ValiditySettings.parse_obj(django_settings.PLUGINS_CONFIG.get("validity", {}))
