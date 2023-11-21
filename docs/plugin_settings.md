@@ -27,6 +27,16 @@ The amount of seconds system will wait between executing each Compliance Test.
 
 Compliance Test execution may cause a lot of DB queries, because Compliance Test is dynamic by its nature and the system cannot prefetch all the required instances before the test. If you're realizing that `Run Compliance Tests` script overwhelms your DB with a lot of queries, you can adjust this setting to spread the queries over time.
 
+
+# result_batch_size
+
+*Default:* `500`
+
+*Type:* `int`
+
+Execution of the Tests and producing Test Results is carried out in batches. As soon as each batch reaches its maximum size (specified via this variable) all the Test Results within a batch will be uploaded into a DB.
+
+
 ### store_reports
 
 *Default:* `5`
@@ -66,6 +76,7 @@ PLUGINS_CONFIG = {
     'validity': {
         'git_folder': '/opt/git/',
         'sleep_between_tests': 0.02,
+        'result_batch_size': 300,
         'store_reports': 7,
         'store_last_results': 8,
     },
