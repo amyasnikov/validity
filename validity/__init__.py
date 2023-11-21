@@ -19,7 +19,7 @@ class NetBoxValidityConfig(PluginConfig):
     description = "Vendor-agnostic framework to build your own configuration compliance rule set"
     author = "Anton Miasnikov"
     author_email = "anton2008m@gmail.com"
-    version = "1.4.0"
+    version = "1.4.1"
     base_url = "validity"
     django_apps = ["bootstrap5"]
     min_version = "3.4.0"
@@ -44,6 +44,7 @@ class ValiditySettings(BaseModel):
     store_reports: int = Field(default=5, gt=0, lt=1001)
     git_folder: DirectoryPath = Path("/opt/git_repos")
     sleep_between_tests: float = 0
+    result_batch_size: int = 500
 
 
 settings = ValiditySettings.parse_obj(django_settings.PLUGINS_CONFIG.get("validity", {}))
