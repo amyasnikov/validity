@@ -1,12 +1,11 @@
 from core.forms.mixins import SyncedDataMixin
-from core.models import DataSource
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import CharField, PasswordInput, Textarea, ValidationError
+from django.forms import CharField, Textarea, ValidationError
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
-from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
+from utilities.forms.fields import DynamicModelMultipleChoiceField
 
 from validity import models
 

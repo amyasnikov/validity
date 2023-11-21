@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Iterable
 
 from django.db import models
 from django.urls import reverse

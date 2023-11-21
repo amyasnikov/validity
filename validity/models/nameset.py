@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from validity.managers import NameSetQS
 from .base import BaseModel, DataSourceMixin
 from .test import ComplianceTest
 
@@ -17,8 +16,6 @@ class NameSet(DataSourceMixin, BaseModel):
         ComplianceTest, verbose_name=_("Compliance Tests"), blank=True, related_name="namesets"
     )
     definitions = models.TextField(help_text=_("Here you can write python functions or imports"), blank=True)
-
-    objects = NameSetQS.as_manager()
 
     clone_fields = ("description", "_global", "tests", "definitions", "data_source", "data_file")
     text_db_field_name = "definitions"

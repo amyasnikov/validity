@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TypeVar
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import (
@@ -10,7 +10,6 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     FloatField,
-    OuterRef,
     Prefetch,
     Q,
     QuerySet,
@@ -18,7 +17,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, JSONObject
+from django.db.models.functions import Cast
 from netbox.models import RestrictedQuerySet
 
 from validity import settings
@@ -26,24 +25,23 @@ from validity.choices import DeviceGroupByChoices, SeverityChoices
 from validity.utils.orm import QuerySetMap, RegexpReplace
 
 
-if TYPE_CHECKING:
-    from validity.models.base import BaseModel
-
-
 class CustomPrefetchMixin(QuerySet):
     """
     Allows to prefetch objects without direct relations
+    Many-objects are prefetched as generators
     """
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.custom_prefetches = {}
 
-    def custom_prefetch(self, field: str, prefetch_qs: QuerySet):
+    def custom_prefetch(self, field: str, prefetch_qs: QuerySet, many: bool = False):
         pk_field = field + "_id"
         pk_values = self.values_list(pk_field, flat=True)
+        if many:
+            pk_values = chain.from_iterable(pk_values)
         prefetched_objects = prefetch_qs.filter(pk__in=pk_values)
-        self.custom_prefetches[field] = QuerySetMap(prefetched_objects)
+        self.custom_prefetches[field] = (many, QuerySetMap(prefetched_objects))
         return self
 
     def _clone(self, *args, **kwargs):
@@ -56,8 +54,13 @@ class CustomPrefetchMixin(QuerySet):
         for item in self._result_cache:
             if not isinstance(item, self.model):
                 continue
-            for prefetched_field, qs_dict in self.custom_prefetches.items():
-                setattr(item, prefetched_field, qs_dict[item.pk])
+            for prefetched_field, (many, qs_dict) in self.custom_prefetches.items():
+                prefetch_pk_values = getattr(item, prefetched_field + "_id")
+                if many:
+                    prefetch_values = (qs_dict[pk] for pk in prefetch_pk_values)
+                else:
+                    prefetch_values = qs_dict[prefetch_pk_values]
+                setattr(item, prefetched_field, prefetch_values)
 
 
 class ComplianceTestQS(RestrictedQuerySet):
@@ -102,19 +105,6 @@ class ComplianceTestResultQS(RestrictedQuerySet):
         return self.filter(report=None).last_more_than(settings.store_last_results).delete()
 
 
-class JSONObjMixin:
-    def as_json(self):
-        return self.values(json=JSONObject(**{f: f for f in self.model.json_fields}))
-
-
-class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
-    pass
-
-
-class NameSetQS(JSONObjMixin, RestrictedQuerySet):
-    pass
-
-
 def percentage(field1: str, field2: str) -> Case:
     return Case(
         When(Q(**{f"{field2}__gt": 0}), then=Value(100.0) * F(field1) / F(field2)),
@@ -127,16 +117,20 @@ class VDataFileQS(RestrictedQuerySet):
     pass
 
 
-class VDataSourceQS(RestrictedQuerySet):
+class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
     def annotate_config_path(self):
         return self.annotate(device_config_path=KeyTextTransform("device_config_path", "custom_field_data"))
 
     def prefetch_config_files(self):
         from validity.models import VDataFile
 
-        config_path = RegexpReplace(OuterRef("device_config_path"), Value("{{.+?}}"), Value(".+?"))
-        return self.annotate_config_path().prefetch_related(
-            Prefetch("datafiles", VDataFile.objects.filter(path__regex=config_path), to_attr="config_files")
+        config_path = RegexpReplace(F("device_config_path"), Value("{{.+?}}"), Value(".+?"))
+        path_filter = Q(datafiles__path__regex=config_path)
+        return (
+            self.annotate_config_path()
+            .annotate(config_files_id=ArrayAgg(F("datafiles__pk"), filter=path_filter))
+            .annotate(config_file_count=Count("datafiles__pk", filter=path_filter))
+            .custom_prefetch("config_files", VDataFile.objects.all(), many=True)
         )
 
 
@@ -175,10 +169,6 @@ class ComplianceReportQS(RestrictedQuerySet):
 
 
 _QS = TypeVar("_QS", bound=QuerySet)
-
-
-def annotate_json(qs: _QS, field: str, annotate_model: type["BaseModel"]) -> _QS:
-    return qs.annotate(**{f"json_{field}": annotate_model.objects.filter(pk=OuterRef(f"{field}_id")).as_json()})
 
 
 class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):

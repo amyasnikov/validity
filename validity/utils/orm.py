@@ -42,3 +42,7 @@ class QuerySetMap:
     def get(self, key, default=None):
         self._evaluate()
         return self._map.get(key, default)
+
+    @property
+    def model(self):
+        return self._qs.model

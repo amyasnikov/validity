@@ -4,7 +4,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import ConfigExtractionChoices
-from validity.managers import ConfigSerializerQS
 from validity.netbox_changes import DEVICE_ROLE_RELATION
 from .base import BaseModel, DataSourceMixin
 
@@ -15,8 +14,6 @@ class ConfigSerializer(DataSourceMixin, BaseModel):
         _("Config Extraction Method"), max_length=10, choices=ConfigExtractionChoices.choices, default="TTP"
     )
     ttp_template = models.TextField(_("TTP Template"), blank=True)
-
-    objects = ConfigSerializerQS.as_manager()
 
     clone_fields = ("ttp_template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "ttp_template"

@@ -24,7 +24,7 @@ class VDevice(Device):
 
     @property
     def config_path(self) -> str:
-        assert hasattr(self, "datasource"), "You must prefetch datasource first"
+        assert hasattr(self, "data_source"), "You must prefetch datasource first"
         template = Environment(loader=BaseLoader()).from_string(self.data_source.config_path_template)
         return template.render(device=self)
 

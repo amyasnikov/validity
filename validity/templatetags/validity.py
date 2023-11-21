@@ -1,6 +1,5 @@
 from typing import Any
 
-from dcim.models import Device
 from django import template
 from django.db.models import Model
 from django.utils.safestring import mark_safe
