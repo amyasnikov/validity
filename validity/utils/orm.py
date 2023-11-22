@@ -1,4 +1,5 @@
-from typing import Any
+from itertools import chain
+from typing import Any, Generic, Iterable, Iterator, TypeVar
 
 from django.db.models import F, Func, QuerySet, TextField
 
@@ -46,3 +47,59 @@ class QuerySetMap:
     @property
     def model(self):
         return self._qs.model
+
+
+M = TypeVar("M")
+
+
+class M2MIterator(Generic[M]):
+    """
+    This class mimics lazy handling of the QuerySet
+    """
+
+    def __init__(self, iterable: Iterable[M]) -> None:
+        self.iterable = iterable
+        self.cache = None
+
+    def all(self) -> Iterator[M]:
+        if self.cache is None:
+            self.cache = list(self.iterable)
+        yield from self.cache
+
+
+class CustomPrefetchMixin(QuerySet):
+    """
+    Allows to prefetch objects without direct relations
+    Many-objects are prefetched as M2MIterator
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.custom_prefetches = {}
+
+    def custom_prefetch(self, field: str, prefetch_qs: QuerySet, many: bool = False):
+        pk_field = field + "_id"
+        pk_values = self.values_list(pk_field, flat=True)
+        if many:
+            pk_values = chain.from_iterable(pk_values)
+        prefetched_objects = prefetch_qs.filter(pk__in=pk_values)
+        self.custom_prefetches[field] = (many, QuerySetMap(prefetched_objects))
+        return self
+
+    def _clone(self, *args, **kwargs):
+        c = super()._clone(*args, **kwargs)
+        c.custom_prefetches = self.custom_prefetches
+        return c
+
+    def _fetch_all(self):
+        super()._fetch_all()
+        for item in self._result_cache:
+            if not isinstance(item, self.model):
+                continue
+            for prefetched_field, (many, qs_dict) in self.custom_prefetches.items():
+                prefetch_pk_values = getattr(item, prefetched_field + "_id")
+                if many:
+                    prefetch_values = M2MIterator(qs_dict[pk] for pk in prefetch_pk_values)
+                else:
+                    prefetch_values = qs_dict.get(prefetch_pk_values)
+                setattr(item, prefetched_field, prefetch_values)

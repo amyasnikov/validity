@@ -28,7 +28,9 @@ class BaseDeviceConfig:
         Device MUST be annotated with ".serializer" pointing to appropriate config serializer instance
         """
         with reraise((AssertionError, FileNotFoundError, AttributeError), DeviceConfigError):
-            assert getattr(device, "data_file", None), f"{device} has no bound data file"
+            assert getattr(
+                device, "data_file", None
+            ), f"{device} has no bound data file. Either no data source bound or the file does not exist"
             assert getattr(device, "serializer", None), f"{device} has no bound serializer"
             return cls._config_classes[device.serializer.extraction_method]._from_device(device)
 

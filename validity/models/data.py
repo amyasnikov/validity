@@ -23,7 +23,7 @@ class VDataSource(DataSource):
         Returns "path: datafile" mapping for config files
         """
         assert hasattr(self, "config_files"), "You must call .prefetch_config_files() first"
-        return QuerySetMap(self.config_files, attribute="path")
+        return QuerySetMap(self.config_files.all(), attribute="path")
 
     class Meta:
         proxy = True

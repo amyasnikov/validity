@@ -22,45 +22,7 @@ from netbox.models import RestrictedQuerySet
 
 from validity import settings
 from validity.choices import DeviceGroupByChoices, SeverityChoices
-from validity.utils.orm import QuerySetMap, RegexpReplace
-
-
-class CustomPrefetchMixin(QuerySet):
-    """
-    Allows to prefetch objects without direct relations
-    Many-objects are prefetched as generators
-    """
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.custom_prefetches = {}
-
-    def custom_prefetch(self, field: str, prefetch_qs: QuerySet, many: bool = False):
-        pk_field = field + "_id"
-        pk_values = self.values_list(pk_field, flat=True)
-        if many:
-            pk_values = chain.from_iterable(pk_values)
-        prefetched_objects = prefetch_qs.filter(pk__in=pk_values)
-        self.custom_prefetches[field] = (many, QuerySetMap(prefetched_objects))
-        return self
-
-    def _clone(self, *args, **kwargs):
-        c = super()._clone(*args, **kwargs)
-        c.custom_prefetches = self.custom_prefetches
-        return c
-
-    def _fetch_all(self):
-        super()._fetch_all()
-        for item in self._result_cache:
-            if not isinstance(item, self.model):
-                continue
-            for prefetched_field, (many, qs_dict) in self.custom_prefetches.items():
-                prefetch_pk_values = getattr(item, prefetched_field + "_id")
-                if many:
-                    prefetch_values = (qs_dict[pk] for pk in prefetch_pk_values)
-                else:
-                    prefetch_values = qs_dict[prefetch_pk_values]
-                setattr(item, prefetched_field, prefetch_values)
+from validity.utils.orm import CustomPrefetchMixin, RegexpReplace
 
 
 class ComplianceTestQS(RestrictedQuerySet):
@@ -230,7 +192,7 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
         from validity.models import ConfigSerializer
 
         return self.annotate_serializer_id().custom_prefetch(
-            "serializer", ConfigSerializer.objects.prefetch_related("data_file")
+            "serializer", ConfigSerializer.objects.select_related("data_file")
         )
 
     def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
