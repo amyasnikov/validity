@@ -167,10 +167,13 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
             )
         )
 
-    def prefetch_datasource(self: _QS) -> _QS:
+    def prefetch_datasource(self: _QS, prefetch_config_files: bool = False) -> _QS:
         from validity.models import VDataSource
 
-        return self.annotate_datasource_id().custom_prefetch("data_source", VDataSource.objects.prefetch_config_files())
+        datasource_qs = VDataSource.objects.all()
+        if prefetch_config_files:
+            datasource_qs = datasource_qs.prefetch_config_files()
+        return self.annotate_datasource_id().custom_prefetch("data_source", datasource_qs)
 
     def annotate_serializer_id(self: _QS) -> _QS:
         return (

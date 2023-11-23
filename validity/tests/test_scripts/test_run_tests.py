@@ -8,8 +8,8 @@ from simpleeval import InvalidExpression
 
 from validity.config_compliance.exceptions import EvalError
 from validity.models import ComplianceReport, ComplianceTestResult, VDevice
-from validity.scripts import validity_run_tests
-from validity.scripts.validity_run_tests import RunTestsScript
+from validity.scripts import run_tests
+from validity.scripts.run_tests import RunTestsScript
 from validity.utils.misc import null_request
 
 
@@ -84,7 +84,7 @@ def test_run_test(monkeypatch):
     nm_functions = Mock()
     evaluator_cls = Mock(return_value=Mock(explanation=[("var1", "val1")]))
     monkeypatch.setattr(script, "nameset_functions", nm_functions)
-    monkeypatch.setattr(validity_run_tests, "ExplanationalEval", evaluator_cls)
+    monkeypatch.setattr(run_tests, "ExplanationalEval", evaluator_cls)
     device = Mock()
     test = Mock()
     passed, explanation = script.run_test(device, test)
@@ -108,7 +108,7 @@ def test_run_test(monkeypatch):
 )
 def test_run_tests_for_device(mock_script_logging, run_test_mock, monkeypatch):
     result_cls = namedtuple("MockResult", "passed explanation device test report dynamic_pair")
-    monkeypatch.setattr(validity_run_tests, "ComplianceTestResult", result_cls)
+    monkeypatch.setattr(run_tests, "ComplianceTestResult", result_cls)
     script = RunTestsScript()
     script._sleep_between_tests = 0
     monkeypatch.setattr(script, "run_test", run_test_mock)
@@ -152,7 +152,7 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
 @pytest.mark.django_db
 def test_webhook_without_ctx_is_not_fired(monkeypatch):
     enq_obj = Mock()
-    monkeypatch.setattr(validity_run_tests, "enqueue_object", enq_obj)
+    monkeypatch.setattr(run_tests, "enqueue_object", enq_obj)
     with null_request():
         ComplianceReport.objects.create()
     enq_obj.assert_not_called()
@@ -161,7 +161,7 @@ def test_webhook_without_ctx_is_not_fired(monkeypatch):
 @pytest.mark.django_db
 def test_fire_report_webhook(monkeypatch):
     enq_obj = Mock()
-    monkeypatch.setattr(validity_run_tests, "enqueue_object", enq_obj)
+    monkeypatch.setattr(run_tests, "enqueue_object", enq_obj)
     script = RunTestsScript()
     script.request = Mock(id=uuid4(), user=Mock(username="admin"))
     report = ReportFactory()

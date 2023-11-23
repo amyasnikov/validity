@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from validity.utils.password import EncryptedString
 from django.db import migrations, models
 import django.db.models.deletion
+from validity.utils.misc import datasource_sync
 
 
 def setup_datasource_cf(apps, schema_editor):
@@ -78,6 +79,7 @@ def setup_datasources(apps, schema_editor):
 
     db = schema_editor.connection.alias
     GitRepo = apps.get_model("validity", "GitRepo")
+    datasources = []
     for repo in GitRepo.objects.using(db).all():
         try:
             cf = get_fields(
@@ -99,13 +101,14 @@ def setup_datasources(apps, schema_editor):
                 parameters=parameters,
                 custom_field_data=cf,
             )
-            datasource.sync()
+            datasources.append(datasource)
         except Exception as e:
             print(
                 f"\nAn error occured while creating Data Source for {repo.name}, skipping...",
                 f"{type(e).__name__}: {e}",
                 sep="\n",
             )  # noqa
+        datasource_sync(datasources, fail_handler=lambda ds, err: print(f"Cannot sync Data Source {ds}:", err))
 
 
 def delete_repo_cf(apps, schema_editor):

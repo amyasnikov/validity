@@ -12,8 +12,6 @@ from .data import VDataFile, VDataSource
 class VDevice(Device):
     objects = VDeviceQS.as_manager()
     data_source: VDataSource
-    # above this limit config data files won't be prefetched to datasource and will be queried one by one
-    config_prefetch_limit = 1000
 
     class Meta:
         proxy = True
@@ -31,10 +29,7 @@ class VDevice(Device):
     @cached_property
     def data_file(self) -> VDataFile | None:
         path = self.config_path
-        if (
-            hasattr(self.data_source, "config_files")
-            and self.data_source.config_file_count <= self.config_prefetch_limit
-        ):
+        if hasattr(self.data_source, "config_files"):
             return self.data_source.configfiles_by_path.get(path)
         return self.data_source.datafiles.filter(path=path).first()
 
