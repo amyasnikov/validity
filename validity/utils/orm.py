@@ -28,7 +28,7 @@ class QuerySetMap:
 
     def _evaluate(self):
         if not self._evaluated:
-            for model in self._qs:
+            for model in self._qs.iterator(chunk_size=2000):
                 self._map[getattr(model, self._attribute)] = model
             self._evaluated = True
 

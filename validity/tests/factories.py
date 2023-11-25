@@ -1,3 +1,5 @@
+import datetime
+
 import factory
 from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from extras.models import Tag
@@ -7,25 +9,46 @@ from tenancy.models import Tenant
 from validity import models
 
 
-class GitRepoFactory(DjangoModelFactory):
-    name = factory.Sequence(lambda n: f"repo-{n}")
-    git_url = "http://some.url/repo"
-    web_url = "http://some.url/repo/{{branch}}"
-    device_config_path = "some/path/{{device.name}}.txt"
-    username = ""
+class DataSourceFactory(DjangoModelFactory):
+    name = factory.Sequence(lambda n: f"datasource-{n}")
+    type = "local"
+    source_url = "file:///some_path"
 
     class Meta:
-        model = models.GitRepo
-
-    @factory.post_generation
-    def password(self, create, extracted, **kwargs):
-        self.password = extracted
-        self.save()
+        model = models.VDataSource
 
 
-class GitRepoLinkFactory(DjangoModelFactory):
-    repo = factory.SubFactory(GitRepoFactory)
-    file_path = "some/file.txt"
+class DataFileFactory(DjangoModelFactory):
+    source = factory.SubFactory(DataSourceFactory)
+    path = factory.Sequence(lambda n: f"file-{n}.txt")
+    data = "some contents".encode()
+    size = len(data)
+    last_updated = datetime.datetime.utcnow()
+    hash = "1" * 64
+
+    class Meta:
+        model = models.VDataFile
+
+
+class ConfigFileFactory(DataFileFactory):
+    path = "file-1.txt"
+    source = factory.SubFactory(
+        DataSourceFactory,
+        custom_field_data={
+            "device_config_default": True,
+            "device_config_path": path,
+            "web_url": "http://some_url.com/",
+        },
+    )
+
+
+class DataSourceLinkFactory(DjangoModelFactory):
+    data_source = factory.SubFactory(DataSourceFactory)
+    data_file = factory.SubFactory(DataFileFactory, source=data_source, data=factory.SelfAttribute("..contents_bin"))
+
+    class Params:
+        contents = "some_contents"
+        contents_bin = factory.LazyAttribute(lambda o: o.contents.encode())
 
 
 class NameSetDBFactory(DjangoModelFactory):
@@ -37,7 +60,7 @@ class NameSetDBFactory(DjangoModelFactory):
         model = models.NameSet
 
 
-class NameSetGitFactory(GitRepoLinkFactory, NameSetDBFactory):
+class NameSetDSFactory(DataSourceLinkFactory, NameSetDBFactory):
     definitions = ""
 
     class Meta:
@@ -63,7 +86,7 @@ class SerializerDBFactory(DjangoModelFactory):
         model = models.ConfigSerializer
 
 
-class SerializerGitFactory(GitRepoLinkFactory, SerializerDBFactory):
+class SerializerDSFactory(DataSourceLinkFactory, SerializerDBFactory):
     ttp_template = ""
 
     class Meta:
@@ -78,7 +101,7 @@ class CompTestDBFactory(DjangoModelFactory):
         model = models.ComplianceTest
 
 
-class CompTestGitFactory(GitRepoLinkFactory, CompTestDBFactory):
+class CompTestDSFactory(DataSourceLinkFactory, CompTestDBFactory):
     expression = ""
 
     class Meta:

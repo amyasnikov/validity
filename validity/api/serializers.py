@@ -262,13 +262,14 @@ NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "displ
 
 class SerializedConfigSerializer(serializers.Serializer):
     serializer = NestedConfigSerializerSerializer(read_only=True, source="device.serializer")
-    data_source = NestedDataSourceSerializer(read_only=True, source="device.datasource")
+    data_source = NestedDataSourceSerializer(read_only=True, source="device.data_source")
+    data_file = NestedDataFileSerializer(read_only=True, source="device.data_file")
     local_copy_last_updated = serializers.DateTimeField(allow_null=True, source="last_modified")
     config_web_link = serializers.SerializerMethodField()
     serialized_config = serializers.JSONField(source="serialized")
 
     def get_config_web_link(self, obj):
-        return urljoin(obj.device.datasource.web_url, obj.config_path.as_posix())
+        return urljoin(obj.device.data_source.web_url, obj.device.config_path)
 
 
 class DeviceReportSerializer(NestedDeviceSerializer):

@@ -3,14 +3,19 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
+from extras.scripts import Script
 from factories import CompTestDBFactory, DeviceFactory, NameSetDBFactory, ReportFactory, SelectorFactory
 from simpleeval import InvalidExpression
 
 from validity.config_compliance.exceptions import EvalError
 from validity.models import ComplianceReport, ComplianceTestResult, VDevice
 from validity.scripts import run_tests
-from validity.scripts.run_tests import RunTestsScript
+from validity.scripts.run_tests import RunTestsScript as RunTestsMixin
 from validity.utils.misc import null_request
+
+
+class RunTestsScript(RunTestsMixin, Script):
+    pass
 
 
 NS_1 = """
@@ -139,7 +144,7 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
         name="selector",
         **{
             "devices.select_related.return_value"
-            ".annotate_json_serializer.return_value.annotate_json_repo.return_value": devices
+            ".prefetch_datasource.return_value.prefetch_serializer.return_value": devices
         }
     )
     report = Mock()

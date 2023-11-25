@@ -32,6 +32,11 @@ class PostMixin:
 
     @classmethod
     def resolve_post_body(cls):
+        #  making data_file point to the same data_source
+        if "data_source" in cls.post_body and "data_file" in cls.post_body:
+            data_source = cls.post_body["data_source"]()
+            cls.post_body["data_source"] = data_source.pk
+            cls.post_body["data_file"] = cls.post_body["data_file"](source=data_source).pk
         for k, v in cls.post_body.items():
             if isinstance(v, type):
                 cls.post_body[k] = v().pk

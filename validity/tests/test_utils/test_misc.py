@@ -3,7 +3,8 @@ from contextlib import nullcontext
 
 import pytest
 
-from validity.utils.misc import NetboxVersion, reraise
+from validity.utils.misc import reraise
+from validity.utils.version import NetboxVersion
 
 
 class Error1(Exception):

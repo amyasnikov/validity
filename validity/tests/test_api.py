@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -8,9 +7,11 @@ from django.utils import timezone
 from factories import (
     CompTestDBFactory,
     CompTestResultFactory,
+    ConfigFileFactory,
+    DataFileFactory,
+    DataSourceFactory,
     DeviceFactory,
     DeviceTypeFactory,
-    GitRepoFactory,
     LocationFactory,
     ManufacturerFactory,
     PlatformFactory,
@@ -39,29 +40,15 @@ class TestDBNameSet(ApiPostGetTest):
             assert resp_json["effective_definitions"]
 
 
-class TestGitNameSet(ApiPostGetTest):
+class TestDSNameSet(ApiPostGetTest):
     entity = "namesets"
     post_body = {
         "name": "nameset-1",
         "description": "nameset description",
         "global": False,
         "tests": [CompTestDBFactory, CompTestDBFactory],
-        "repo": GitRepoFactory,
-        "file_path": "some/file.txt",
-    }
-
-
-class TestGitRepo(ApiPostGetTest):
-    entity = "git-repositories"
-    post_body = {
-        "name": "repo-1",
-        "git_url": "http://some.url/path",
-        "web_url": "http://some.url/webpath",
-        "device_config_path": "some/path/{{device.name}}.txt",
-        "default": True,
-        "username": "admin",
-        "password": "1234",
-        "branch": "main",
+        "data_source": DataSourceFactory,
+        "data_file": DataFileFactory,
     }
 
 
@@ -92,13 +79,13 @@ class TestDBSerializer(ApiPostGetTest):
             assert resp_json["effective_template"]
 
 
-class TestGitSerializer(ApiPostGetTest):
+class TestDSSerializer(ApiPostGetTest):
     entity = "serializers"
     post_body = {
         "name": "serializer-1",
         "extraction_method": "TTP",
-        "repo": GitRepoFactory,
-        "file_path": "some_file.txt",
+        "data_source": DataSourceFactory,
+        "data_file": DataFileFactory,
     }
 
 
@@ -117,15 +104,15 @@ class TestDBTest(ApiPostGetTest):
             assert resp_json["effective_expression"]
 
 
-class TestGitTest(ApiPostGetTest):
+class TestDSTest(ApiPostGetTest):
     entity = "tests"
     post_body = {
         "name": "test-1",
         "description": "some description",
         "severity": "LOW",
         "selectors": [SelectorFactory],
-        "repo": GitRepoFactory,
-        "file_path": "some/file.txt",
+        "data_source": DataSourceFactory,
+        "data_file": DataFileFactory,
     }
 
 
@@ -142,18 +129,18 @@ class TestReport(ApiGetTest):
 @pytest.mark.django_db
 def test_get_serialized_config(monkeypatch, admin_client):
     device = DeviceFactory()
-    device.repo = GitRepoFactory(web_url="http://github.com/reponame")
-    device.serializer = SerializerDBFactory()
+    config_file = ConfigFileFactory()
+    device.custom_field_data["serializer"] = SerializerDBFactory().pk
+    device.save()
+    device.data_source = config_file.source
     lm = timezone.now()
-    config = DeviceConfig(
-        device=device, config_path=Path("some/file.txt"), last_modified=lm, serialized={"key1": "value1"}
-    )
+    config = DeviceConfig(device=device, plain_config="", last_modified=lm, serialized={"key1": "value1"})
     monkeypatch.setattr(DeviceConfig, "from_device", Mock(return_value=config))
     resp = admin_client.get(f"/api/dcim/devices/{device.pk}/serialized_config/")
     assert resp.status_code == HTTPStatus.OK
     assert resp.json().keys() == {
-        "serializer",
-        "repo",
+        "data_source",
+        "data_file",
         "local_copy_last_updated",
         "config_web_link",
         "serialized_config",
