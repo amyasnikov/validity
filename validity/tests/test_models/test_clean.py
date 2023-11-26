@@ -2,15 +2,7 @@ import textwrap
 
 import pytest
 from django.core.exceptions import ValidationError
-from factories import CompTestGitFactory, GitRepoFactory, NameSetGitFactory, SelectorFactory, SerializerGitFactory
-
-
-@pytest.mark.django_db
-def test_only_one_default_repo():
-    GitRepoFactory(default=True)
-    with pytest.raises(ValidationError):
-        repo = GitRepoFactory.build(default=True)
-        repo.clean()
+from factories import CompTestDSFactory, NameSetDSFactory, SelectorFactory, SerializerDSFactory
 
 
 class BaseTestClean:
@@ -34,8 +26,8 @@ class BaseTestClean:
                     model.clean()
 
 
-class TestNameSet(BaseTestClean):
-    factory = NameSetGitFactory
+class TestDBNameSet(BaseTestClean):
+    factory = NameSetDSFactory
     right_definition = textwrap.dedent(
         """
             from collections import Counter
@@ -50,13 +42,16 @@ class TestNameSet(BaseTestClean):
         """
     )
 
-    right_kwargs = [{"definitions": right_definition, "repo": None, "file_path": ""}]
+    right_kwargs = [
+        {"definitions": right_definition, "data_source": None, "data_file": None},
+        {"definitions": "", "contents": right_definition},
+    ]
     wrong_kwargs = [
-        {"definitions": "a = 10", "repo": None, "file_path": ""},
-        {"definitions": "some invalid syntax", "repo": None, "file_path": ""},
-        {"definitions": "def some_func(): pass", "repo": None, "file_path": ""},
-        {"definitions": right_definition, "repo": None},
-        {"definitions": right_definition, "file_path": ""},
+        {"definitions": "a = 10", "data_source": None, "data_file": None},
+        {"definitions": "some invalid syntax", "data_source": None, "data_file": None},
+        {"definitions": "def some_func(): pass", "data_source": None, "data_file": None},
+        {"definitions": right_definition, "data_source": None},
+        {"definitions": right_definition, "data_file": None},
     ]
 
 
@@ -67,21 +62,36 @@ class TestSelector(BaseTestClean):
 
 
 class TestSerializer(BaseTestClean):
-    factory = SerializerGitFactory
+    factory = SerializerDSFactory
 
     right_kwargs = [
-        {"extraction_method": "TTP", "ttp_template": "interface {{ interface }}", "repo": None, "file_path": ""},
-        {"extraction_method": "YAML", "repo": None, "file_path": ""},
+        {
+            "extraction_method": "TTP",
+            "ttp_template": "interface {{ interface }}",
+            "data_source": None,
+            "data_file": None,
+        },
+        {"extraction_method": "YAML", "data_source": None, "data_file": None},
+        {"extraction_method": "TTP", "ttp_template": "", "contents": "interface {{ interface }}"},
     ]
     wrong_kwargs = [
-        {"extraction_method": "TTP", "ttp_template": "", "repo": None, "file_path": ""},
-        {"extraction_method": "TTP", "ttp_template": "qwerty", "file_path": ""},
+        {"extraction_method": "TTP", "ttp_template": "", "data_source": None, "data_file": None},
+        {"extraction_method": "TTP", "ttp_template": "qwerty"},
+        {"extraction_method": "TTP", "ttp_template": "qwerty", "data_source": None},
+        {"extraction_method": "TTP", "ttp_template": "qwerty", "data_file": None},
         {"extraction_method": "YAML"},
     ]
 
 
-class TestTest(BaseTestClean):
-    factory = CompTestGitFactory
+class TestCompTest(BaseTestClean):
+    factory = CompTestDSFactory
 
-    right_kwargs = [{"expression": "a==1", "repo": None, "file_path": ""}, {}]
-    wrong_kwargs = [{"expression": "a==b", "repo": None}, {"expression": "a = 10 + 15", "repo": None, "file_path": ""}]
+    right_kwargs = [{"expression": "a==1", "data_source": None, "data_file": None}, {}]
+    wrong_kwargs = [
+        {"expression": "a == b"},
+        {"expression": "", "data_source": None, "data_file": None},
+        {"expression": "a==b", "data_source": None},
+        {"expression": "a==b", "data_file": None},
+        {"expression": "a = 10 + 15", "data_source": None, "data_file": None},
+        {"expression": "import itertools; a==b", "data_source": None, "data_file": None},
+    ]

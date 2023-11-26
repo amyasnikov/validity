@@ -1,53 +1,44 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from dcim.models import Device
-from django.utils.timezone import make_aware
-
-from validity import settings
 from validity.utils.misc import reraise
 from ..exceptions import DeviceConfigError
 
 
+if TYPE_CHECKING:
+    from validity.models import VDevice
+
+
 @dataclass
 class BaseDeviceConfig:
-    device: Device
-    config_path: Path
+    device: "VDevice"
+    plain_config: str
     last_modified: datetime | None = None
     serialized: dict | list | None = None
-    _git_folder: ClassVar[Path] = settings.git_folder
+
     _config_classes: ClassVar[dict[str, type]] = {}
 
     @classmethod
-    def _full_config_path(cls, device: Device) -> Path:
-        return cls._git_folder / device.repo.name / device.repo.rendered_device_path(device)
-
-    @classmethod
-    def from_device(cls, device: Device) -> "BaseDeviceConfig":
+    def from_device(cls, device: "VDevice") -> "BaseDeviceConfig":
         """
         Get DeviceConfig from dcim.models.Device
-        Device MUST be annotated with ".repo" pointing to a repo with device config file
+        Device MUST be annotated with ".data_file"
         Device MUST be annotated with ".serializer" pointing to appropriate config serializer instance
         """
-        with reraise((AssertionError, FileNotFoundError), DeviceConfigError):
-            assert getattr(device, "repo", None), f"{device} has no bound repository"
+        with reraise((AssertionError, FileNotFoundError, AttributeError), DeviceConfigError):
+            assert getattr(
+                device, "data_file", None
+            ), f"{device} has no bound data file. Either no data source bound or the file does not exist"
             assert getattr(device, "serializer", None), f"{device} has no bound serializer"
             return cls._config_classes[device.serializer.extraction_method]._from_device(device)
 
     @classmethod
-    def _from_device(cls, device: Device) -> "BaseDeviceConfig":
-        with reraise(AttributeError, DeviceConfigError):
-            device_path = cls._full_config_path(device)
-            last_modified = None
-            if device_path.is_file():
-                lm_timestamp = device_path.stat().st_mtime
-                last_modified = make_aware(datetime.fromtimestamp(lm_timestamp))
-            instance = cls(device, device_path, last_modified)
-            instance.serialize()
-            return instance
+    def _from_device(cls, device: "VDevice") -> "BaseDeviceConfig":
+        instance = cls(device, device.data_file.data_as_string, device.data_file.last_updated)
+        instance.serialize()
+        return instance
 
     @abstractmethod
     def serialize(self, override: bool = False) -> None:

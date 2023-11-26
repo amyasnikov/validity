@@ -1,39 +1,29 @@
 from functools import partial as p
-from unittest.mock import MagicMock, Mock
 
 import pytest
 from factories import (
     CompTestDBFactory,
-    CompTestGitFactory,
+    CompTestDSFactory,
     NameSetDBFactory,
-    NameSetGitFactory,
+    NameSetDSFactory,
     SerializerDBFactory,
-    SerializerGitFactory,
+    SerializerDSFactory,
 )
-
-from validity.models import base
 
 
 @pytest.mark.parametrize(
     "factory, prop_name, expected_value",
     [
         (p(SerializerDBFactory, ttp_template="template"), "effective_template", "template"),
-        (SerializerGitFactory, "effective_template", ""),
+        (p(SerializerDSFactory, contents="template2"), "effective_template", "template2"),
         (p(NameSetDBFactory, definitions="def f(): pass"), "effective_definitions", "def f(): pass"),
-        (NameSetGitFactory, "effective_definitions", ""),
+        (p(NameSetDSFactory, contents="def f2(): pass"), "effective_definitions", "def f2(): pass"),
         (p(CompTestDBFactory, expression="1==2"), "effective_expression", "1==2"),
-        (CompTestGitFactory, "effective_expression", ""),
+        (p(CompTestDSFactory, contents="1==3"), "effective_expression", "1==3"),
     ],
 )
 @pytest.mark.django_db
-def test_git_link_model(factory, prop_name, expected_value, monkeypatch):
-    model = factory()
-    mock_git = Mock(GitRepo=Mock(from_db=MagicMock()))
-    monkeypatch.setattr(base, "git", mock_git)
-    value = getattr(model, prop_name)
-    if isinstance(value, Mock):
-        assert value._extract_mock_name() == "mock.GitRepo.from_db().local_path.__truediv__().open().__enter__().read()"
-        mock_git.GitRepo.from_db.assert_called_once_with(model.repo)
-        mock_git.GitRepo.from_db.return_value.local_path.__truediv__.assert_called_once_with(model.file_path)
-    else:
-        assert value == expected_value
+def test_git_link_model(factory, prop_name, expected_value):
+    created_model = factory()
+    obj = type(created_model).objects.filter(pk=created_model.pk).first()
+    assert getattr(obj, prop_name) == expected_value

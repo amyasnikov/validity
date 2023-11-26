@@ -74,24 +74,6 @@ class ComplianceResultTable(NetBoxTable):
         default_columns = fields
 
 
-class GitRepoTable(NetBoxTable):
-    name = Column(linkify=True)
-    total_devices = Column(empty_values=())
-    default = BooleanColumn()
-
-    class Meta(NetBoxTable.Meta):
-        model = models.GitRepo
-        fields = ("name", "default", "total_devices")
-        default_columns = fields
-
-    def __init__(self, *args, extra_columns=None, **kwargs):
-        super().__init__(*args, extra_columns=extra_columns, **kwargs)
-        self.total_devices_map = models.VDevice.objects.count_per_repo()
-
-    def render_total_devices(self, record):
-        return self.total_devices_map.get(record.id, 0)
-
-
 class ConfigSerializerTable(NetBoxTable):
     name = Column(linkify=True)
     extraction_method = ChoiceFieldColumn()

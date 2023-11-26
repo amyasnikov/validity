@@ -10,12 +10,6 @@ class NameSetIndex(SearchIndex):
 
 
 @register_search
-class GitRepoIndex(SearchIndex):
-    model = models.GitRepo
-    fields = (("name", 100), ("git_url", 300), ("device_config_path", 300))
-
-
-@register_search
 class SelectorIndex(SearchIndex):
     model = models.ComplianceSelector
     fields = (

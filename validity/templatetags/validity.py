@@ -1,13 +1,11 @@
 from typing import Any
 
-from dcim.models import Device
 from django import template
 from django.db.models import Model
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from utilities.templatetags.builtins.filters import linkify, placeholder
 
-from validity.models import GitRepoLinkMixin
 from validity.utils.misc import colorful_percentage as _colorful_percentage
 
 
@@ -36,21 +34,8 @@ def checkmark(value: Any) -> str:
 
 
 @register.filter
-def device_path(device: Device) -> str:
-    """
-    Returns device config path
-    device MUST be annotated with ".repo"
-    """
-    try:
-        repo = device.repo
-        return repo.rendered_device_path(device)
-    except AttributeError:
-        return ""
-
-
-@register.filter
-def data_source(model: GitRepoLinkMixin) -> str:
-    return _("Git") if model.repo else _("DB")
+def data_source(model) -> str:
+    return _("Data Source") if model.data_source else _("DB")
 
 
 @register.filter

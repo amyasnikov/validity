@@ -6,24 +6,6 @@ from netbox.graphql.types import BaseObjectType, NetBoxObjectType
 from validity import filtersets, models
 
 
-class GitRepoType(NetBoxObjectType):
-    class Meta:
-        model = models.GitRepo
-        fields = (
-            "id",
-            "name",
-            "git_url",
-            "web_url",
-            "device_config_path",
-            "default",
-            "username",
-            "branch",
-            "head_hash",
-            "created",
-            "last_updated",
-        )
-
-
 class NameSetType(NetBoxObjectType):
     global_ = Field(name="global", type_=Boolean, source="_global")
 
@@ -35,8 +17,8 @@ class NameSetType(NetBoxObjectType):
             "description",
             "tests",
             "definitions",
-            "repo",
-            "file_path",
+            "data_source",
+            "data_file",
             "created",
             "last_updated",
         )
@@ -82,7 +64,16 @@ class ComplianceSelectorWithDevicesType(ComplianceSelectorType):
 class ConfigSerializerType(NetBoxObjectType):
     class Meta:
         model = models.ConfigSerializer
-        fields = ("id", "name", "extraction_method", "ttp_template", "repo", "file_path", "created", "last_updated")
+        fields = (
+            "id",
+            "name",
+            "extraction_method",
+            "ttp_template",
+            "data_source",
+            "data_file",
+            "created",
+            "last_updated",
+        )
         filterset_class = filtersets.ConfigSerializerFilterSet
 
 
@@ -95,8 +86,8 @@ class ComplianceTestType(NetBoxObjectType):
             "description",
             "severity",
             "selectors",
-            "repo",
-            "file_path",
+            "data_source",
+            "data_file",
             "namesets",
             "created",
             "last_updated",
@@ -144,9 +135,6 @@ class ReportType(BaseObjectType):
 
 
 class Query(ObjectType):
-    repo = ObjectField(GitRepoType)
-    repo_list = ObjectListField(GitRepoType)
-
     nameset = ObjectField(NameSetType)
     nameset_list = ObjectListField(NameSetType)
 

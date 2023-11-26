@@ -6,18 +6,20 @@ from base import ViewTest
 from factories import (
     CompTestDBFactory,
     CompTestResultFactory,
+    ConfigFileFactory,
+    DataFileFactory,
+    DataSourceFactory,
     DeviceFactory,
     DeviceTypeFactory,
-    GitRepoFactory,
     LocationFactory,
     ManufacturerFactory,
     NameSetDBFactory,
-    NameSetGitFactory,
+    NameSetDSFactory,
     PlatformFactory,
     ReportFactory,
     SelectorFactory,
     SerializerDBFactory,
-    SerializerGitFactory,
+    SerializerDSFactory,
     SiteFactory,
     TagFactory,
     TenantFactory,
@@ -42,8 +44,8 @@ class TestDBNameSet(ViewTest):
     }
 
 
-class TestGitNameSet(ViewTest):
-    factory_class = NameSetGitFactory
+class TestDSNameSet(ViewTest):
+    factory_class = NameSetDSFactory
     model_class = models.NameSet
     post_body = {
         "name": "nameset-1",
@@ -51,23 +53,8 @@ class TestGitNameSet(ViewTest):
         "_global": False,
         "tests": [CompTestDBFactory, CompTestDBFactory],
         "definitions": "",
-        "repo": GitRepoFactory,
-        "file_path": "some/file.txt",
-    }
-
-
-class TestGitRepo(ViewTest):
-    factory_class = GitRepoFactory
-    model_class = models.GitRepo
-    post_body = {
-        "name": "repo-1",
-        "git_url": "http://some.url/path",
-        "web_url": "http://some.url/path",
-        "device_config_path": "device/path",
-        "default": True,
-        "username": "admin",
-        "password": "1234",
-        "branch": "master",
+        "data_source": DataSourceFactory,
+        "data_file": DataFileFactory,
     }
 
 
@@ -104,15 +91,15 @@ class TestDBSerializer(ViewTest):
     post_body = {"name": "serializer-1", "extraction_method": "TTP", "ttp_template": "interface {{interface}}"}
 
 
-class TestGitSerializer(ViewTest):
-    factory_class = SerializerGitFactory
+class TestDSSerializer(ViewTest):
+    factory_class = SerializerDSFactory
     model_class = models.ConfigSerializer
     post_body = {
         "name": "serializer-1",
         "extraction_method": "TTP",
         "ttp_template": "",
-        "repo": GitRepoFactory,
-        "file_path": "some_file.txt",
+        "data_source": DataSourceFactory,
+        "data_file": DataFileFactory,
     }
 
 
@@ -136,7 +123,7 @@ class TestDBTest(ViewTest):
     }
 
 
-class TestGitTest(ViewTest):
+class TestDSTest(ViewTest):
     factory_class = CompTestDBFactory
     model_class = models.ComplianceTest
     post_body = {
@@ -145,14 +132,18 @@ class TestGitTest(ViewTest):
         "severity": "LOW",
         "expression": "",
         "selectors": [SelectorFactory],
-        "repo": GitRepoFactory,
-        "file_path": "some/file.txt",
+        "data_source": DataSourceFactory,
+        "data_file": DataFileFactory,
     }
 
 
 @pytest.mark.django_db
 def test_device_results(admin_client):
     device = DeviceFactory()
+    ConfigFileFactory()
+    serializer = SerializerDBFactory()
+    device.custom_field_data["serializer"] = serializer.pk
+    device.save()
     resp = admin_client.get(f"/dcim/devices/{device.pk}/serialized_config/")
     assert resp.status_code == HTTPStatus.OK
 

@@ -1,19 +1,21 @@
 import base64
 from dataclasses import dataclass, field
-from functools import partial
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from django import forms
 from django.conf import settings
-from django.db.models.fields import CharField
 
 
 @dataclass
 class EncryptedString:
+    """
+    The rudiment from Validity 1.x which was supposed to encrypt/decrypt passwords for GitRepo
+    Now it is required to execute migration 0005
+    """
+
     cipher: bytes
     salt: bytes
     _fernet: Fernet | None = field(default=None, compare=False, repr=False)
@@ -52,34 +54,3 @@ class EncryptedString:
     def deserialize(cls, value: str):
         salt, cipher = value.split("$")
         return cls(cipher.encode(), salt.encode())
-
-
-class PasswordField(CharField):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        kwargs["max_length"] = 255
-        super().__init__(*args, **kwargs)
-
-    def deconstruct(self) -> Any:
-        name, path, args, kwargs = super().deconstruct()
-        del kwargs["max_length"]
-        return name, path, args, kwargs
-
-    def from_db_value(self, value, expression, connection):
-        if value is None:
-            return value
-        return EncryptedString.deserialize(value)
-
-    def get_prep_value(self, value: EncryptedString | str | None) -> str | None:
-        if value is None or isinstance(value, str):
-            return value
-        return value.serialize()
-
-    def to_python(self, value):
-        if value is None or isinstance(value, EncryptedString):
-            return value
-        return EncryptedString.deserialize(value)
-
-    def formfield(self, **kwargs):
-        if kwargs.get("form_class") is None:
-            kwargs["form_class"] = partial(forms.CharField, widget=forms.PasswordInput())
-        return super().formfield(**kwargs)

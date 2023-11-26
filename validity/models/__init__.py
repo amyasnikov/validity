@@ -1,7 +1,6 @@
-from .base import GitRepoLinkMixin
+from .data import VDataFile, VDataSource
 from .device import VDevice
 from .nameset import NameSet
-from .repo import GitRepo
 from .report import ComplianceReport
 from .selector import ComplianceSelector
 from .serializer import ConfigSerializer

@@ -23,7 +23,7 @@ class TestResultView(TestResultBaseView):
 class DeviceSerializedConfigView(generic.ObjectView):
     template_name = "validity/device_config.html"
     tab = ViewTab("Serialized Config", permission="dcim.view_device")
-    queryset = VDevice.objects.all()
+    queryset = VDevice.objects.prefetch_datasource().prefetch_serializer()
 
     def get_extra_context(self, request, instance):
         try:

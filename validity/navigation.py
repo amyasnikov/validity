@@ -36,18 +36,6 @@ validity_menu_items = (
         link_text="Reports",
     ),
     PluginMenuItem(
-        link="plugins:validity:gitrepo_list",
-        link_text="Git Repositories",
-        buttons=[
-            PluginMenuButton(
-                link="plugins:validity:gitrepo_add",
-                title="Add",
-                icon_class="mdi mdi-plus-thick",
-                color=ButtonColorChoices.GREEN,
-            ),
-        ],
-    ),
-    PluginMenuItem(
         link="plugins:validity:configserializer_list",
         link_text="Config Serializers",
         buttons=[

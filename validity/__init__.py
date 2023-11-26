@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 from django.conf import settings as django_settings
@@ -7,7 +6,7 @@ from extras.plugins import PluginConfig
 from netbox.settings import VERSION
 from pydantic import BaseModel, DirectoryPath, Field
 
-from validity.utils.misc import NetboxVersion
+from validity.utils.version import NetboxVersion
 
 
 logger = logging.getLogger(__name__)
@@ -26,14 +25,6 @@ class NetBoxValidityConfig(PluginConfig):
 
     # custom field
     netbox_version = NetboxVersion(VERSION)
-
-    def ready(self):
-        try:
-            os.makedirs(settings.git_folder, exist_ok=True)
-        except OSError as e:
-            if not settings.git_folder.is_dir():
-                logger.error("Cannot create git_folder (%s), %s: %s", settings.git_folder, type(e).__name__, e)
-        return super().ready()
 
 
 config = NetBoxValidityConfig

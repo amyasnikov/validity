@@ -9,7 +9,7 @@ from dcim.models import Device
 from django.db.models import QuerySet
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
-from extras.scripts import BooleanVar, MultiObjectVar, Script
+from extras.scripts import BooleanVar, MultiObjectVar
 from extras.webhooks import enqueue_object
 from netbox.context import webhooks_queue
 from simpleeval import InvalidExpression
@@ -23,24 +23,22 @@ from validity.models import (
     ComplianceSelector,
     ComplianceTest,
     ComplianceTestResult,
-    GitRepo,
     NameSet,
+    VDataSource,
     VDevice,
 )
-from validity.utils.git import SyncReposMixin
-from validity.utils.misc import null_request
+from validity.utils.misc import datasource_sync, null_request
 
 
-class RunTestsScript(SyncReposMixin, Script):
-
+class RunTestsScript:
     _sleep_between_tests = validity.settings.sleep_between_tests
     _result_batch_size = validity.settings.result_batch_size
 
-    sync_repos = BooleanVar(
+    sync_datasources = BooleanVar(
         required=False,
         default=False,
-        label=__("Sync Repositories"),
-        description=__("Pull updates from all available git repositories before running the tests"),
+        label=__("Sync Data Sources"),
+        description=__('Sync all Data Source instances which have "device_config_path" defined'),
     )
     make_report = BooleanVar(default=True, label=__("Make Compliance Report"))
     selectors = MultiObjectVar(
@@ -128,7 +126,7 @@ class RunTestsScript(SyncReposMixin, Script):
         report: ComplianceReport | None,
         device_ids: list[int],
     ) -> Generator[ComplianceTestResult, None, None]:
-        qs = selector.devices.select_related().annotate_json_serializer().annotate_json_repo()
+        qs = selector.devices.select_related().prefetch_datasource().prefetch_serializer()
         if device_ids:
             qs = qs.filter(pk__in=device_ids)
         for device in qs:
@@ -150,8 +148,8 @@ class RunTestsScript(SyncReposMixin, Script):
             ComplianceReport.objects.delete_old()
 
     def run(self, data, commit):
-        if data.get("sync_repos"):
-            self.update_git_repos(GitRepo.objects.all())
+        if data.get("sync_datasources"):
+            datasource_sync(VDataSource.objects.exclude(custom_field_data__device_config_path=None))
         with null_request():
             report = ComplianceReport.objects.create() if data.get("make_report") else None
         selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
@@ -167,6 +165,3 @@ class RunTestsScript(SyncReposMixin, Script):
             self.log_info(f"See [Compliance Report]({report.get_absolute_url()}) for detailed statistics")
             self.fire_report_webhook(report.pk)
         return yaml.dump(output, sort_keys=False)
-
-
-name = "Validity Compliance Tests"

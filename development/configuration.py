@@ -1,5 +1,4 @@
 import os
-import socket
 
 from .configuration_example import *
 
@@ -63,6 +62,14 @@ PLUGINS.append("validity")
 
 PLUGINS_CONFIG = {"validity": {"store_last_results": 5, "git_folder": "/opt/git_repos/", "autocopy_scripts": True}}
 
+
 # for debug toolbar
-_, _, _ips = socket.gethostbyname_ex(socket.gethostname())
-INTERNAL_IPS += tuple(ip[: ip.rfind(".")] + ".1" for ip in _ips)
+class ContainsAll:
+    def __contains__(self, v):
+        return True
+
+
+INTERNAL_IPS = ContainsAll()
+
+
+CUSTOM_VALIDATORS = {"core.datasource": ["validity.custom_validators.DataSourceValidator"]}

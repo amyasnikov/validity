@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import (
@@ -10,7 +10,6 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     FloatField,
-    OuterRef,
     Prefetch,
     Q,
     QuerySet,
@@ -18,24 +17,12 @@ from django.db.models import (
     When,
 )
 from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, JSONObject
+from django.db.models.functions import Cast
 from netbox.models import RestrictedQuerySet
 
 from validity import settings
 from validity.choices import DeviceGroupByChoices, SeverityChoices
-
-
-if TYPE_CHECKING:
-    from validity.models.base import BaseModel
-
-
-class JSONObjMixin:
-    def as_json(self):
-        return self.values(json=JSONObject(**{f: f for f in self.model.json_fields}))
-
-
-class GitRepoQS(JSONObjMixin, RestrictedQuerySet):
-    pass
+from validity.utils.orm import CustomPrefetchMixin, RegexpReplace
 
 
 class ComplianceTestQS(RestrictedQuerySet):
@@ -81,20 +68,33 @@ class ComplianceTestResultQS(RestrictedQuerySet):
         return (del_count, {"validity.ComplianceTestResult": del_count})
 
 
-class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
-    pass
-
-
-class NameSetQS(JSONObjMixin, RestrictedQuerySet):
-    pass
-
-
 def percentage(field1: str, field2: str) -> Case:
     return Case(
         When(Q(**{f"{field2}__gt": 0}), then=Value(100.0) * F(field1) / F(field2)),
         default=100.0,
         output_field=FloatField(),
     )
+
+
+class VDataFileQS(RestrictedQuerySet):
+    pass
+
+
+class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
+    def annotate_config_path(self):
+        return self.annotate(device_config_path=KeyTextTransform("device_config_path", "custom_field_data"))
+
+    def prefetch_config_files(self):
+        from validity.models import VDataFile
+
+        config_path = RegexpReplace(F("device_config_path"), Value("{{.+?}}"), Value(".+?"))
+        path_filter = Q(datafiles__path__regex=config_path)
+        return (
+            self.annotate_config_path()
+            .annotate(config_files_id=ArrayAgg(F("datafiles__pk"), filter=path_filter))
+            .annotate(config_file_count=Count("datafiles__pk", filter=path_filter))
+            .custom_prefetch("config_files", VDataFile.objects.all(), many=True)
+        )
 
 
 class ComplianceReportQS(RestrictedQuerySet):
@@ -140,11 +140,7 @@ class ComplianceReportQS(RestrictedQuerySet):
 _QS = TypeVar("_QS", bound=QuerySet)
 
 
-def annotate_json(qs: _QS, field: str, annotate_model: type["BaseModel"]) -> _QS:
-    return qs.annotate(**{f"json_{field}": annotate_model.objects.filter(pk=OuterRef(f"{field}_id")).as_json()})
-
-
-class VDeviceQS(RestrictedQuerySet):
+class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.selector = None
@@ -165,18 +161,26 @@ class VDeviceQS(RestrictedQuerySet):
                 if isinstance(item, self.model):
                     item.selector = self.selector
 
-    def annotate_git_repo_id(self: _QS) -> _QS:
-        from validity.models import GitRepo
+    def annotate_datasource_id(self: _QS) -> _QS:
+        from validity.models import VDataSource
 
         return self.annotate(
-            bound_repo=Cast(KeyTextTransform("repo", "tenant__custom_field_data"), BigIntegerField())
+            bound_source=Cast(KeyTextTransform("config_data_source", "tenant__custom_field_data"), BigIntegerField())
         ).annotate(
-            repo_id=Case(
-                When(bound_repo__isnull=False, then=F("bound_repo")),
-                default=GitRepo.objects.filter(default=True).values("id")[:1],
+            data_source_id=Case(
+                When(bound_source__isnull=False, then=F("bound_source")),
+                default=VDataSource.objects.filter(custom_field_data__device_config_default=True).values("id")[:1],
                 output_field=BigIntegerField(),
             )
         )
+
+    def prefetch_datasource(self: _QS, prefetch_config_files: bool = False) -> _QS:
+        from validity.models import VDataSource
+
+        datasource_qs = VDataSource.objects.all()
+        if prefetch_config_files:
+            datasource_qs = datasource_qs.prefetch_config_files()
+        return self.annotate_datasource_id().custom_prefetch("data_source", datasource_qs)
 
     def annotate_serializer_id(self: _QS) -> _QS:
         return (
@@ -194,24 +198,12 @@ class VDeviceQS(RestrictedQuerySet):
             )
         )
 
-    def annotate_json_serializer_repo(self: _QS) -> _QS:
-        from validity.models import GitRepo
-
-        return self.annotate(
-            json_serializer_repo=GitRepo.objects.filter(configserializer__pk=OuterRef("serializer_id")).as_json()
-        )
-
-    def annotate_json_repo(self: _QS) -> _QS:
-        from validity.models import GitRepo
-
-        qs = self.annotate_git_repo_id()
-        return annotate_json(qs, "repo", GitRepo)
-
-    def annotate_json_serializer(self: _QS) -> _QS:
+    def prefetch_serializer(self: _QS) -> _QS:
         from validity.models import ConfigSerializer
 
-        qs = self.annotate_serializer_id().annotate_json_serializer_repo()
-        return annotate_json(qs, "serializer", ConfigSerializer)
+        return self.annotate_serializer_id().custom_prefetch(
+            "serializer", ConfigSerializer.objects.select_related("data_file")
+        )
 
     def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
         qs = getattr(self, annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
@@ -219,9 +211,6 @@ class VDeviceQS(RestrictedQuerySet):
         for values in qs:
             result[values[field]] = values["cnt"]
         return result
-
-    def count_per_repo(self) -> dict[int | None, int]:
-        return self._count_per_something("repo_id", "annotate_git_repo_id")
 
     def count_per_serializer(self) -> dict[int | None, int]:
         return self._count_per_something("serializer_id", "annotate_serializer_id")

@@ -12,10 +12,9 @@ class YAMLDeviceConfig(DeviceConfig):
 
     def serialize(self, override: bool = False) -> None:
         if not self.serialized or override:
-            with self.config_path.open("r") as cfg_file:
-                with reraise(
-                    yaml.YAMLError,
-                    DeviceConfigError,
-                    msg=f"Trying to parse invalid YAML as device config for {self.device}",
-                ):
-                    self.serialized = yaml.safe_load(cfg_file)
+            with reraise(
+                yaml.YAMLError,
+                DeviceConfigError,
+                msg=f"Trying to parse invalid YAML as device config for {self.device}",
+            ):
+                self.serialized = yaml.safe_load(self.plain_config)
