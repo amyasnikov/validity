@@ -1,5 +1,6 @@
 import logging
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -40,8 +41,22 @@ class DataSourceMixin(models.Model):
     class Meta:
         abstract = True
 
-    def _validate_db_or_git_filled(self) -> bool:  # TODO: add this to self.clean
+    @property
+    def _validate_db_or_git_filled(self) -> bool:
         return True
+
+    def clean(self) -> None:
+        text_value = getattr(self, self.text_db_field_name)
+        if text_value and (self.data_source or self.data_file):
+            raise ValidationError(_(f"You cannot set both: data_source/data_file and {self.text_db_field_name}"))
+        if self._validate_db_or_git_filled and not text_value and (not self.data_source or not self.data_file):
+            raise ValidationError(
+                {
+                    self.text_db_field_name: _(
+                        f"You must set either {self.text_db_field_name} or both: data_source and data_file"
+                    )
+                }
+            )
 
     def effective_text_field(self) -> str:
         text_db_value = getattr(self, self.text_db_field_name)
@@ -69,7 +84,6 @@ class BaseReadOnlyModel(
     WebhooksMixin,
     models.Model,
 ):
-
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     last_updated = models.DateTimeField(auto_now=True, blank=True, null=True)
 

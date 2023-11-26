@@ -27,6 +27,7 @@ class ConfigSerializer(DataSourceMixin, BaseModel):
     def get_extraction_method_color(self):
         return ConfigExtractionChoices.colors.get(self.extraction_method)
 
+    @property
     def _validate_db_or_git_filled(self) -> bool:
         return self.extraction_method == "TTP"
 

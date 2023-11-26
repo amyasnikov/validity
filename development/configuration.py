@@ -1,5 +1,4 @@
 import os
-import socket
 
 from .configuration_example import *
 
@@ -69,4 +68,8 @@ class ContainsAll:
     def __contains__(self, v):
         return True
 
+
 INTERNAL_IPS = ContainsAll()
+
+
+CUSTOM_VALIDATORS = {"core.datasource": ["validity.custom_validators.DataSourceValidator"]}
