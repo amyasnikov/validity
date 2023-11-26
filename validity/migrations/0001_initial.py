@@ -109,7 +109,7 @@ class Migration(migrations.Migration):
                 ),
                 ("default", models.BooleanField(default=False)),
                 ("username", models.CharField(blank=True, max_length=255)),
-                ("encrypted_password", models.CharField(blank=True, default=None, null=True)),
+                ("encrypted_password", models.CharField(blank=True, max_length=255)),
                 (
                     "branch",
                     models.CharField(

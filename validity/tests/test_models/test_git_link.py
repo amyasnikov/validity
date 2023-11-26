@@ -24,5 +24,6 @@ from factories import (
 )
 @pytest.mark.django_db
 def test_git_link_model(factory, prop_name, expected_value):
-    model = factory()
-    assert getattr(model, prop_name) == expected_value
+    created_model = factory()
+    obj = type(created_model).objects.filter(pk=created_model.pk).first()
+    assert getattr(obj, prop_name) == expected_value

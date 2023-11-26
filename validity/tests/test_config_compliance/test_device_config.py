@@ -6,6 +6,7 @@ import yaml
 from factories import DataFileFactory, DeviceFactory
 
 from validity.config_compliance.device_config import DeviceConfig
+from validity.models.data import VDataFile
 
 
 JSON_CONFIG = """
@@ -114,7 +115,8 @@ def test_device_config(extraction_method, contents, serialized):
     device.serializer = Mock(name="some_serializer", extraction_method=extraction_method)
     if extraction_method == "TTP":
         device.serializer.effective_template = TTP_TEMPLATE
-    device.data_file = DataFileFactory(data=contents.encode())
+    DataFileFactory(data=contents.encode())
+    device.data_file = VDataFile.objects.first()
     device_config = DeviceConfig.from_device(device)
     assert extraction_method.lower() in type(device_config).__name__.lower()
     assert device_config.serialized == serialized
