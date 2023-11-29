@@ -59,6 +59,18 @@ validity_menu_items = (
             ),
         ],
     ),
+    PluginMenuItem(
+        link="plugins:validity:keybundle_list",
+        link_text="Key Bundles",
+        buttons=[
+            PluginMenuButton(
+                link="plugins:validity:keybundle_add",
+                title="Add",
+                icon_class="mdi mdi-plus-thick",
+                color=ButtonColorChoices.GREEN,
+            ),
+        ],
+    ),
 )
 
 menu = PluginMenu(

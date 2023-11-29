@@ -287,3 +287,22 @@ class DeviceReportSerializer(NestedDeviceSerializer):
             "results_count",
             "results",
         ]
+
+
+class KeyBundleSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:keybundle-detail")
+    class Meta:
+        model = models.KeyBundle
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "connection_type",
+            "public_credentials",
+            "private_credentials",
+            "tags",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )

@@ -107,3 +107,8 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
     def pk_field(self):
         pk_path = self.value.split("__")[:-1] + ["pk"]
         return "__".join(pk_path)
+
+
+class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
+    NETMIKO = 'netmiko', 'blue'
+    GENERIC = 'generic', 'grey'

@@ -1,3 +1,4 @@
+from functools import partialmethod
 from itertools import chain
 from typing import TypeVar
 
@@ -182,28 +183,48 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
             datasource_qs = datasource_qs.prefetch_config_files()
         return self.annotate_datasource_id().custom_prefetch("data_source", datasource_qs)
 
-    def annotate_serializer_id(self: _QS) -> _QS:
+    def annotate_cf(self, cf: str, annotation: str = ""):
+        """
+        Annotates CF value (in decreasing precedence):
+            1) From device itself
+            2) from device type
+            3) from manufacturer
+        """
+        annotation = annotation or cf
+        device_cf = f"device_{cf}"
+        devtype_cf = f"devtype_{cf}"
+        manuf_cf = f"manuf_{cf}"
         return (
-            self.annotate(device_s=KeyTextTransform("serializer", "custom_field_data"))
+            self.annotate(**{device_cf: KeyTextTransform(cf, "custom_field_data")})
             .annotate(
-                devtype_s=KeyTextTransform("serializer", "device_type__custom_field_data"),
+                **{devtype_cf: KeyTextTransform(cf, "device_type__custom_field_data")},
             )
-            .annotate(manufacturer_s=KeyTextTransform("serializer", "device_type__manufacturer__custom_field_data"))
+            .annotate(**{manuf_cf: KeyTextTransform(cf, "device_type__manufacturer__custom_field_data")})
             .annotate(
-                serializer_id=Case(
-                    When(device_s__isnull=False, then=Cast(F("device_s"), BigIntegerField())),
-                    When(devtype_s__isnull=False, then=Cast(F("devtype_s"), BigIntegerField())),
-                    When(manufacturer_s__isnull=False, then=Cast(F("manufacturer_s"), BigIntegerField())),
-                )
+                **{
+                    annotation: Case(
+                        When(**{f"{device_cf}__isnull": False, "then": Cast(F(device_cf), BigIntegerField())}),
+                        When(**{f"{devtype_cf}__isnull": False, "then": Cast(F(devtype_cf), BigIntegerField())}),
+                        When(**{f"{manuf_cf}__isnull": False, "then": Cast(F(manuf_cf), BigIntegerField())}),
+                    )
+                }
             )
         )
 
-    def prefetch_serializer(self: _QS) -> _QS:
+    annotate_serializer_id = partialmethod(annotate_cf, "serializer", "serializer_id")
+    annotate_keybundle_id = partialmethod(annotate_cf, "keybundle", "keybundle_id")
+
+    def prefetch_serializer(self):
         from validity.models import ConfigSerializer
 
         return self.annotate_serializer_id().custom_prefetch(
             "serializer", ConfigSerializer.objects.select_related("data_file")
         )
+
+    def prefetch_keybundle(self):
+        from validity.models import KeyBundle
+
+        return self.annotate_keybundle_id().custom_prefetch("keybundle", KeyBundle.objects.all())
 
     def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
         qs = getattr(self, annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
@@ -212,8 +233,8 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
             result[values[field]] = values["cnt"]
         return result
 
-    def count_per_serializer(self) -> dict[int | None, int]:
-        return self._count_per_something("serializer_id", "annotate_serializer_id")
+    count_per_serializer = partialmethod(_count_per_something, "serializer_id", "annotate_serializer_id")
+    count_per_keybundle = partialmethod(_count_per_something, "keybundle_id", "annotate_keybundle_id")
 
     def annotate_result_stats(self, report_id: int, severity_ge: SeverityChoices = SeverityChoices.LOW):
         results_filter = Q(results__report__pk=report_id) & self._severity_filter(severity_ge, "results")

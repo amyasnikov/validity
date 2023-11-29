@@ -7,5 +7,6 @@ from .filterset import (
     NameSetFilterForm,
     ReportGroupByForm,
     TestResultFilterForm,
+    KeyBundleFilterForm
 )
-from .general import ComplianceSelectorForm, ComplianceTestForm, ConfigSerializerForm, NameSetForm
+from .general import ComplianceSelectorForm, ComplianceTestForm, ConfigSerializerForm, NameSetForm, KeyBundleForm

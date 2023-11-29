@@ -31,3 +31,9 @@ class SerializerIndex(SearchIndex):
 class TestIndex(SearchIndex):
     model = models.ComplianceTest
     fields = (("name", 100), ("expression", 1000))
+
+
+@register_search
+class KeyBundleIndex(SearchIndex):
+    model = models.KeyBundle
+    fields = (("name", 100),)

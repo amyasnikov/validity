@@ -109,3 +109,9 @@ class NameSetForm(NetBoxModelForm):
     class Meta:
         model = models.NameSet
         fields = ("name", "description", "_global", "tests", "definitions", "data_source", "data_file", "tags")
+
+
+class KeyBundleForm(NetBoxModelForm):
+    class Meta:
+        model = models.KeyBundle
+        fields = ("name", "connection_type", "public_credentials", "private_credentials", "tags")

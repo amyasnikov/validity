@@ -14,6 +14,7 @@ from validity.choices import (
     DeviceGroupByChoices,
     DynamicPairsChoices,
     SeverityChoices,
+    ConnectionTypeChoices,
 )
 from .helpers import ExcludeMixin, PlaceholderChoiceField
 
@@ -138,3 +139,9 @@ class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
     datasource_id = DynamicModelMultipleChoiceField(
         label=_("Data Source"), queryset=DataSource.objects.all(), required=False
     )
+
+
+class KeyBundleFilterForm(NetBoxModelFilterSetForm):
+    model = models.KeyBundle
+    name = CharField(required=False)
+    connection_type = PlaceholderChoiceField(required=False, placeholder=_("Connection Type"), choices=ConnectionTypeChoices.choices)

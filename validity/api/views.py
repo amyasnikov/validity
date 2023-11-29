@@ -70,6 +70,12 @@ class ComplianceReportViewSet(NetBoxModelViewSet):
     http_method_names = ["get", "head", "options", "trace", "delete"]
 
 
+class KeyBundleViewSet(NetBoxModelViewSet):
+    queryset = models.KeyBundle.objects.prefetch_related('tags')
+    serializer_class = serializers.KeyBundleSerializer
+    filterset_class = filtersets.KeyBundleFilterSet
+
+
 class DeviceReportView(ListAPIView):
     serializer_class = serializers.DeviceReportSerializer
     filterset_class = filtersets.DeviceReportFilterSet

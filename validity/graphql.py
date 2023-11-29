@@ -134,6 +134,20 @@ class ReportType(BaseObjectType):
         return queryset.annotate_result_stats().count_devices_and_tests()
 
 
+class KeyBundleType(NetBoxObjectType):
+    class Meta:
+        model = models.KeyBundle
+        fields = (
+            "id",
+            "name",
+            "connection_type",
+            "public_credentials",
+            "private_credentials",
+            "created",
+            "last_updated",
+        )
+
+
 class Query(ObjectType):
     nameset = ObjectField(NameSetType)
     nameset_list = ObjectListField(NameSetType)
@@ -152,6 +166,9 @@ class Query(ObjectType):
 
     report = ObjectField(ReportType)
     report_list = ObjectListField(ReportType)
+
+    keybundle = ObjectField(KeyBundleType)
+    keybundle_list = ObjectListField(KeyBundleType)
 
 
 schema = Query

@@ -25,4 +25,8 @@ urlpatterns = [
     path("namesets/<int:pk>/", include(get_model_urls("validity", "nameset"))),
     path("reports/", views.ComplianceReportListView.as_view(), name="compliancereport_list"),
     path("reports/<int:pk>/", include(get_model_urls("validity", "compliancereport"))),
+    path("keybundles/", views.KeyBundleListView.as_view(), name="keybundle_list"),
+    path("keybundles/add/", views.KeyBundleEditView.as_view(), name="keybundle_add"),
+    path("keybundles/delete/", views.KeyBundleBulkDeleteView.as_view(), name="keybundle_bulk_delete"),
+    path("keybundles/<int:pk>/", include(get_model_urls("validity", "keybundle"))),
 ]

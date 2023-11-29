@@ -111,3 +111,10 @@ class NameSetFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 class DeviceReportFilterSet(DeviceFilterSet):
     compliance_passed = BooleanFilter()
+
+
+class KeyBundleFilterSet(SearchMixin, NetBoxModelFilterSet):
+    class Meta:
+        model = models.KeyBundle
+        fields = ("id", "name", "connection_type")
+        search_fields = ("name",)

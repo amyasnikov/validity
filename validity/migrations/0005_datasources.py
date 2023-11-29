@@ -1,7 +1,7 @@
 from itertools import chain
 from django.db import migrations
 from django.utils.translation import gettext_lazy as _
-from validity.utils.password import EncryptedString
+from validity.utils.dbfields import EncryptedString
 from django.db import migrations, models
 import django.db.models.deletion
 from validity.utils.misc import datasource_sync

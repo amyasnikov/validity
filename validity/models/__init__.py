@@ -6,3 +6,4 @@ from .selector import ComplianceSelector
 from .serializer import ConfigSerializer
 from .test import ComplianceTest
 from .test_result import ComplianceTestResult
+from .keybundle import KeyBundle

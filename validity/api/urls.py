@@ -13,6 +13,7 @@ router.register("test-results", views.ComplianceTestResultViewSet)
 router.register("serializers", views.ConfigSerializerViewSet)
 router.register("namesets", views.NameSetViewSet)
 router.register("reports", views.ComplianceReportViewSet)
+router.register("keybundles", views.KeyBundleViewSet)
 
 urlpatterns = [
     path("reports/<int:pk>/devices/", views.DeviceReportView.as_view(), name="report_devices"),
