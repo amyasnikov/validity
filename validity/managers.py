@@ -71,13 +71,14 @@ class ComplianceTestResultQS(RestrictedQuerySet):
     def last_more_than(self, than: int) -> "ComplianceTestResultQS":
         qs = self.values("device", "test").annotate(ids=ArrayAgg(F("id"), ordering="-created"))
         last_ids = chain.from_iterable(record["ids"][than:] for record in qs.iterator())
-        return self.model.objects.filter(pk__in=last_ids)
+        return self.filter(pk__in=last_ids)
 
     def count_devices_and_tests(self):
         return self.aggregate(device_count=Count("devices", distinct=True), test_count=Count("tests", distinct=True))
 
-    def delete_old(self):
-        return self.filter(report=None).last_more_than(settings.store_last_results).delete()
+    def delete_old(self, _settings=settings):
+        del_count = self.filter(report=None).last_more_than(_settings.store_last_results)._raw_delete(self.db)
+        return (del_count, {"validity.ComplianceTestResult": del_count})
 
 
 class ConfigSerializerQS(JSONObjMixin, RestrictedQuerySet):
@@ -124,10 +125,16 @@ class ComplianceReportQS(RestrictedQuerySet):
             device_count=Count("results__device", distinct=True), test_count=Count("results__test", distinct=True)
         )
 
-    def delete_old(self):
-        return self.filter(
-            pk__in=self.values_list("pk", flat=True).order_by("-created")[settings.store_reports :]
-        ).delete()
+    def delete_old(self, _settings=settings):
+        from validity.models import ComplianceTestResult
+
+        old_reports = list(self.order_by("-created").values_list("pk", flat=True)[_settings.store_reports :])
+        deleted_results = ComplianceTestResult.objects.filter(report__pk__in=old_reports)._raw_delete(self.db)
+        deleted_reports, _ = self.filter(pk__in=old_reports).delete()
+        return (
+            deleted_results + deleted_reports,
+            {"validity.ComplianceTestResult": deleted_results, "validity.ComplianceReport": deleted_reports},
+        )
 
 
 _QS = TypeVar("_QS", bound=QuerySet)
