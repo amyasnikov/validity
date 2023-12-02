@@ -61,8 +61,8 @@ class TestDSNameSet(ViewTest):
 class TestReport(ViewTest):
     factory_class = ReportFactory
     model_class = models.ComplianceReport
-    get_suffixes = ["", "list"]
-    post_suffixes = []
+    get_suffixes = ["", "list", "delete"]
+    post_suffixes = ["delete"]
     post_body = {}
 
 

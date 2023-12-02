@@ -110,3 +110,8 @@ class ReportResultView(TestResultBaseView):
     read_only = True
     exclude_form_fields = ("latest", "selector_id", "platform_id", "tenant_id", "device_role_id", "manufacturer_id")
     permission_required = "view_compliancereport"
+
+
+@register_model_view(models.ComplianceReport, "delete")
+class ReportDeleteView(generic.ObjectDeleteView):
+    queryset = models.ComplianceReport.objects.all()

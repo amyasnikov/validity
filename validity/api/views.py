@@ -64,9 +64,10 @@ class NameSetViewSet(NetBoxModelViewSet):
     filterset_class = filtersets.NameSetFilterSet
 
 
-class ComplianceReportViewSet(ReadOnlyNetboxViewSet):
+class ComplianceReportViewSet(NetBoxModelViewSet):
     queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
     serializer_class = serializers.ComplianceReportSerializer
+    http_method_names = ["get", "head", "options", "trace", "delete"]
 
 
 class DeviceReportView(ListAPIView):

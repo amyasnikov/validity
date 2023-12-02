@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django_tables2 import Column, RequestConfig, Table, TemplateColumn
 from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
+from netbox.tables.columns import ActionsColumn
 from utilities.paginator import EnhancedPaginator
 
 from validity import models
@@ -151,6 +152,7 @@ class ComplianceReportTable(NetBoxTable):
     low_stats = StatsColumn(data_prefix="low", verbose_name=_("Low Severity"), empty_values=())
     middle_stats = StatsColumn(data_prefix="middle", verbose_name=_("Middle Severity"), empty_values=())
     high_stats = StatsColumn(data_prefix="high", verbose_name=_("High Severity"), empty_values=())
+    actions = ActionsColumn(actions=("delete",))
 
     class Meta(NetBoxTable.Meta):
         model = models.ComplianceReport
@@ -165,7 +167,6 @@ class ComplianceReportTable(NetBoxTable):
             "high_stats",
             "created",
         )
-        exclude = ("actions",)
         default_columns = fields
 
 

@@ -1,9 +1,15 @@
 {% extends 'generic/object.html' %}
 {% load validity %}
 {% load bootstrap5 %}
+{% load buttons %}
+{% load perms %}
 {% load render_table from django_tables2 %}
 {% block controls %}
-<div class="controls"></div>
+<div class="controls">
+{% if request.user|can_delete:object %}
+  {% delete_button object %}
+{% endif %}
+</div>
 {% endblock %}
 {% block content %}
   <div class="row">
