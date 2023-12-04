@@ -8,7 +8,6 @@ import validity.utils.dbfields
 from django.utils.translation import gettext_lazy as _
 
 
-
 def create_cf(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
     CustomField = apps.get_model("extras", "CustomField")
@@ -26,11 +25,13 @@ def create_cf(apps, schema_editor):
         object_type=ContentType.objects.get_for_model(KeyBundle),
         required=False,
     )
-    cf.content_types.set([
-        ContentType.objects.get_for_model(Device),
-        ContentType.objects.get_for_model(DeviceType),
-        ContentType.objects.get_for_model(Manufacturer),
-    ])
+    cf.content_types.set(
+        [
+            ContentType.objects.get_for_model(Device),
+            ContentType.objects.get_for_model(DeviceType),
+            ContentType.objects.get_for_model(Manufacturer),
+        ]
+    )
 
 
 def delete_cf(apps, schema_editor):
@@ -56,16 +57,16 @@ class Migration(migrations.Migration):
                     "custom_field_data",
                     models.JSONField(blank=True, default=dict, encoder=utilities.json.CustomFieldJSONEncoder),
                 ),
-                ("name", models.CharField(max_length=255)),
+                ("name", models.CharField(max_length=255, unique=True)),
                 ("connection_type", models.CharField(max_length=50)),
-                ("public_credentials", models.JSONField(default=dict)),
-                ("private_credentials", validity.utils.dbfields.EncryptedDictField()),
+                ("public_credentials", models.JSONField(blank=True, default=dict)),
+                ("private_credentials", validity.utils.dbfields.EncryptedDictField(blank=True)),
                 ("tags", taggit.managers.TaggableManager(through="extras.TaggedItem", to="extras.Tag")),
             ],
             options={
-                "abstract": False,
+                "ordering": ("name",),
             },
             bases=(validity.models.base.URLMixin, models.Model),
         ),
-        migrations.RunPython(create_cf, delete_cf)
+        migrations.RunPython(create_cf, delete_cf),
     ]

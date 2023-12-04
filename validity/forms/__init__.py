@@ -4,9 +4,9 @@ from .filterset import (
     ComplianceTestResultFilterForm,
     ConfigSerializerFilterForm,
     DeviceReportFilterForm,
+    KeyBundleFilterForm,
     NameSetFilterForm,
     ReportGroupByForm,
     TestResultFilterForm,
-    KeyBundleFilterForm
 )
-from .general import ComplianceSelectorForm, ComplianceTestForm, ConfigSerializerForm, NameSetForm, KeyBundleForm
+from .general import ComplianceSelectorForm, ComplianceTestForm, ConfigSerializerForm, KeyBundleForm, NameSetForm

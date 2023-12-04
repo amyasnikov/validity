@@ -110,5 +110,5 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
 
 
 class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
-    NETMIKO = 'netmiko', 'blue'
-    GENERIC = 'generic', 'grey'
+    netmiko = "netmiko", "blue"
+    generic = "generic", "grey"

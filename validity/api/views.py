@@ -71,7 +71,7 @@ class ComplianceReportViewSet(NetBoxModelViewSet):
 
 
 class KeyBundleViewSet(NetBoxModelViewSet):
-    queryset = models.KeyBundle.objects.prefetch_related('tags')
+    queryset = models.KeyBundle.objects.prefetch_related("tags")
     serializer_class = serializers.KeyBundleSerializer
     filterset_class = filtersets.KeyBundleFilterSet
 

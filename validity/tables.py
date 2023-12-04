@@ -75,7 +75,6 @@ class ComplianceResultTable(NetBoxTable):
         default_columns = fields
 
 
-
 class TotalDevicesMixin(NetBoxTable):
     total_devices = Column(empty_values=())
 
@@ -83,7 +82,7 @@ class TotalDevicesMixin(NetBoxTable):
 
     def __init__(self, *args, extra_columns=None, **kwargs):
         super().__init__(*args, extra_columns=extra_columns, **kwargs)
-        self.total_devices_map = getattr(models.VDevice.objects, f'count_per_{self.count_per}')()
+        self.total_devices_map = getattr(models.VDevice.objects, f"count_per_{self.count_per}")()
 
     def render_total_devices(self, record):
         return self.total_devices_map.get(record.id, 0)
@@ -93,7 +92,7 @@ class ConfigSerializerTable(TotalDevicesMixin, NetBoxTable):
     name = Column(linkify=True)
     extraction_method = ChoiceFieldColumn()
 
-    count_per = 'serializer'
+    count_per = "serializer"
 
     class Meta(NetBoxTable.Meta):
         model = models.ConfigSerializer
@@ -105,7 +104,7 @@ class KeyBundleTable(TotalDevicesMixin, NetBoxTable):
     name = Column(linkify=True)
     connection_type = ChoiceFieldColumn()
 
-    count_per = 'keybundle'
+    count_per = "keybundle"
 
     class Meta(NetBoxTable.Meta):
         model = models.KeyBundle

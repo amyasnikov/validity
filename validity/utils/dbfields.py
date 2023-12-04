@@ -9,6 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import JSONField, Model
 
 
@@ -83,15 +84,24 @@ class EncryptedDict(dict):
         return {k: v.decrypt() for k, v in self.items()}
 
 
+class EncryptedFieldEncoder(DjangoJSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, EncryptedString):
+            return o.serialize()
+        return super().default(o)
+
+
 class EncryptedDictField(JSONField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("default", dict)
+        kwargs["encoder"] = EncryptedFieldEncoder
         super().__init__(*args, **kwargs)
 
     def deconstruct(self) -> Any:
         name, path, args, kwargs = super().deconstruct()
         if kwargs.get("default") == dict:
             del kwargs["default"]
+        del kwargs["encoder"]
         return name, path, args, kwargs
 
     def from_db_value(self, value, expression, connection):
@@ -100,12 +110,11 @@ class EncryptedDictField(JSONField):
             return EncryptedDict(value)
 
     def get_prep_value(self, value: dict | None) -> dict | None:
-        value = super().get_prep_value(value)
         if isinstance(value, EncryptedDict):
-            return value.encrypted
+            value = value.encrypted
         if isinstance(value, dict):
-            return EncryptedDict(value).encrypted
-        return value
+            value = EncryptedDict(value).encrypted
+        return super().get_prep_value(value)
 
     def to_python(self, value):
         if value is None or isinstance(value, EncryptedDict):

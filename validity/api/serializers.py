@@ -20,7 +20,7 @@ from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
 
 from validity import models
-from .helpers import nested_factory
+from .helpers import EncryptedDictField, nested_factory
 
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
@@ -291,6 +291,8 @@ class DeviceReportSerializer(NestedDeviceSerializer):
 
 class KeyBundleSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:keybundle-detail")
+    private_credentials = EncryptedDictField()
+
     class Meta:
         model = models.KeyBundle
         fields = (
@@ -306,3 +308,6 @@ class KeyBundleSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+
+
+NestedKeyBundleSerializer = nested_factory(KeyBundleSerializer, ("id", "url", "display", "name"))

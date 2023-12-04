@@ -11,10 +11,10 @@ from validity import models
 from validity.choices import (
     BoolOperationChoices,
     ConfigExtractionChoices,
+    ConnectionTypeChoices,
     DeviceGroupByChoices,
     DynamicPairsChoices,
     SeverityChoices,
-    ConnectionTypeChoices,
 )
 from .helpers import ExcludeMixin, PlaceholderChoiceField
 
@@ -144,4 +144,6 @@ class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
 class KeyBundleFilterForm(NetBoxModelFilterSetForm):
     model = models.KeyBundle
     name = CharField(required=False)
-    connection_type = PlaceholderChoiceField(required=False, placeholder=_("Connection Type"), choices=ConnectionTypeChoices.choices)
+    connection_type = PlaceholderChoiceField(
+        required=False, placeholder=_("Connection Type"), choices=ConnectionTypeChoices.choices
+    )
