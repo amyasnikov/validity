@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-from django.db import IntegrityError, migrations
+from django.db import IntegrityError, migrations, transaction
 from django.utils.translation import gettext_lazy as _
 from validity import scripts
 from validity import config
@@ -29,9 +29,10 @@ def forward_func(apps, schema_editor):
         module = ScriptModule(data_source=data_source, data_file=data_file, file_root="scripts", auto_sync_enabled=True)
         module.clean()
         try:
-            module.save()
+            with transaction.atomic():
+                module.save()
         except IntegrityError:
-            print(f"{module.full_path} already exists, ignoring", file=sys.stderr)  # noqa
+            print(f"\n{module.full_path} already exists, ignoring", file=sys.stderr)  # noqa
 
 
 def reverse_func(apps, schema_editor):
