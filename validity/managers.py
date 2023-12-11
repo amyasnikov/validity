@@ -1,6 +1,5 @@
 from functools import partialmethod
 from itertools import chain
-from typing import TypeVar
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import (
@@ -13,7 +12,6 @@ from django.db.models import (
     FloatField,
     Prefetch,
     Q,
-    QuerySet,
     Value,
     When,
 )
@@ -138,9 +136,6 @@ class ComplianceReportQS(RestrictedQuerySet):
         )
 
 
-_QS = TypeVar("_QS", bound=QuerySet)
-
-
 class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -162,7 +157,7 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
                 if isinstance(item, self.model):
                     item.selector = self.selector
 
-    def annotate_datasource_id(self: _QS) -> _QS:
+    def annotate_datasource_id(self):
         from validity.models import VDataSource
 
         return self.annotate(
@@ -175,7 +170,7 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
             )
         )
 
-    def prefetch_datasource(self: _QS, prefetch_config_files: bool = False) -> _QS:
+    def prefetch_datasource(self, prefetch_config_files: bool = False):
         from validity.models import VDataSource
 
         datasource_qs = VDataSource.objects.all()
@@ -212,7 +207,7 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
         )
 
     annotate_serializer_id = partialmethod(annotate_cf, "serializer", "serializer_id")
-    annotate_keybundle_id = partialmethod(annotate_cf, "keybundle", "keybundle_id")
+    annotate_poller_id = partialmethod(annotate_cf, "poller", "poller_id")
 
     def prefetch_serializer(self):
         from validity.models import ConfigSerializer
@@ -221,10 +216,10 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
             "serializer", ConfigSerializer.objects.select_related("data_file")
         )
 
-    def prefetch_keybundle(self):
-        from validity.models import KeyBundle
+    def prefetch_poller(self):
+        from validity.models import Poller
 
-        return self.annotate_keybundle_id().custom_prefetch("keybundle", KeyBundle.objects.all())
+        return self.annotate_poller_id().custom_prefetch("poller", Poller.objects.prefetch_related("commands"))
 
     def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
         qs = getattr(self, annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
@@ -234,7 +229,7 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
         return result
 
     count_per_serializer = partialmethod(_count_per_something, "serializer_id", "annotate_serializer_id")
-    count_per_keybundle = partialmethod(_count_per_something, "keybundle_id", "annotate_keybundle_id")
+    count_per_poller = partialmethod(_count_per_something, "poller_id", "annotate_poller_id")
 
     def annotate_result_stats(self, report_id: int, severity_ge: SeverityChoices = SeverityChoices.LOW):
         results_filter = Q(results__report__pk=report_id) & self._severity_filter(severity_ge, "results")

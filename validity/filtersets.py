@@ -113,8 +113,15 @@ class DeviceReportFilterSet(DeviceFilterSet):
     compliance_passed = BooleanFilter()
 
 
-class KeyBundleFilterSet(SearchMixin, NetBoxModelFilterSet):
+class PollerFilterSet(SearchMixin, NetBoxModelFilterSet):
     class Meta:
-        model = models.KeyBundle
+        model = models.Poller
         fields = ("id", "name", "connection_type")
         search_fields = ("name",)
+
+
+class CommandFilterSet(SearchMixin, NetBoxModelFilterSet):
+    class Meta:
+        model = models.Command
+        fields = ("id", "name", "slug", "type", "retrieves_config")
+        search_fields = ("name", "slug")

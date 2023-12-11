@@ -100,16 +100,25 @@ class ConfigSerializerTable(TotalDevicesMixin, NetBoxTable):
         default_columns = fields
 
 
-class KeyBundleTable(TotalDevicesMixin, NetBoxTable):
+class PollerTable(TotalDevicesMixin, NetBoxTable):
     name = Column(linkify=True)
     connection_type = ChoiceFieldColumn()
 
-    count_per = "keybundle"
+    count_per = "poller"
 
     class Meta(NetBoxTable.Meta):
-        model = models.KeyBundle
+        model = models.Poller
         fields = ("name", "connection_type", "total_devices")
         default_columns = fields
+
+
+class CommandTable(NetBoxTable):
+    name = Column(linkify=True)
+    type = ChoiceFieldColumn()
+
+    class Meta(NetBoxTable.Meta):
+        model = models.Command
+        fields = ("name", "type", "retrieves_config", "bound_pollers", "slug")
 
 
 class ExplanationColumn(Column):

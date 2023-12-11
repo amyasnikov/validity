@@ -5,9 +5,11 @@ from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
-from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.fields import DynamicModelMultipleChoiceField, SlugField
+from utilities.forms.widgets import HTMXSelect
 
 from validity import models
+from .helpers import SubformMixin
 
 
 class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
@@ -111,7 +113,26 @@ class NameSetForm(NetBoxModelForm):
         fields = ("name", "description", "_global", "tests", "definitions", "data_source", "data_file", "tags")
 
 
-class KeyBundleForm(NetBoxModelForm):
+class PollerForm(NetBoxModelForm):
+    commands = DynamicModelMultipleChoiceField(queryset=models.Command.objects.all())
+
     class Meta:
-        model = models.KeyBundle
-        fields = ("name", "connection_type", "public_credentials", "private_credentials", "tags")
+        model = models.Poller
+        fields = ("name", "commands", "connection_type", "public_credentials", "private_credentials", "tags")
+        widgets = {
+            "public_credentials": Textarea(attrs={"style": "font-family:monospace"}),
+            "private_credentials": Textarea(attrs={"style": "font-family:monospace"}),
+        }
+
+
+class CommandForm(SubformMixin, NetBoxModelForm):
+    slug = SlugField()
+
+    main_fieldsets = [
+        (_("Command"), ("name", "slug", "type", "retrieves_config", "tags")),
+    ]
+
+    class Meta:
+        model = models.Command
+        fields = ("name", "slug", "type", "retrieves_config", "tags")
+        widgets = {"type": HTMXSelect()}

@@ -1,0 +1,58 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load validity %}
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-5">
+      <div class="card">
+        <h5 class="card-header">Command</h5>
+        <div class="card-body">
+          <table class="table table-hover attr-table">
+            <tr>
+              <th scope="row">Name</th>
+              <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Slug</th>
+              <td>{{ object.slug }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Retrieves Configuration</th>
+              <td>{{ object.retrieves_config | checkmark }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Type</th>
+              <td>{{ object | colored_choice:"type" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Pollers</th>
+              <td>{{ object.pollers.all | linkify_list }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      {% include 'inc/panels/tags.html' %}
+    </div>
+    <div class="col col-md-7">
+      <div class="card">
+        <h5 class="card-header">Parameters</h5>
+        <div class="card-body">
+          <table class="table table-hover attr-table">
+            {% for field_name, field in object.parameters_form.base_fields.items %}
+            <tr>
+              <th scope="row">{{ field.label }}</th>
+              <td>{{ object.parameters | get_key:field_name | placeholder }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="text-muted">
+                No parameters defined
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

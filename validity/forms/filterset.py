@@ -10,6 +10,7 @@ from utilities.forms.fields import DynamicModelMultipleChoiceField
 from validity import models
 from validity.choices import (
     BoolOperationChoices,
+    CommandTypeChoices,
     ConfigExtractionChoices,
     ConnectionTypeChoices,
     DeviceGroupByChoices,
@@ -141,9 +142,18 @@ class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
     )
 
 
-class KeyBundleFilterForm(NetBoxModelFilterSetForm):
-    model = models.KeyBundle
+class PollerFilterForm(NetBoxModelFilterSetForm):
+    model = models.Poller
     name = CharField(required=False)
     connection_type = PlaceholderChoiceField(
         required=False, placeholder=_("Connection Type"), choices=ConnectionTypeChoices.choices
+    )
+
+
+class CommandFilterForm(NetBoxModelFilterSetForm):
+    model = models.Command
+    name = CharField(required=False)
+    type = PlaceholderChoiceField(required=False, placeholder=_("Type"), choices=CommandTypeChoices.choices)
+    retrieves_config = NullBooleanField(
+        label=_("Global"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES)
     )

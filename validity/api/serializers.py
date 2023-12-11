@@ -289,12 +289,39 @@ class DeviceReportSerializer(NestedDeviceSerializer):
         ]
 
 
-class KeyBundleSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:keybundle-detail")
-    private_credentials = EncryptedDictField()
+class CommandSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:command-detail")
 
     class Meta:
-        model = models.KeyBundle
+        model = models.Command
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "slug",
+            "retrieves_config",
+            "type",
+            "parameters",
+            "tags",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )
+
+
+NestedCommandSerializer = nested_factory(CommandSerializer, ("id", "url", "display", "name"))
+
+
+class PollerSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:poller-detail")
+    private_credentials = EncryptedDictField()
+    commands = SerializedPKRelatedField(
+        serializer=NestedCommandSerializer, many=True, required=False, queryset=models.Command.objects.all()
+    )
+
+    class Meta:
+        model = models.Poller
         fields = (
             "id",
             "url",
@@ -303,6 +330,7 @@ class KeyBundleSerializer(NetBoxModelSerializer):
             "connection_type",
             "public_credentials",
             "private_credentials",
+            "commands",
             "tags",
             "custom_fields",
             "created",
@@ -310,4 +338,4 @@ class KeyBundleSerializer(NetBoxModelSerializer):
         )
 
 
-NestedKeyBundleSerializer = nested_factory(KeyBundleSerializer, ("id", "url", "display", "name"))
+NestedPollerSerializer = nested_factory(PollerSerializer, ("id", "url", "display", "name"))

@@ -34,6 +34,12 @@ class TestIndex(SearchIndex):
 
 
 @register_search
-class KeyBundleIndex(SearchIndex):
-    model = models.KeyBundle
+class PollerIndex(SearchIndex):
+    model = models.Poller
     fields = (("name", 100),)
+
+
+@register_search
+class CommandIndex(SearchIndex):
+    model = models.Poller
+    fields = (("name", 100), ("slug", 110))

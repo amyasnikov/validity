@@ -111,4 +111,7 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
 
 class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
     netmiko = "netmiko", "blue"
-    generic = "generic", "grey"
+
+
+class CommandTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
+    CLI = "CLI", "CLI", "blue"
