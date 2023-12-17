@@ -30,7 +30,7 @@ class BaseDeviceConfig:
         with reraise((AssertionError, FileNotFoundError, AttributeError), DeviceConfigError):
             assert getattr(
                 device, "data_file", None
-            ), f"{device} has no bound data file. Either no data source bound or the file does not exist"
+            ), f"{device} has no bound data file. Either there is no data source attached or the file does not exist"
             assert getattr(device, "serializer", None), f"{device} has no bound serializer"
             return cls._config_classes[device.serializer.extraction_method]._from_device(device)
 

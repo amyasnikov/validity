@@ -1,8 +1,16 @@
+from contextlib import contextmanager
+from functools import cached_property
+from typing import Iterable
+
 from dcim.models import Device
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import CommandTypeChoices, ConnectionTypeChoices
+from validity.managers import PollerQS
+from validity.pollers import get_poller
 from validity.subforms import CLICommandForm
 from validity.utils.dbfields import EncryptedDictField
 from .base import BaseModel, SubformMixin
@@ -10,7 +18,18 @@ from .base import BaseModel, SubformMixin
 
 class Command(SubformMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
-    slug = models.SlugField(_("Slug"), max_length=100, unique=True)
+    label = models.CharField(
+        _("Label"),
+        max_length=100,
+        unique=True,
+        help_text=_("String key to access command output inside Tests"),
+        validators=[
+            RegexValidator(
+                regex="^[a-z][a-z0-9_]*$",
+                message=_("Only lowercase ASCII letters, numbers and underscores are allowed"),
+            )
+        ],
+    )
     retrieves_config = models.BooleanField(
         _("Retrieves Configuration"),
         default=False,
@@ -19,7 +38,6 @@ class Command(SubformMixin, BaseModel):
     type = models.CharField(_("Type"), max_length=50, choices=CommandTypeChoices.choices)
     parameters = models.JSONField(_("Parameters"))
 
-    clone_fields = ("retrieves_config", "type", "parameters")
     subform_type_field = "type"
     subform_json_field = "parameters"
     subforms = {"CLI": CLICommandForm}
@@ -41,7 +59,7 @@ class Poller(BaseModel):
     private_credentials = EncryptedDictField(_("Private Credentials"), blank=True)
     commands = models.ManyToManyField(Command, verbose_name=_("Commands"), related_name="pollers")
 
-    clone_fields = ("connection_type", "public_credentials", "private_credentials")
+    objects = PollerQS.as_manager()
 
     class Meta:
         ordering = ("name",)
@@ -62,9 +80,38 @@ class Poller(BaseModel):
 
         return VDevice.objects.annotate_poller_id().filter(poller_id=self.pk)
 
+    @cached_property
+    def config_command(self) -> Command | None:
+        """
+        Bound command which is responsible for retrieving configuration
+        """
+        return next((cmd for cmd in self.commands.all() if cmd.retrieves_config), None)
+
+    def get_backend(self):
+        return get_poller(self.connection_type, self.credentials, self.commands.all())
+
     def serialize_object(self):
+        with self.serializable_credentials():
+            return super().serialize_object()
+
+    @contextmanager
+    def serializable_credentials(self):
         private_creds = self.private_credentials
-        self.private_credentials = self.private_credentials.encrypted
-        result = super().serialize_object()
-        self.private_credentials = private_creds
-        return result
+        try:
+            self.private_credentials = self.private_credentials.encrypted
+            yield
+        finally:
+            self.private_credentials = private_creds
+
+    @staticmethod
+    def validate_commands(commands: Iterable[Command]):
+        config_commands_count = sum(1 for cmd in commands if cmd.retrieves_config)
+        if config_commands_count > 1:
+            raise ValidationError(
+                {
+                    "commands": _(
+                        "No more than 1 command to retrieve config is allowed, "
+                        f"but {config_commands_count} were specified"
+                    )
+                }
+            )

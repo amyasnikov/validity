@@ -98,7 +98,7 @@ class DeviceReportView(ListAPIView):
 
 
 class SerializedConfigView(APIView):
-    queryset = models.VDevice.objects.prefetch_datasource().prefetch_serializer()
+    queryset = models.VDevice.objects.prefetch_datasource().prefetch_serializer().prefetch_poller()
 
     def get_object(self, pk):
         try:

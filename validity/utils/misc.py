@@ -1,5 +1,6 @@
+import inspect
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 from core.exceptions import SyncError
@@ -33,17 +34,28 @@ def null_request():
 
 
 @contextmanager
-def reraise(catch: type[Exception] | tuple[type[Exception], ...], raise_: type[Exception], msg: Any = None):
+def reraise(
+    catch: type[Exception] | tuple[type[Exception], ...],
+    raise_: type[Exception],
+    *args,
+    orig_error_param="orig_error",
+    **kwargs,
+):
+    """
+    Catch one exception and raise another exception of different type,
+    args and kwargs will be passed to the newly generated exception
+    """
     try:
         yield
     except raise_:
         raise
-    except catch as e:
-        if msg and isinstance(msg, str):
-            msg = msg.format(str(e))
-        if not msg:
-            msg = str(e)
-        raise raise_(msg) from e
+    except catch as catched_err:
+        if not args:
+            args += (str(catched_err),)
+        with suppress():
+            if orig_error_param in inspect.signature(raise_).parameters:
+                kwargs[orig_error_param] = catched_err
+        raise raise_(*args, **kwargs) from catched_err
 
 
 def datasource_sync(

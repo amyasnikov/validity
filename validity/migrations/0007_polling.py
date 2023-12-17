@@ -6,6 +6,7 @@ import utilities.json
 import validity.models.base
 import validity.utils.dbfields
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import RegexValidator
 
 
 def create_cf(apps, schema_editor):
@@ -40,8 +41,31 @@ def delete_cf(apps, schema_editor):
     CustomField.objects.using(db_alias).filter(name="poller").delete()
 
 
-class Migration(migrations.Migration):
+def create_polling_datasource(apps, schema_editor):
+    DataSource = apps.get_model("core", "DataSource")
+    db = schema_editor.connection.alias
+    ds = DataSource.objects.using(db).create(
+        name="Validity Polling",
+        type="device_polling",
+        source_url="/",
+        description=_("Required by Validity. Polls bound devices and stores the results"),
+        custom_field_data={
+            "device_config_path": "{{device | slugify}}/{{ device.poller.config_command.label }}.txt",
+            "device_config_default": False,
+            "web_url": "",
+        },
+    )
+    ds.parameters = {"datasource_id": ds.pk}
+    ds.save()
 
+
+def delete_polling_datasource(apps, schema_editor):
+    DataSource = apps.get_model("core", "DataSource")
+    db = schema_editor.connection.alias
+    DataSource.objects.using(db).filter(type="Validity Polling").delete()
+
+
+class Migration(migrations.Migration):
     dependencies = [
         ("extras", "0098_webhook_custom_field_data_webhook_tags"),
         ("validity", "0006_script_change"),
@@ -59,7 +83,19 @@ class Migration(migrations.Migration):
                     models.JSONField(blank=True, default=dict, encoder=utilities.json.CustomFieldJSONEncoder),
                 ),
                 ("name", models.CharField(max_length=255, unique=True)),
-                ("slug", models.SlugField(max_length=100, unique=True)),
+                (
+                    "label",
+                    models.CharField(
+                        max_length=100,
+                        unique=True,
+                        validators=[
+                            RegexValidator(
+                                regex="^[a-z][a-z0-9_]*$",
+                                message=_("Only lowercase ASCII letters, numbers and underscores are allowed"),
+                            )
+                        ],
+                    ),
+                ),
                 ("retrieves_config", models.BooleanField(default=False)),
                 ("type", models.CharField(max_length=50)),
                 ("parameters", models.JSONField()),
@@ -93,4 +129,5 @@ class Migration(migrations.Migration):
             bases=(validity.models.base.URLMixin, models.Model),
         ),
         migrations.RunPython(create_cf, delete_cf),
+        migrations.RunPython(create_polling_datasource, delete_polling_datasource),
     ]

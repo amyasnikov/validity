@@ -123,5 +123,5 @@ class PollerFilterSet(SearchMixin, NetBoxModelFilterSet):
 class CommandFilterSet(SearchMixin, NetBoxModelFilterSet):
     class Meta:
         model = models.Command
-        fields = ("id", "name", "slug", "type", "retrieves_config")
-        search_fields = ("name", "slug")
+        fields = ("id", "name", "label", "type", "retrieves_config")
+        search_fields = ("name", "label")

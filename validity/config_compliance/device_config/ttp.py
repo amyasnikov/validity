@@ -28,7 +28,5 @@ class TTPDeviceConfig(DeviceConfig):
         if not self.serialized or override:
             parser = ttp(data=self.plain_config, template=self._template.template)
             parser.parse()
-            with reraise(
-                IndexError, DeviceConfigError, msg=f"Invalid parsed config for {self.device}: {parser.result()}"
-            ):
+            with reraise(IndexError, DeviceConfigError, f"Invalid parsed config for {self.device}: {parser.result()}"):
                 self.serialized = parser.result()[0][0]

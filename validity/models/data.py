@@ -1,8 +1,8 @@
 from functools import cached_property
 
 from core.models import DataFile, DataSource
-from jinja2 import BaseLoader, Environment
 
+from validity.j2_env import Environment
 from validity.managers import VDataFileQS, VDataSourceQS
 from validity.utils.orm import QuerySetMap
 
@@ -34,8 +34,8 @@ class VDataSource(DataSource):
 
     @property
     def web_url(self) -> str:
-        template_text = self.cf.get("web_url", "")
-        template = Environment(loader=BaseLoader()).from_string(template_text)
+        template_text = self.cf.get("web_url") or ""
+        template = Environment().from_string(template_text)
         return template.render(**self.parameters or {})
 
     @property

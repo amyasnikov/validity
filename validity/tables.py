@@ -118,7 +118,7 @@ class CommandTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = models.Command
-        fields = ("name", "type", "retrieves_config", "bound_pollers", "slug")
+        fields = ("name", "type", "retrieves_config", "bound_pollers", "label")
 
 
 class ExplanationColumn(Column):

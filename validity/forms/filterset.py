@@ -153,6 +153,7 @@ class PollerFilterForm(NetBoxModelFilterSetForm):
 class CommandFilterForm(NetBoxModelFilterSetForm):
     model = models.Command
     name = CharField(required=False)
+    label = CharField(required=False)
     type = PlaceholderChoiceField(required=False, placeholder=_("Type"), choices=CommandTypeChoices.choices)
     retrieves_config = NullBooleanField(
         label=_("Global"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES)

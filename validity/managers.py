@@ -219,7 +219,7 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
     def prefetch_poller(self):
         from validity.models import Poller
 
-        return self.annotate_poller_id().custom_prefetch("poller", Poller.objects.prefetch_related("commands"))
+        return self.annotate_poller_id().custom_prefetch("poller", Poller.objects.prefetch_commands())
 
     def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
         qs = getattr(self, annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
@@ -258,3 +258,9 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
                 .order_by("test__name"),
             )
         )
+
+
+class PollerQS(RestrictedQuerySet):
+    def prefetch_commands(self):
+        Command = self.model._meta.get_field("commands").remote_field.model
+        return self.prefetch_related(Prefetch("commands", Command.objects.order_by("-retrieves_config")))

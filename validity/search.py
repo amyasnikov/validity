@@ -41,5 +41,5 @@ class PollerIndex(SearchIndex):
 
 @register_search
 class CommandIndex(SearchIndex):
-    model = models.Poller
-    fields = (("name", 100), ("slug", 110))
+    model = models.Command
+    fields = (("name", 100), ("label", 110))

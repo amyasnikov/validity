@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
-from utilities.forms.fields import DynamicModelMultipleChoiceField, SlugField
+from utilities.forms.fields import DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
 from validity import models
@@ -124,15 +124,17 @@ class PollerForm(NetBoxModelForm):
             "private_credentials": Textarea(attrs={"style": "font-family:monospace"}),
         }
 
+    def clean(self):
+        models.Poller.validate_commands(self.cleaned_data["commands"])
+        return super().clean()
+
 
 class CommandForm(SubformMixin, NetBoxModelForm):
-    slug = SlugField()
-
     main_fieldsets = [
-        (_("Command"), ("name", "slug", "type", "retrieves_config", "tags")),
+        (_("Command"), ("name", "label", "type", "retrieves_config", "tags")),
     ]
 
     class Meta:
         model = models.Command
-        fields = ("name", "slug", "type", "retrieves_config", "tags")
+        fields = ("name", "label", "type", "retrieves_config", "tags")
         widgets = {"type": HTMXSelect()}

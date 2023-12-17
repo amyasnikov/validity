@@ -299,7 +299,7 @@ class CommandSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
-            "slug",
+            "label",
             "retrieves_config",
             "type",
             "parameters",
@@ -317,7 +317,10 @@ class PollerSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:poller-detail")
     private_credentials = EncryptedDictField()
     commands = SerializedPKRelatedField(
-        serializer=NestedCommandSerializer, many=True, required=False, queryset=models.Command.objects.all()
+        serializer=NestedCommandSerializer,
+        many=True,
+        queryset=models.Command.objects.all(),
+        allow_empty=False,
     )
 
     class Meta:
@@ -336,6 +339,10 @@ class PollerSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+
+    def validate(self, data):
+        models.Poller.validate_commands(data["commands"])
+        return super().validate(data)
 
 
 NestedPollerSerializer = nested_factory(PollerSerializer, ("id", "url", "display", "name"))
