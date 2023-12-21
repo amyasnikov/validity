@@ -1,6 +1,7 @@
 import inspect
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
+from itertools import islice
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 from core.exceptions import SyncError
@@ -76,3 +77,15 @@ def datasource_sync(
 
     with ThreadPoolExecutor(max_workers=threads) as tp:
         any(tp.map(sync_func, datasources))
+
+
+def batched(iterable: Iterable, n: int, container: type = list):
+    """
+    Batch data into containers of length n
+    """
+    it = iter(iterable)
+    while True:
+        batch = container(islice(it, n))
+        if not batch:
+            return
+        yield batch

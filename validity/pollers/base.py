@@ -35,15 +35,15 @@ class ThreadPoller(DevicePoller):
 
     thread_workers: int = 500
 
-    def _poll_one_device(self, device: "VDevice") -> Iterator[CommandResult]:
+    def _poll_one_device(self, device: "VDevice") -> Collection[CommandResult]:
         """
         Handles device-wide errors
         """
         try:
             with reraise(Exception, PollingError):
-                yield from self.poll_one_device(device)
+                return list(self.poll_one_device(device))
         except PollingError as err:
-            yield from (CommandResult(device, c, error=err) for c in self.commands)
+            return [CommandResult(device, c, error=err) for c in self.commands]
 
     @abstractmethod
     def poll_one_device(self, device: "VDevice") -> Iterator[CommandResult]:

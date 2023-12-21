@@ -112,6 +112,12 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
 class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
     netmiko = "netmiko", "blue"
 
+    __command_types__ = {"netmiko": "CLI"}
+
+    @property
+    def acceptable_command_type(self) -> "CommandTypeChoices":
+        return CommandTypeChoices[self.__command_types__[self.name]]
+
 
 class CommandTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
     CLI = "CLI", "CLI", "blue"

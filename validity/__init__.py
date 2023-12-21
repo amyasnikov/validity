@@ -41,4 +41,4 @@ class ValiditySettings(BaseModel):
     result_batch_size: int = 500
 
 
-settings = ValiditySettings.parse_obj(django_settings.PLUGINS_CONFIG.get("validity", {}))
+settings = ValiditySettings.model_validate(django_settings.PLUGINS_CONFIG.get("validity", {}))

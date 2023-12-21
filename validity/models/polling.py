@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from functools import cached_property
-from typing import Iterable
+from typing import Collection
 
 from dcim.models import Device
 from django.core.exceptions import ValidationError
@@ -104,14 +104,23 @@ class Poller(BaseModel):
             self.private_credentials = private_creds
 
     @staticmethod
-    def validate_commands(commands: Iterable[Command]):
+    def validate_commands(connection_type: str, commands: Collection[Command]):
+        # All the commands must be of the matching type
+        conn_type = ConnectionTypeChoices[connection_type]
+        if any(cmd.type != conn_type.acceptable_command_type for cmd in commands):
+            raise ValidationError(
+                {
+                    "commands": _("%(conntype)s accepts only %(cmdtype)s commands")
+                    % {"conntype": conn_type.label, "cmdtype": conn_type.acceptable_command_type.label}
+                }
+            )
+
+        # Only one bound "retrives config" command may exist
         config_commands_count = sum(1 for cmd in commands if cmd.retrieves_config)
         if config_commands_count > 1:
             raise ValidationError(
                 {
-                    "commands": _(
-                        "No more than 1 command to retrieve config is allowed, "
-                        f"but {config_commands_count} were specified"
-                    )
+                    "commands": _("No more than 1 command to retrieve config is allowed, but %(cnt)s were specified")
+                    % {"cnt": config_commands_count}
                 }
             )

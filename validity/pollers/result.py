@@ -1,32 +1,17 @@
+import datetime
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
+from django.utils import timezone
 from django.utils.text import slugify
+from pydantic import BaseModel, Field, computed_field, field_serializer
 
 from .exceptions import PollingError
 
 
 if TYPE_CHECKING:
     from validity.models import Command, VDevice
-
-
-@dataclass(frozen=True)
-class DescriptiveError:
-    """
-    This info will be added to polling_info.yaml
-    """
-
-    device: str
-    command: str | None
-    error: str
-
-    @property
-    def serialized(self):
-        result = {"device": self.device, "error": self.error}
-        if self.command:
-            result["command"] = self.command
-        return result
 
 
 @dataclass
@@ -58,3 +43,33 @@ class CommandResult:
             device_folder.mkdir()
         full_path = device_folder / self.filename
         full_path.write_text(self.contents, encoding="utf-8")
+
+
+class DescriptiveError(BaseModel, frozen=True):
+    """
+    This info will be added to polling_info.yaml
+    """
+
+    device: str
+    command: str = ""
+    error: str
+
+
+class PollingInfo(BaseModel):
+    polled_at: datetime.datetime = Field(default_factory=timezone.now)
+    devices_polled: int
+    errors: list[DescriptiveError]
+    partial_sync: bool = False
+
+    @field_serializer("errors")
+    def sort_errors(self, errors, _info):
+        return sorted(errors, key=lambda error: error.device)
+
+    @field_serializer("polled_at")
+    def serialize_polled_at(self, polled_at: datetime.datetime, _info):
+        return polled_at.isoformat(timespec="seconds")
+
+    @computed_field
+    @property
+    def error_count(self) -> int:
+        return len(self.errors)
