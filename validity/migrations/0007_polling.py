@@ -67,7 +67,6 @@ def delete_polling_datasource(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("extras", "0098_webhook_custom_field_data_webhook_tags"),
         ("validity", "0006_script_change"),
     ]
 
