@@ -1,6 +1,8 @@
+import json
 from typing import Sequence
 
 from django.forms import ChoiceField, Select
+from utilities.forms import get_field_value
 
 
 class SelectWithPlaceholder(Select):
@@ -27,3 +29,56 @@ class ExcludeMixin:
         super().__init__(*args, **kwargs)
         for field in exclude:
             self.fields.pop(field, None)
+
+
+class SubformMixin:
+    main_fieldsets: Sequence[tuple[str, Sequence]]
+
+    @property
+    def type_field_name(self):
+        return self.instance.subform_type_field
+
+    @property
+    def json_field_name(self):
+        return self.instance.subform_json_field
+
+    @property
+    def json_field_value(self):
+        if self.json_field_name in self.initial:
+            return json.loads(self.initial[self.json_field_name])
+        return getattr(self.instance, self.json_field_name)
+
+    @json_field_value.setter
+    def json_field_value(self, value):
+        setattr(self.instance, self.json_field_name, value)
+
+    @property
+    def fieldset_title(self):
+        return self.instance._meta.get_field(self.json_field_name).verbose_name
+
+    @property
+    def fieldsets(self):
+        field_sets = list(self.main_fieldsets)
+        if self.subform:
+            field_sets.append((self.fieldset_title, self.subform.fields.keys()))
+        return field_sets
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.subform = None
+        type_field_value = get_field_value(self, self.type_field_name)
+        if type_field_value:
+            setattr(self.instance, self.type_field_name, type_field_value)
+            subform_cls = getattr(self.instance, self.json_field_name + "_form")
+            self.subform = subform_cls(self.json_field_value)
+            self.fields |= self.subform.fields
+            self.initial |= self.subform.data
+
+    def save(self, commit=True):
+        json_field = {}
+        if self.subform:
+            for name in self.fields:
+                if name in self.subform.fields:
+                    json_field[name] = self.cleaned_data[name]
+            self.json_field_value = json_field
+        return super().save(commit)

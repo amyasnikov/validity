@@ -91,3 +91,15 @@ class BaseReadOnlyModel(
 
     class Meta:
         abstract = True
+
+
+class SubformMixin:
+    subform_json_field: str
+    subform_type_field: str
+    subforms: dict
+
+    def __getattr__(self, attr):
+        if attr == f"{self.subform_json_field}_form":
+            type_value = getattr(self, self.subform_type_field)
+            return self.subforms[type_value]
+        raise AttributeError(attr)

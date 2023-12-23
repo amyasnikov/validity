@@ -144,7 +144,9 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
         name="selector",
         **{
             "devices.select_related.return_value"
-            ".prefetch_datasource.return_value.prefetch_serializer.return_value": devices
+            ".prefetch_datasource.return_value"
+            ".prefetch_serializer.return_value"
+            ".prefetch_poller.return_value": devices
         }
     )
     report = Mock()

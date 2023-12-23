@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from itertools import chain
 from typing import Any, Generic, Iterable, Iterator, TypeVar
 
@@ -67,6 +68,21 @@ class M2MIterator(Generic[M]):
         yield from self.cache
 
 
+@dataclass
+class CustomPrefetch:
+    field: str
+    qs: QuerySet
+    many: bool
+
+    pk_field = property(lambda self: self.field + "_id")
+
+    def get_qs_map(self, main_queryset: QuerySet) -> QuerySetMap:
+        pk_values = main_queryset.values_list(self.pk_field, flat=True)
+        if self.many:
+            pk_values = chain.from_iterable(pk_values)
+        return QuerySetMap(self.qs.filter(pk__in=pk_values))
+
+
 class CustomPrefetchMixin(QuerySet):
     """
     Allows to prefetch objects without direct relations
@@ -75,31 +91,30 @@ class CustomPrefetchMixin(QuerySet):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.custom_prefetches = {}
+        self.custom_prefetches = []
 
     def custom_prefetch(self, field: str, prefetch_qs: QuerySet, many: bool = False):
-        pk_field = field + "_id"
-        pk_values = self.values_list(pk_field, flat=True)
-        if many:
-            pk_values = chain.from_iterable(pk_values)
-        prefetched_objects = prefetch_qs.filter(pk__in=pk_values)
-        self.custom_prefetches[field] = (many, QuerySetMap(prefetched_objects))
+        self.custom_prefetches.append(CustomPrefetch(field, prefetch_qs, many))
         return self
+
+    custom_prefetch.queryset_only = True
 
     def _clone(self, *args, **kwargs):
         c = super()._clone(*args, **kwargs)
-        c.custom_prefetches = self.custom_prefetches
+        c.custom_prefetches = self.custom_prefetches.copy()
         return c
 
     def _fetch_all(self):
         super()._fetch_all()
+        qs_dicts = {custom_pf.field: custom_pf.get_qs_map(self) for custom_pf in self.custom_prefetches}
         for item in self._result_cache:
             if not isinstance(item, self.model):
                 continue
-            for prefetched_field, (many, qs_dict) in self.custom_prefetches.items():
-                prefetch_pk_values = getattr(item, prefetched_field + "_id")
-                if many:
+            for custom_prefetch in self.custom_prefetches:
+                prefetch_pk_values = getattr(item, custom_prefetch.pk_field)
+                qs_dict = qs_dicts[custom_prefetch.field]
+                if custom_prefetch.many:
                     prefetch_values = M2MIterator(qs_dict[pk] for pk in prefetch_pk_values)
                 else:
                     prefetch_values = qs_dict.get(prefetch_pk_values)
-                setattr(item, prefetched_field, prefetch_values)
+                setattr(item, custom_prefetch.field, prefetch_values)

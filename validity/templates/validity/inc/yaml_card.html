@@ -1,0 +1,10 @@
+<div class="card">
+  {% if title_link %}
+  <h5 class="card-header"><a class="text-decoration-none" href="{{ title_link }}">{{ title }}</a></h5>
+  {% else %}
+  <h5 class="card-header">{{title}}</h5>
+  {% endif %}
+  <div class="card-body">
+      <pre>{{ content }}</pre>
+  </div>
+</div>

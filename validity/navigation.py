@@ -61,8 +61,35 @@ validity_menu_items = (
     ),
 )
 
+polling_menu_items = (
+    PluginMenuItem(
+        link="plugins:validity:poller_list",
+        link_text="Pollers",
+        buttons=[
+            PluginMenuButton(
+                link="plugins:validity:poller_add",
+                title="Add",
+                icon_class="mdi mdi-plus-thick",
+                color=ButtonColorChoices.GREEN,
+            ),
+        ],
+    ),
+    PluginMenuItem(
+        link="plugins:validity:command_list",
+        link_text="Commands",
+        buttons=[
+            PluginMenuButton(
+                link="plugins:validity:command_add",
+                title="Add",
+                icon_class="mdi mdi-plus-thick",
+                color=ButtonColorChoices.GREEN,
+            ),
+        ],
+    ),
+)
+
 menu = PluginMenu(
     label="Validity",
-    groups=(("Validity", validity_menu_items),),
+    groups=(("main", validity_menu_items), ("polling", polling_menu_items)),
     icon_class="mdi mdi-checkbox-marked-circle-outline",
 )

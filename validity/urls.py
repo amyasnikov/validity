@@ -25,4 +25,12 @@ urlpatterns = [
     path("namesets/<int:pk>/", include(get_model_urls("validity", "nameset"))),
     path("reports/", views.ComplianceReportListView.as_view(), name="compliancereport_list"),
     path("reports/<int:pk>/", include(get_model_urls("validity", "compliancereport"))),
+    path("pollers/", views.PollerListView.as_view(), name="poller_list"),
+    path("pollers/add/", views.PollerEditView.as_view(), name="poller_add"),
+    path("pollers/delete/", views.PollerBulkDeleteView.as_view(), name="poller_bulk_delete"),
+    path("pollers/<int:pk>/", include(get_model_urls("validity", "poller"))),
+    path("commands/", views.CommandListView.as_view(), name="command_list"),
+    path("commands/add/", views.CommandEditView.as_view(), name="command_add"),
+    path("commands/delete/", views.CommandBulkDeleteView.as_view(), name="command_bulk_delete"),
+    path("commands/<int:pk>/", include(get_model_urls("validity", "command"))),
 ]

@@ -4,6 +4,7 @@ from http import HTTPStatus
 import pytest
 from base import ViewTest
 from factories import (
+    CommandFactory,
     CompTestDBFactory,
     CompTestResultFactory,
     ConfigFileFactory,
@@ -16,6 +17,7 @@ from factories import (
     NameSetDBFactory,
     NameSetDSFactory,
     PlatformFactory,
+    PollerFactory,
     ReportFactory,
     SelectorFactory,
     SerializerDBFactory,
@@ -153,3 +155,26 @@ def test_report_devices(admin_client):
     report = ReportFactory(passed_results=4, failed_results=2)
     resp = admin_client.get(f"/plugins/validity/reports/{report.pk}/devices/")
     assert resp.status_code == HTTPStatus.OK
+
+
+class TestPoller(ViewTest):
+    factory_class = PollerFactory
+    model_class = models.Poller
+    post_body = {
+        "name": "poller-1",
+        "connection_type": "netmiko",
+        "public_credentials": '{"username": "admin"}',
+        "private_credentials": '{"password": "ADMIN"}',
+        "commands": [CommandFactory, CommandFactory],
+    }
+
+
+class TestCommand(ViewTest):
+    factory_class = CommandFactory
+    model_class = models.Command
+    post_body = {
+        "name": "command-1",
+        "label": "command_1",
+        "type": "CLI",
+        "cli_command": "show run",
+    }

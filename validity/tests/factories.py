@@ -213,3 +213,21 @@ class CompTestResultFactory(DjangoModelFactory):
 
     class Meta:
         model = models.ComplianceTestResult
+
+
+class CommandFactory(DjangoModelFactory):
+    name = factory.Sequence(lambda n: f"command-{n}")
+    label = factory.Sequence(lambda n: f"command_{n}")
+    type = "CLI"
+    parameters = {"cli_command": "show run"}
+
+    class Meta:
+        model = models.Command
+
+
+class PollerFactory(DjangoModelFactory):
+    name = factory.Sequence(lambda n: f"poller-{n}")
+    connection_type = "netmiko"
+
+    class Meta:
+        model = models.Poller

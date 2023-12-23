@@ -1,0 +1,69 @@
+{% extends 'generic/object.html' %}
+{% load validity %}
+{% load render_table from django_tables2 %}
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-4">
+      <div class="row mb-3">
+        <div class="card">
+          <h5 class="card-header">Poller</h5>
+          <div class="card-body">
+            <table class="table table-hover attr-table">
+              <tr>
+                <th scope="row">Name</th>
+                <td>{{ object.name }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Connection Type</th>
+                <td>{{ object | colored_choice:"connection_type" }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Commands</th>
+                <td>{{ object.commands.all | linkify_list }}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        {% include 'inc/panels/tags.html' %}
+      </div>
+    </div>
+    <div class="col col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <div class="row">
+            <h5 class="col">Credentials</h5>
+            <div class="col">{% include 'extras/inc/configcontext_format.html' %}</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div>
+            <h6 class="mb-3">Public</h6>
+            {% include 'extras/inc/configcontext_data.html' with data=object.public_credentials format=format %}
+          </div>
+          <div class="mt-4">
+            <h6 class="mb-3">Private</h6>
+            {% include 'extras/inc/configcontext_data.html' with data=object.private_credentials.encrypted %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col col-md-12">
+      <div class="card">
+        <h5 class="card-header">Bound Devices</h5>
+        <div class="card-body">
+          <div class="pt-0 mb-3 col col-md-3">
+            {% include 'validity/inc/search_form.html' with model='Device' %}
+          </div>
+          <div class="table-responsive">
+            {% render_table table 'inc/table.html' %}
+          </div>
+          {%include 'inc/paginator.html' with paginator=table.paginator page=table.page%}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

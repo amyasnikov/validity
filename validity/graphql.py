@@ -11,17 +11,7 @@ class NameSetType(NetBoxObjectType):
 
     class Meta:
         model = models.NameSet
-        fields = (
-            "id",
-            "name",
-            "description",
-            "tests",
-            "definitions",
-            "data_source",
-            "data_file",
-            "created",
-            "last_updated",
-        )
+        fields = "__all__"
         filterset_class = filtersets.NameSetFilterSet
 
 
@@ -64,52 +54,21 @@ class ComplianceSelectorWithDevicesType(ComplianceSelectorType):
 class ConfigSerializerType(NetBoxObjectType):
     class Meta:
         model = models.ConfigSerializer
-        fields = (
-            "id",
-            "name",
-            "extraction_method",
-            "ttp_template",
-            "data_source",
-            "data_file",
-            "created",
-            "last_updated",
-        )
+        fields = "__all__"
         filterset_class = filtersets.ConfigSerializerFilterSet
 
 
 class ComplianceTestType(NetBoxObjectType):
     class Meta:
         model = models.ComplianceTest
-        fields = (
-            "id",
-            "name",
-            "description",
-            "severity",
-            "selectors",
-            "data_source",
-            "data_file",
-            "namesets",
-            "created",
-            "last_updated",
-        )
+        fields = "__all__"
         filterset_class = filtersets.ComplianceTestFilterSet
 
 
 class ComplianceTestResultType(BaseObjectType):
     class Meta:
         model = models.ComplianceTestResult
-        fields = (
-            "id",
-            "test",
-            "device",
-            "dynamic_pair",
-            "explanation",
-            "passed",
-            "explanation",
-            "report",
-            "created",
-            "last_updated",
-        )
+        fields = "__all__"
         filterset_class = filtersets.ComplianceTestResultFilterSet
 
 
@@ -127,11 +86,25 @@ class ReportType(BaseObjectType):
 
     class Meta:
         model = models.ComplianceReport
-        fields = ("id", "created", "last_updated", "results")
+        fields = "__all__"
 
     @classmethod
     def get_queryset(cls, queryset, info):
         return queryset.annotate_result_stats().count_devices_and_tests()
+
+
+class PollerType(NetBoxObjectType):
+    class Meta:
+        model = models.Poller
+        fields = "__all__"
+        filterset_class = filtersets.PollerFilterSet
+
+
+class CommandType(NetBoxObjectType):
+    class Meta:
+        model = models.Command
+        fields = "__all__"
+        filterset_class = filtersets.CommandFilterSet
 
 
 class Query(ObjectType):
@@ -152,6 +125,12 @@ class Query(ObjectType):
 
     report = ObjectField(ReportType)
     report_list = ObjectListField(ReportType)
+
+    poller = ObjectField(PollerType)
+    poller_list = ObjectListField(PollerType)
+
+    command = ObjectField(CommandType)
+    command_list = ObjectListField(CommandType)
 
 
 schema = Query

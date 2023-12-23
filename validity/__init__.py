@@ -1,10 +1,9 @@
 import logging
-from pathlib import Path
 
 from django.conf import settings as django_settings
 from extras.plugins import PluginConfig
 from netbox.settings import VERSION
-from pydantic import BaseModel, DirectoryPath, Field
+from pydantic import BaseModel, Field
 
 from validity.utils.version import NetboxVersion
 
@@ -26,6 +25,11 @@ class NetBoxValidityConfig(PluginConfig):
     # custom field
     netbox_version = NetboxVersion(VERSION)
 
+    def ready(self):
+        import validity.data_backends
+
+        return super().ready()
+
 
 config = NetBoxValidityConfig
 
@@ -33,9 +37,8 @@ config = NetBoxValidityConfig
 class ValiditySettings(BaseModel):
     store_last_results: int = Field(default=5, gt=0, lt=1001)
     store_reports: int = Field(default=5, gt=0, lt=1001)
-    git_folder: DirectoryPath = Path("/opt/git_repos")
     sleep_between_tests: float = 0
     result_batch_size: int = 500
 
 
-settings = ValiditySettings.parse_obj(django_settings.PLUGINS_CONFIG.get("validity", {}))
+settings = ValiditySettings.model_validate(django_settings.PLUGINS_CONFIG.get("validity", {}))

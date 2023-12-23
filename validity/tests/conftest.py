@@ -9,7 +9,7 @@ from graphene_django.utils.testing import graphql_query
 from tenancy.models import Tenant
 
 import validity
-from validity.models import ConfigSerializer
+from validity.models import ConfigSerializer, Poller
 
 
 pytest.register_assert_rewrite("base")
@@ -52,6 +52,12 @@ def create_custom_fields(db):
                 type="string",
                 required=False,
             ),
+            CustomField(
+                name="poller",
+                type="object",
+                object_type=ContentType.objects.get_for_model(Poller),
+                required=False,
+            ),
         ]
     )
     cfs[0].content_types.set(
@@ -62,8 +68,15 @@ def create_custom_fields(db):
         ]
     )
     cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])
-    for cf in cfs[2:]:
+    for cf in cfs[2:5]:
         cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
+    cfs[5].content_types.set(
+        [
+            ContentType.objects.get_for_model(Device),
+            ContentType.objects.get_for_model(DeviceType),
+            ContentType.objects.get_for_model(Manufacturer),
+        ]
+    )
 
 
 @pytest.fixture

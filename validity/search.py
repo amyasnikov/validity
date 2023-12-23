@@ -31,3 +31,15 @@ class SerializerIndex(SearchIndex):
 class TestIndex(SearchIndex):
     model = models.ComplianceTest
     fields = (("name", 100), ("expression", 1000))
+
+
+@register_search
+class PollerIndex(SearchIndex):
+    model = models.Poller
+    fields = (("name", 100),)
+
+
+@register_search
+class CommandIndex(SearchIndex):
+    model = models.Command
+    fields = (("name", 100), ("label", 110))

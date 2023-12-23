@@ -107,3 +107,17 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
     def pk_field(self):
         pk_path = self.value.split("__")[:-1] + ["pk"]
         return "__".join(pk_path)
+
+
+class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
+    netmiko = "netmiko", "blue"
+
+    __command_types__ = {"netmiko": "CLI"}
+
+    @property
+    def acceptable_command_type(self) -> "CommandTypeChoices":
+        return CommandTypeChoices[self.__command_types__[self.name]]
+
+
+class CommandTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
+    CLI = "CLI", "CLI", "blue"

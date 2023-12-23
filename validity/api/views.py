@@ -70,6 +70,18 @@ class ComplianceReportViewSet(NetBoxModelViewSet):
     http_method_names = ["get", "head", "options", "trace", "delete"]
 
 
+class PollerViewSet(NetBoxModelViewSet):
+    queryset = models.Poller.objects.prefetch_related("tags", "commands")
+    serializer_class = serializers.PollerSerializer
+    filterset_class = filtersets.PollerFilterSet
+
+
+class CommandViewSet(NetBoxModelViewSet):
+    queryset = models.Command.objects.prefetch_related("tags")
+    serializer_class = serializers.CommandSerializer
+    filterset_class = filtersets.CommandFilterSet
+
+
 class DeviceReportView(ListAPIView):
     serializer_class = serializers.DeviceReportSerializer
     filterset_class = filtersets.DeviceReportFilterSet
@@ -86,7 +98,7 @@ class DeviceReportView(ListAPIView):
 
 
 class SerializedConfigView(APIView):
-    queryset = models.VDevice.objects.prefetch_datasource().prefetch_serializer()
+    queryset = models.VDevice.objects.prefetch_datasource().prefetch_serializer().prefetch_poller()
 
     def get_object(self, pk):
         try:

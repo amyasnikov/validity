@@ -5,9 +5,12 @@ from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
+from utilities.forms import get_field_value
 from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.widgets import HTMXSelect
 
 from validity import models
+from .helpers import SubformMixin
 
 
 class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
@@ -109,3 +112,31 @@ class NameSetForm(NetBoxModelForm):
     class Meta:
         model = models.NameSet
         fields = ("name", "description", "_global", "tests", "definitions", "data_source", "data_file", "tags")
+
+
+class PollerForm(NetBoxModelForm):
+    commands = DynamicModelMultipleChoiceField(queryset=models.Command.objects.all())
+
+    class Meta:
+        model = models.Poller
+        fields = ("name", "commands", "connection_type", "public_credentials", "private_credentials", "tags")
+        widgets = {
+            "public_credentials": Textarea(attrs={"style": "font-family:monospace"}),
+            "private_credentials": Textarea(attrs={"style": "font-family:monospace"}),
+        }
+
+    def clean(self):
+        connection_type = self.cleaned_data.get("connection_type") or get_field_value(self, "connection_type")
+        models.Poller.validate_commands(connection_type, self.cleaned_data["commands"])
+        return super().clean()
+
+
+class CommandForm(SubformMixin, NetBoxModelForm):
+    main_fieldsets = [
+        (_("Command"), ("name", "label", "type", "retrieves_config", "tags")),
+    ]
+
+    class Meta:
+        model = models.Command
+        fields = ("name", "label", "type", "retrieves_config", "tags")
+        widgets = {"type": HTMXSelect()}

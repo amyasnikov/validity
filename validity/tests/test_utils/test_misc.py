@@ -15,6 +15,12 @@ class Error2(Exception):
     pass
 
 
+class Error3(Exception):
+    def __init__(self, *args: object, orig_error) -> None:
+        self.orig_error = orig_error
+        super().__init__(*args)
+
+
 @pytest.mark.parametrize(
     "internal_exc, external_exc, msg",
     [
@@ -30,9 +36,19 @@ def test_reraise(internal_exc, external_exc, msg):
         else nullcontext()
     )
     with ctx:
-        with reraise(type(internal_exc), type(external_exc), msg):
+        args = () if msg is None else (msg,)
+        with reraise(type(internal_exc), type(external_exc), *args):
             if internal_exc is not None:
                 raise internal_exc
+
+
+def test_reraise_orig_error():
+    try:
+        with reraise(TypeError, Error3):
+            raise TypeError("message")
+    except Error3 as e:
+        assert isinstance(e.orig_error, TypeError)
+        assert e.orig_error.args == ("message",)
 
 
 @pytest.mark.parametrize(

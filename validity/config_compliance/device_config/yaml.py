@@ -15,6 +15,6 @@ class YAMLDeviceConfig(DeviceConfig):
             with reraise(
                 yaml.YAMLError,
                 DeviceConfigError,
-                msg=f"Trying to parse invalid YAML as device config for {self.device}",
+                f"Trying to parse invalid YAML as device config for {self.device}",
             ):
                 self.serialized = yaml.safe_load(self.plain_config)

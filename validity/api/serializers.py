@@ -20,7 +20,7 @@ from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
 
 from validity import models
-from .helpers import nested_factory
+from .helpers import EncryptedDictField, nested_factory
 
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
@@ -287,3 +287,62 @@ class DeviceReportSerializer(NestedDeviceSerializer):
             "results_count",
             "results",
         ]
+
+
+class CommandSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:command-detail")
+
+    class Meta:
+        model = models.Command
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "label",
+            "retrieves_config",
+            "type",
+            "parameters",
+            "tags",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )
+
+
+NestedCommandSerializer = nested_factory(CommandSerializer, ("id", "url", "display", "name"))
+
+
+class PollerSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:poller-detail")
+    private_credentials = EncryptedDictField()
+    commands = SerializedPKRelatedField(
+        serializer=NestedCommandSerializer,
+        many=True,
+        queryset=models.Command.objects.all(),
+        allow_empty=False,
+    )
+
+    class Meta:
+        model = models.Poller
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "connection_type",
+            "public_credentials",
+            "private_credentials",
+            "commands",
+            "tags",
+            "custom_fields",
+            "created",
+            "last_updated",
+        )
+
+    def validate(self, data):
+        models.Poller.validate_commands(data["connection_type"], data["commands"])
+        return super().validate(data)
+
+
+NestedPollerSerializer = nested_factory(PollerSerializer, ("id", "url", "display", "name"))

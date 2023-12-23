@@ -2,9 +2,9 @@ from functools import cached_property
 from typing import Any, Optional
 
 from dcim.models import Device
-from jinja2 import BaseLoader, Environment
 
 from validity.config_compliance.device_config import DeviceConfig
+from validity.j2_env import Environment
 from validity.managers import VDeviceQS
 from .data import VDataFile, VDataSource
 
@@ -23,7 +23,7 @@ class VDevice(Device):
     @property
     def config_path(self) -> str:
         assert hasattr(self, "data_source"), "You must prefetch data_source first"
-        template = Environment(loader=BaseLoader()).from_string(self.data_source.config_path_template)
+        template = Environment().from_string(self.data_source.config_path_template)
         return template.render(device=self)
 
     @cached_property

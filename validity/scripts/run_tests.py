@@ -126,7 +126,7 @@ class RunTestsScript:
         report: ComplianceReport | None,
         device_ids: list[int],
     ) -> Generator[ComplianceTestResult, None, None]:
-        qs = selector.devices.select_related().prefetch_datasource().prefetch_serializer()
+        qs = selector.devices.select_related().prefetch_datasource().prefetch_serializer().prefetch_poller()
         if device_ids:
             qs = qs.filter(pk__in=device_ids)
         for device in qs:
