@@ -5,6 +5,7 @@ import pytest
 from base import ApiGetTest, ApiPostGetTest
 from django.utils import timezone
 from factories import (
+    CommandFactory,
     CompTestDBFactory,
     CompTestResultFactory,
     ConfigFileFactory,
@@ -124,6 +125,27 @@ class TestTestResult(ApiGetTest):
 class TestReport(ApiGetTest):
     factory = ReportFactory
     entity = "reports"
+
+
+class TestCommand(ApiPostGetTest):
+    entity = "commands"
+    post_body = {
+        "name": "command-1",
+        "label": "command_1",
+        "type": "CLI",
+        "parameters": {"cli_command": "show version"},
+    }
+
+
+class TestPoller(ApiPostGetTest):
+    entity = "pollers"
+    post_body = {
+        "name": "poller-1",
+        "connection_type": "netmiko",
+        "public_credentials": {"username": "admin"},
+        "private_credentials": {"password": "1234"},
+        "commands": [CommandFactory, CommandFactory],
+    }
 
 
 @pytest.mark.django_db

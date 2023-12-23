@@ -341,7 +341,7 @@ class PollerSerializer(NetBoxModelSerializer):
         )
 
     def validate(self, data):
-        models.Poller.validate_commands(data["commands"])
+        models.Poller.validate_commands(data["connection_type"], data["commands"])
         return super().validate(data)
 
 

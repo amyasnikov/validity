@@ -75,8 +75,8 @@ class VDataSource(DataSource):
     def partial_sync(self, device_filter: Q, batch_size: int = 1000) -> None:
         def update_batch(batch):
             for datafile in self.datafiles.filter(path__in=batch).iterator():
-                datafile.refresh_from_disk(local_path)
-                yield datafile
+                if datafile.refresh_from_disk(local_path):
+                    yield datafile
                 paths.discard(datafile.path)
 
         def new_data_file(path):

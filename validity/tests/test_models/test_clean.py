@@ -1,8 +1,11 @@
 import textwrap
+from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ValidationError
-from factories import CompTestDSFactory, NameSetDSFactory, SelectorFactory, SerializerDSFactory
+from factories import CommandFactory, CompTestDSFactory, NameSetDSFactory, SelectorFactory, SerializerDSFactory
+
+from validity.models import Poller
 
 
 class BaseTestClean:
@@ -95,3 +98,33 @@ class TestCompTest(BaseTestClean):
         {"expression": "a = 10 + 15", "data_source": None, "data_file": None},
         {"expression": "import itertools; a==b", "data_source": None, "data_file": None},
     ]
+
+
+class TestPoller:
+    @pytest.mark.parametrize(
+        "connection_type, command_type, is_valid", [("netmiko", "CLI", True), ("netmiko", "netconf", False)]
+    )
+    @pytest.mark.django_db
+    def test_match_command_type(self, connection_type, command_type, is_valid):
+        command = CommandFactory(type=command_type)
+        ctx = nullcontext() if is_valid else pytest.raises(ValidationError)
+        with ctx:
+            Poller.validate_commands(connection_type=connection_type, commands=[command])
+
+    @pytest.mark.parametrize(
+        "retrive_config, is_valid",
+        [
+            ([True], True),
+            ([False], True),
+            ([False, True], True),
+            ([False, False, False], True),
+            ([True, True], False),
+            ([True, False, True], False),
+        ],
+    )
+    @pytest.mark.django_db
+    def only_one_config_command(self, retrive_config, is_valid):
+        commands = [CommandFactory(type=t) for t in retrive_config]
+        ctx = nullcontext() if is_valid else pytest.raises(ValidationError)
+        with ctx:
+            Poller.validate_commands(connection_type="CLI", commands=commands)

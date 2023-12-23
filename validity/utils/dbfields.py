@@ -8,9 +8,10 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from django import forms
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import JSONField, Model
+from django.db.models import Field, JSONField
 
 
 @dataclass
@@ -93,13 +94,13 @@ class EncryptedFieldEncoder(DjangoJSONEncoder):
 
 class EncryptedDictField(JSONField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        kwargs.setdefault("default", dict)
+        kwargs.setdefault("default", EncryptedDict)
         kwargs["encoder"] = EncryptedFieldEncoder
         super().__init__(*args, **kwargs)
 
     def deconstruct(self) -> Any:
         name, path, args, kwargs = super().deconstruct()
-        if kwargs.get("default") == dict:
+        if kwargs.get("default") == EncryptedDict:
             del kwargs["default"]
         del kwargs["encoder"]
         return name, path, args, kwargs
@@ -121,5 +122,21 @@ class EncryptedDictField(JSONField):
             return value
         return EncryptedDict(value)
 
-    def validate(self, value: Any, model_instance: Model) -> None:
-        pass  # TODO: add validation
+    def formfield(self, **kwargs):
+        return Field.formfield(
+            self,
+            **{
+                "form_class": EncryptedDictFormField,
+                "encoder": self.encoder,
+                "decoder": self.decoder,
+                **kwargs,
+            },
+        )
+
+
+class EncryptedDictFormField(forms.JSONField):
+    def to_python(self, value: Any) -> Any:
+        value = super().to_python(value)
+        if isinstance(value, dict):
+            value = EncryptedDict(value)
+        return value

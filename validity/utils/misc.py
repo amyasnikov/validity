@@ -53,7 +53,7 @@ def reraise(
     except catch as catched_err:
         if not args:
             args += (str(catched_err),)
-        with suppress():
+        with suppress(Exception):
             if orig_error_param in inspect.signature(raise_).parameters:
                 kwargs[orig_error_param] = catched_err
         raise raise_(*args, **kwargs) from catched_err
@@ -81,7 +81,7 @@ def datasource_sync(
 
 def batched(iterable: Iterable, n: int, container: type = list):
     """
-    Batch data into containers of length n
+    Batch data into containers of length n. Equal to python3.12 itertools.batched
     """
     it = iter(iterable)
     while True:

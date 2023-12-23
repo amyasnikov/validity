@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
+from utilities.forms import get_field_value
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
@@ -125,7 +126,8 @@ class PollerForm(NetBoxModelForm):
         }
 
     def clean(self):
-        models.Poller.validate_commands(self.cleaned_data["commands"])
+        connection_type = self.cleaned_data.get("connection_type") or get_field_value(self, "connection_type")
+        models.Poller.validate_commands(connection_type, self.cleaned_data["commands"])
         return super().clean()
 
 
