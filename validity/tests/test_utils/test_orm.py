@@ -6,7 +6,7 @@ from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from factories import DeviceFactory, SerializerDBFactory
 
-from validity.models.serializer import ConfigSerializer
+from validity.models.serializer import Serializer
 from validity.utils.orm import CustomPrefetchMixin, QuerySetMap
 
 
@@ -36,5 +36,5 @@ def test_custom_prefetch():
 
     for device in custom_qs.annotate(
         serializer_id=Cast(KeyTextTransform("serializer", "custom_field_data"), BigIntegerField())
-    ).custom_prefetch("serializer", ConfigSerializer.objects.all()):
+    ).custom_prefetch("serializer", Serializer.objects.all()):
         assert device_serializer_map[device.pk] == device.serializer.pk

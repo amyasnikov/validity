@@ -85,11 +85,11 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
         return queryset.only_latest(exclude=not value)
 
 
-class ConfigSerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
+class SerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
     datasource_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
         fields = ("id", "name", "extraction_method", "datasource_id")
         search_fields = ("name",)
 

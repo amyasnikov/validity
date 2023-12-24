@@ -52,10 +52,10 @@ class ComplianceTestResultViewSet(ReadOnlyNetboxViewSet):
     filterset_class = filtersets.ComplianceTestResultFilterSet
 
 
-class ConfigSerializerViewSet(NetBoxModelViewSet):
-    queryset = models.ConfigSerializer.objects.select_related("data_source", "data_file").prefetch_related("tags")
-    serializer_class = serializers.ConfigSerializerSerializer
-    filterset_class = filtersets.ConfigSerializerFilterSet
+class SerializerViewSet(NetBoxModelViewSet):
+    queryset = models.Serializer.objects.select_related("data_source", "data_file").prefetch_related("tags")
+    serializer_class = serializers.SerializerSerializer
+    filterset_class = filtersets.SerializerFilterSet
 
 
 class NameSetViewSet(NetBoxModelViewSet):

@@ -210,10 +210,10 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
     annotate_poller_id = partialmethod(annotate_cf, "poller", "poller_id")
 
     def prefetch_serializer(self):
-        from validity.models import ConfigSerializer
+        from validity.models import Serializer
 
         return self.annotate_serializer_id().custom_prefetch(
-            "serializer", ConfigSerializer.objects.select_related("data_file")
+            "serializer", Serializer.objects.select_related("data_file")
         )
 
     def prefetch_poller(self):

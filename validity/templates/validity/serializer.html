@@ -6,7 +6,7 @@
     <div class="col col-md-4">
       <div class="row mb-3">
         <div class="card">
-          <h5 class="card-header">Config Serializer</h5>
+          <h5 class="card-header">Serializer</h5>
           <div class="card-body">
             <table class="table table-hover attr-table">
               <tr>
@@ -14,7 +14,7 @@
                 <td>{{ object.name }}</td>
               </tr>
               <tr>
-                <th scope="row">Config Extraction Method</th>
+                <th scope="row">Extraction Method</th>
                 <td>{{ object | colored_choice:"extraction_method" }}</td>
               </tr>
               {% include "validity/inc/datasource_link.html" %}
@@ -28,7 +28,7 @@
     </div>
     <div class="col col-md-8">
       <div class="card">
-        <h5 class="card-header">TTP Template [Source: {{ object | data_source }}]</h5>
+        <h5 class="card-header">Template [Source: {{ object | data_source }}]</h5>
         <div class="card-body">
           {% include 'extras/inc/configcontext_data.html' with data=object.effective_template %}
         </div>

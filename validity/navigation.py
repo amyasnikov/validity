@@ -36,11 +36,11 @@ validity_menu_items = (
         link_text="Reports",
     ),
     PluginMenuItem(
-        link="plugins:validity:configserializer_list",
-        link_text="Config Serializers",
+        link="plugins:validity:serializer_list",
+        link_text="Serializers",
         buttons=[
             PluginMenuButton(
-                link="plugins:validity:configserializer_add",
+                link="plugins:validity:serializer_add",
                 title="Add",
                 icon_class="mdi mdi-plus-thick",
                 color=ButtonColorChoices.GREEN,

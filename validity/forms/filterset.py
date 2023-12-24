@@ -11,10 +11,10 @@ from validity import models
 from validity.choices import (
     BoolOperationChoices,
     CommandTypeChoices,
-    ConfigExtractionChoices,
     ConnectionTypeChoices,
     DeviceGroupByChoices,
     DynamicPairsChoices,
+    ExtractionMethodChoices,
     SeverityChoices,
 )
 from .helpers import ExcludeMixin, PlaceholderChoiceField
@@ -119,11 +119,11 @@ class ComplianceSelectorFilterForm(NetBoxModelFilterSetForm):
     )
 
 
-class ConfigSerializerFilterForm(NetBoxModelFilterSetForm):
-    model = models.ConfigSerializer
+class SerializerFilterForm(NetBoxModelFilterSetForm):
+    model = models.Serializer
     name = CharField(required=False)
     extraction_method = PlaceholderChoiceField(
-        required=False, placeholder=_("Extraction Method"), choices=ConfigExtractionChoices.choices
+        required=False, placeholder=_("Extraction Method"), choices=ExtractionMethodChoices.choices
     )
     datasource_id = DynamicModelMultipleChoiceField(
         label=_("Data Source"), queryset=DataSource.objects.all(), required=False

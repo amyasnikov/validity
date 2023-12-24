@@ -73,7 +73,7 @@ class TestSelector(ApiPostGetTest):
 
 class TestDBSerializer(ApiPostGetTest):
     entity = "serializers"
-    post_body = {"name": "serializer-1", "extraction_method": "TTP", "ttp_template": "interface {{interface}}"}
+    post_body = {"name": "serializer-1", "extraction_method": "TTP", "template": "interface {{interface}}"}
 
     def get_extra_checks(self, resp_json, pk):
         if pk:

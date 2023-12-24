@@ -77,7 +77,7 @@ class SeverityChoices(MemberMixin, TextChoices, metaclass=ColoredChoiceMeta):
         return cls.labels[index:]
 
 
-class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
+class ExtractionMethodChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
     YAML = "YAML", "YAML", "info"
     ROUTEROS = "ROUTEROS", "ROUTEROS", "green"

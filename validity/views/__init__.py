@@ -11,11 +11,11 @@ from .selector import (
     ComplianceSelectorView,
 )
 from .serializer import (
-    ConfigSerializerBulkDeleteView,
-    ConfigSerializerDeleteView,
-    ConfigSerializerEditView,
-    ConfigSerializerListView,
-    ConfigSerializerView,
+    SerializerBulkDeleteView,
+    SerializerDeleteView,
+    SerializerEditView,
+    SerializerListView,
+    SerializerView,
 )
 from .test import (
     ComplianceTestBulkDeleteView,

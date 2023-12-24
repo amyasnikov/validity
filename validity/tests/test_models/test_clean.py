@@ -70,18 +70,18 @@ class TestSerializer(BaseTestClean):
     right_kwargs = [
         {
             "extraction_method": "TTP",
-            "ttp_template": "interface {{ interface }}",
+            "template": "interface {{ interface }}",
             "data_source": None,
             "data_file": None,
         },
         {"extraction_method": "YAML", "data_source": None, "data_file": None},
-        {"extraction_method": "TTP", "ttp_template": "", "contents": "interface {{ interface }}"},
+        {"extraction_method": "TTP", "template": "", "contents": "interface {{ interface }}"},
     ]
     wrong_kwargs = [
-        {"extraction_method": "TTP", "ttp_template": "", "data_source": None, "data_file": None},
-        {"extraction_method": "TTP", "ttp_template": "qwerty"},
-        {"extraction_method": "TTP", "ttp_template": "qwerty", "data_source": None},
-        {"extraction_method": "TTP", "ttp_template": "qwerty", "data_file": None},
+        {"extraction_method": "TTP", "template": "", "data_source": None, "data_file": None},
+        {"extraction_method": "TTP", "template": "qwerty"},
+        {"extraction_method": "TTP", "template": "qwerty", "data_source": None},
+        {"extraction_method": "TTP", "template": "qwerty", "data_file": None},
         {"extraction_method": "YAML"},
     ]
 

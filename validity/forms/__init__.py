@@ -3,18 +3,11 @@ from .filterset import (
     ComplianceSelectorFilterForm,
     ComplianceTestFilterForm,
     ComplianceTestResultFilterForm,
-    ConfigSerializerFilterForm,
     DeviceReportFilterForm,
     NameSetFilterForm,
     PollerFilterForm,
     ReportGroupByForm,
+    SerializerFilterForm,
     TestResultFilterForm,
 )
-from .general import (
-    CommandForm,
-    ComplianceSelectorForm,
-    ComplianceTestForm,
-    ConfigSerializerForm,
-    NameSetForm,
-    PollerForm,
-)
+from .general import CommandForm, ComplianceSelectorForm, ComplianceTestForm, NameSetForm, PollerForm, SerializerForm

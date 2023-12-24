@@ -9,7 +9,7 @@ from graphene_django.utils.testing import graphql_query
 from tenancy.models import Tenant
 
 import validity
-from validity.models import ConfigSerializer, Poller
+from validity.models import Poller, Serializer
 
 
 pytest.register_assert_rewrite("base")
@@ -27,7 +27,7 @@ def create_custom_fields(db):
             CustomField(
                 name="serializer",
                 type="object",
-                object_type=ContentType.objects.get_for_model(ConfigSerializer),
+                object_type=ContentType.objects.get_for_model(Serializer),
                 required=False,
             ),
             CustomField(

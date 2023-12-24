@@ -80,17 +80,17 @@ class SelectorFactory(DjangoModelFactory):
 class SerializerDBFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"serializer-{n}")
     extraction_method = "TTP"
-    ttp_template = "interface {{ interface }}"
+    template = "interface {{ interface }}"
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
 
 
 class SerializerDSFactory(DataSourceLinkFactory, SerializerDBFactory):
-    ttp_template = ""
+    template = ""
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
 
 
 class CompTestDBFactory(DjangoModelFactory):

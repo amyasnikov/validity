@@ -89,17 +89,17 @@ class TestSelector(ViewTest):
 
 class TestDBSerializer(ViewTest):
     factory_class = SerializerDBFactory
-    model_class = models.ConfigSerializer
-    post_body = {"name": "serializer-1", "extraction_method": "TTP", "ttp_template": "interface {{interface}}"}
+    model_class = models.Serializer
+    post_body = {"name": "serializer-1", "extraction_method": "TTP", "template": "interface {{interface}}"}
 
 
 class TestDSSerializer(ViewTest):
     factory_class = SerializerDSFactory
-    model_class = models.ConfigSerializer
+    model_class = models.Serializer
     post_body = {
         "name": "serializer-1",
         "extraction_method": "TTP",
-        "ttp_template": "",
+        "template": "",
         "data_source": DataSourceFactory,
         "data_file": DataFileFactory,
     }

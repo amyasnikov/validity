@@ -190,15 +190,15 @@ NestedComplianceTestResultSerializer = nested_factory(
 )
 
 
-class ConfigSerializerSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:configserializer-detail")
-    ttp_template = serializers.CharField(write_only=True, required=False)
+class SerializerSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:serializer-detail")
+    template = serializers.CharField(write_only=True, required=False)
     effective_template = serializers.ReadOnlyField()
     data_source = NestedDataSourceSerializer(required=False)
     data_file = NestedDataFileSerializer(required=False)
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
         fields = (
             "id",
             "url",
@@ -206,7 +206,7 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
             "name",
             "extraction_method",
             "effective_template",
-            "ttp_template",
+            "template",
             "data_source",
             "data_file",
             "tags",
@@ -216,7 +216,7 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
         )
 
 
-NestedConfigSerializerSerializer = nested_factory(ConfigSerializerSerializer, ("id", "url", "display", "name"))
+NestedSerializerSerializer = nested_factory(SerializerSerializer, ("id", "url", "display", "name"))
 
 
 class NameSetSerializer(NetBoxModelSerializer):
@@ -261,7 +261,7 @@ NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "displ
 
 
 class SerializedConfigSerializer(serializers.Serializer):
-    serializer = NestedConfigSerializerSerializer(read_only=True, source="device.serializer")
+    serializer = NestedSerializerSerializer(read_only=True, source="device.serializer")
     data_source = NestedDataSourceSerializer(read_only=True, source="device.data_source")
     data_file = NestedDataFileSerializer(read_only=True, source="device.data_file")
     local_copy_last_updated = serializers.DateTimeField(allow_null=True, source="last_modified")

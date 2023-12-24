@@ -20,10 +20,10 @@ class SelectorIndex(SearchIndex):
 
 @register_search
 class SerializerIndex(SearchIndex):
-    model = models.ConfigSerializer
+    model = models.Serializer
     fields = (
         ("name", 100),
-        ("ttp_template", 1000),
+        ("template", 1000),
     )
 
 
