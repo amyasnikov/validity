@@ -7,6 +7,7 @@ import validity.models.base
 import validity.utils.dbfields
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+import django.db.models.deletion
 
 
 def create_cf(apps, schema_editor):
@@ -50,8 +51,8 @@ def create_polling_datasource(apps, schema_editor):
         source_url="/",
         description=_("Required by Validity. Polls bound devices and stores the results"),
         custom_field_data={
-            "device_config_path": "{{device | slugify}}/{{ device.poller.config_command.label }}.txt",
-            "device_config_default": False,
+            "device_config_path": "{{device | slugify}}/{{ command.label }}.txt",
+            "default": False,
             "web_url": "",
         },
     )
@@ -96,6 +97,16 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("retrieves_config", models.BooleanField(default=False)),
+                (
+                    "serializer",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="commands",
+                        to="validity.serializer",
+                    ),
+                ),
                 ("type", models.CharField(max_length=50)),
                 ("parameters", models.JSONField()),
                 ("tags", taggit.managers.TaggableManager(through="extras.TaggedItem", to="extras.Tag")),

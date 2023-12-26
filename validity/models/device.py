@@ -29,8 +29,6 @@ class VDevice(Device):
     @cached_property
     def data_file(self) -> VDataFile | None:
         path = self.config_path
-        if hasattr(self.data_source, "config_files"):
-            return self.data_source.configfiles_by_path.get(path)
         return self.data_source.datafiles.filter(path=path).first()
 
     @cached_property
@@ -52,3 +50,8 @@ class VDevice(Device):
         if filter_ is None:
             return
         return type(self).objects.filter(filter_).first()
+
+    @property
+    def commands(self):
+        assert hasattr(self, "poller"), "You must prefetch poller first"
+        return self.poller.commands.all()

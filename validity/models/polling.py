@@ -14,6 +14,7 @@ from validity.pollers import get_poller
 from validity.subforms import CLICommandForm
 from validity.utils.dbfields import EncryptedDictField
 from .base import BaseModel, SubformMixin
+from .serializer import Serializer
 
 
 class Command(SubformMixin, BaseModel):
@@ -34,6 +35,14 @@ class Command(SubformMixin, BaseModel):
         _("Retrieves Configuration"),
         default=False,
         help_text=_("There can be only one command to retrieve configuration within each poller"),
+    )
+    serializer = models.ForeignKey(
+        Serializer,
+        on_delete=models.CASCADE,
+        verbose_name=_("Serializer"),
+        related_name="commands",
+        null=True,
+        blank=True,
     )
     type = models.CharField(_("Type"), max_length=50, choices=CommandTypeChoices.choices)
     parameters = models.JSONField(_("Parameters"))

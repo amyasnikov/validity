@@ -38,7 +38,7 @@ def test_datasource_tenant(create_custom_fields):
 
 @pytest.mark.django_db
 def test_datasource_default(create_custom_fields):
-    datasource = DataSourceFactory(custom_field_data={"device_config_default": True})
+    datasource = DataSourceFactory(custom_field_data={"default": True})
     DeviceFactory()
     device = VDevice.objects.prefetch_datasource().first()
     assert device.data_source == datasource
@@ -64,9 +64,7 @@ def test_serializer(setup_serializers, subtests):
 @pytest.mark.django_db
 def test_config_path(create_custom_fields):
     DeviceFactory(name="device1")
-    DataSourceFactory(
-        custom_field_data={"device_config_path": "path/{{device.name}}.cfg", "device_config_default": True}
-    )
+    DataSourceFactory(custom_field_data={"device_config_path": "path/{{device.name}}.cfg", "default": True})
     device = VDevice.objects.prefetch_datasource().first()
     assert device.config_path == "path/device1.cfg"
 

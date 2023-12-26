@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 
 from validity import config, filtersets, models
 from validity.choices import SeverityChoices
-from validity.config_compliance.device_config import DeviceConfig
 from validity.config_compliance.exceptions import DeviceConfigError
 from . import serializers
 
@@ -112,8 +111,7 @@ class SerializedConfigView(APIView):
     def get(self, request, pk):
         device = self.get_object(pk)
         try:
-            config = DeviceConfig.from_device(device)
-            serializer = serializers.SerializedConfigSerializer(config, context={"request": request})
+            serializer = serializers.SerializedConfigSerializer(device.device_config, context={"request": request})
             return Response(serializer.data)
         except DeviceConfigError as e:
             return Response(

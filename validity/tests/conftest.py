@@ -37,7 +37,7 @@ def create_custom_fields(db):
                 required=False,
             ),
             CustomField(
-                name="device_config_default",
+                name="default",
                 type="boolean",
                 required=False,
                 default=False,

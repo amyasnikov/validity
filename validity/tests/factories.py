@@ -35,7 +35,7 @@ class ConfigFileFactory(DataFileFactory):
     source = factory.SubFactory(
         DataSourceFactory,
         custom_field_data={
-            "device_config_default": True,
+            "default": True,
             "device_config_path": path,
             "web_url": "http://some_url.com/",
         },

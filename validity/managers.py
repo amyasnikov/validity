@@ -21,7 +21,7 @@ from netbox.models import RestrictedQuerySet
 
 from validity import settings
 from validity.choices import DeviceGroupByChoices, SeverityChoices
-from validity.utils.orm import CustomPrefetchMixin, RegexpReplace
+from validity.utils.orm import CustomPrefetchMixin
 
 
 class ComplianceTestQS(RestrictedQuerySet):
@@ -83,17 +83,11 @@ class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
     def annotate_config_path(self):
         return self.annotate(device_config_path=KeyTextTransform("device_config_path", "custom_field_data"))
 
-    def prefetch_config_files(self):
-        from validity.models import VDataFile
+    def annotate_command_path(self):
+        return self.annotate(device_command_path=KeyTextTransform("device_command_path", "custom_field_data"))
 
-        config_path = RegexpReplace(F("device_config_path"), Value("{{.+?}}"), Value(".+?"))
-        path_filter = Q(datafiles__path__regex=config_path)
-        return (
-            self.annotate_config_path()
-            .annotate(config_files_id=ArrayAgg(F("datafiles__pk"), filter=path_filter))
-            .annotate(config_file_count=Count("datafiles__pk", filter=path_filter))
-            .custom_prefetch("config_files", VDataFile.objects.all(), many=True)
-        )
+    def annotate_paths(self):
+        return self.annotate_config_path().annotate_command_path()
 
 
 class ComplianceReportQS(RestrictedQuerySet):
@@ -165,7 +159,7 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
         ).annotate(
             data_source_id=Case(
                 When(bound_source__isnull=False, then=F("bound_source")),
-                default=VDataSource.objects.filter(custom_field_data__device_config_default=True).values("id")[:1],
+                default=VDataSource.objects.filter(custom_field_data__default=True).values("id")[:1],
                 output_field=BigIntegerField(),
             )
         )

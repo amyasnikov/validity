@@ -16,8 +16,8 @@ def setup_datasource_cf(apps, schema_editor):
     datasource_cfs = CustomField.objects.using(db).bulk_create(
         [
             CustomField(
-                name="device_config_default",
-                label=_("Default for Device Configs"),
+                name="default",
+                label=_("Default DataSource"),
                 description=_("Required by Validity"),
                 type="boolean",
                 required=False,
@@ -27,6 +27,14 @@ def setup_datasource_cf(apps, schema_editor):
                 name="device_config_path",
                 label=_("Device Config Path"),
                 description=_("Required by Validity. J2 syntax allowed, e.g. devices/{{device.name}}.txt"),
+                type="string",
+                required=False,
+                validation_regex=r"^[^/].*$",
+            ),
+            CustomField(
+                name="device_command_path",
+                label=_("Device Command Path"),
+                description=_("Required by Validity. J2 syntax allowed, e.g. {{device.name}}/{{command.label}}.txt"),
                 type="string",
                 required=False,
                 validation_regex=r"^[^/].*$",
@@ -57,7 +65,7 @@ def delete_datasource_cf(apps, schema_editor):
     CustomField = apps.get_model("extras", "CustomField")
     CustomField.objects.using(schema_editor.connection.alias).filter(
         name__in=[
-            "device_config_default",
+            "default",
             "device_config_path",
             "web_url",
         ],
@@ -82,14 +90,7 @@ def setup_datasources(apps, schema_editor):
     datasources = []
     for repo in GitRepo.objects.using(db).all():
         try:
-            cf = get_fields(
-                repo,
-                {
-                    "web_url": "web_url",
-                    "device_config_path": "device_config_path",
-                    "default": "device_config_default",
-                },
-            )
+            cf = get_fields(repo, ["web_url", "device_config_path", "default"])
             parameters = get_fields(repo, ["username", "branch", "encrypted_password"])
             if encrypted_password := parameters.pop("encrypted_password", None):
                 parameters["password"] = EncryptedString.deserialize(encrypted_password).decrypt()
