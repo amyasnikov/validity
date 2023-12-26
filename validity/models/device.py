@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 from dcim.models import Device
 
-from validity.config_compliance.device_config import DeviceConfig
+from validity.compliance.device_config import DeviceConfig
 from validity.j2_env import Environment
 from validity.managers import VDeviceQS
 from .data import VDataFile, VDataSource

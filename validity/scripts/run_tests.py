@@ -15,9 +15,9 @@ from netbox.context import webhooks_queue
 from simpleeval import InvalidExpression
 
 import validity
-import validity.config_compliance.eval.default_nameset as default_nameset
-from validity.config_compliance.eval import ExplanationalEval
-from validity.config_compliance.exceptions import DeviceConfigError, EvalError
+import validity.compliance.eval.default_nameset as default_nameset
+from validity.compliance.eval import ExplanationalEval
+from validity.compliance.exceptions import DeviceConfigError, EvalError
 from validity.models import (
     ComplianceReport,
     ComplianceSelector,

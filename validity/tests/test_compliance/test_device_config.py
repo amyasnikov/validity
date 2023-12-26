@@ -5,7 +5,7 @@ import pytest
 import yaml
 from factories import DataFileFactory, DeviceFactory
 
-from validity.config_compliance.device_config import DeviceConfig
+from validity.compliance.device_config import DeviceConfig
 from validity.models.data import VDataFile
 
 

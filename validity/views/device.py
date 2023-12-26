@@ -4,7 +4,7 @@ from dcim.models import Device
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 
-from validity.config_compliance.exceptions import DeviceConfigError
+from validity.compliance.exceptions import DeviceConfigError
 from validity.models import VDevice
 from .base import TestResultBaseView
 

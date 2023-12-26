@@ -7,8 +7,8 @@ import pytest
 from deepdiff.serialization import json_dumps
 from simpleeval import InvalidExpression
 
-from validity.config_compliance.eval import ExplanationalEval, default_nameset, eval_defaults
-from validity.config_compliance.exceptions import EvalError
+from validity.compliance.eval import ExplanationalEval, default_nameset, eval_defaults
+from validity.compliance.exceptions import EvalError
 
 
 EXPR_1 = '{"param_1": "val_1", "param_2": "val_2"} == {"param_1": "val_1"}'

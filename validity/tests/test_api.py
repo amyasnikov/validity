@@ -24,7 +24,7 @@ from factories import (
     TenantFactory,
 )
 
-from validity.config_compliance.device_config import DeviceConfig
+from validity.compliance.device_config import DeviceConfig
 
 
 class TestDBNameSet(ApiPostGetTest):

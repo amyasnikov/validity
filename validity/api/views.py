@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from validity import config, filtersets, models
 from validity.choices import SeverityChoices
-from validity.config_compliance.exceptions import DeviceConfigError
+from validity.compliance.exceptions import DeviceConfigError
 from . import serializers
 
 

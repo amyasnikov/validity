@@ -7,7 +7,7 @@ from extras.scripts import Script
 from factories import CompTestDBFactory, DeviceFactory, NameSetDBFactory, ReportFactory, SelectorFactory
 from simpleeval import InvalidExpression
 
-from validity.config_compliance.exceptions import EvalError
+from validity.compliance.exceptions import EvalError
 from validity.models import ComplianceReport, ComplianceTestResult, VDevice
 from validity.scripts import run_tests
 from validity.scripts.run_tests import RunTestsScript as RunTestsMixin
