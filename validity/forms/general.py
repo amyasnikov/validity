@@ -6,7 +6,7 @@ from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
 from utilities.forms import get_field_value
-from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
 from validity import models
@@ -132,11 +132,13 @@ class PollerForm(NetBoxModelForm):
 
 
 class CommandForm(SubformMixin, NetBoxModelForm):
+    serializer = DynamicModelChoiceField(queryset=models.Serializer.objects.all(), required=False)
+
     main_fieldsets = [
-        (_("Command"), ("name", "label", "type", "retrieves_config", "tags")),
+        (_("Command"), ("name", "label", "type", "retrieves_config", "serializer", "tags")),
     ]
 
     class Meta:
         model = models.Command
-        fields = ("name", "label", "type", "retrieves_config", "tags")
+        fields = ("name", "label", "type", "retrieves_config", "serializer", "tags")
         widgets = {"type": HTMXSelect()}

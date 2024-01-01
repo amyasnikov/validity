@@ -4,7 +4,7 @@ from typing import ClassVar
 from ttp import ttp
 
 from validity.utils.misc import reraise
-from ..exceptions import DeviceConfigError
+from ..exceptions import SerializationError
 from .base import DeviceConfig
 
 
@@ -28,5 +28,5 @@ class TTPDeviceConfig(DeviceConfig):
         if not self.serialized or override:
             parser = ttp(data=self.plain_config, template=self._template.template)
             parser.parse()
-            with reraise(IndexError, DeviceConfigError, f"Invalid parsed config for {self.device}: {parser.result()}"):
+            with reraise(IndexError, SerializationError, f"Invalid parsed config for {self.device}: {parser.result()}"):
                 self.serialized = parser.result()[0][0]

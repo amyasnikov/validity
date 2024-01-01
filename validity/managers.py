@@ -21,7 +21,7 @@ from netbox.models import RestrictedQuerySet
 
 from validity import settings
 from validity.choices import DeviceGroupByChoices, SeverityChoices
-from validity.utils.orm import CustomPrefetchMixin
+from validity.utils.orm import CustomPrefetchMixin, SetAttributesMixin
 
 
 class ComplianceTestQS(RestrictedQuerySet):
@@ -130,26 +130,9 @@ class ComplianceReportQS(RestrictedQuerySet):
         )
 
 
-class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.selector = None
-
-    def _clone(self, *args, **kwargs):
-        c = super()._clone(*args, **kwargs)
-        c.selector = self.selector
-        return c
-
+class VDeviceQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
     def set_selector(self, selector):
-        self.selector = selector
-        return self
-
-    def _fetch_all(self):
-        super()._fetch_all()
-        if self.selector:
-            for item in self._result_cache:
-                if isinstance(item, self.model):
-                    item.selector = self.selector
+        self.set_attribute("selector", selector)
 
     def annotate_datasource_id(self):
         from validity.models import VDataSource
@@ -210,10 +193,13 @@ class VDeviceQS(CustomPrefetchMixin, RestrictedQuerySet):
             "serializer", Serializer.objects.select_related("data_file")
         )
 
-    def prefetch_poller(self):
+    def prefetch_poller(self, with_commands: bool = False):
         from validity.models import Poller
 
-        return self.annotate_poller_id().custom_prefetch("poller", Poller.objects.prefetch_commands())
+        poller_qs = Poller.objects.all()
+        if with_commands:
+            poller_qs = poller_qs.prefetch_commands()
+        return self.annotate_poller_id().custom_prefetch("poller", poller_qs)
 
     def _count_per_something(self, field: str, annotate_method: str) -> dict[int | None, int]:
         qs = getattr(self, annotate_method)().values(field).annotate(cnt=Count("id", distinct=True))
@@ -258,3 +244,23 @@ class PollerQS(RestrictedQuerySet):
     def prefetch_commands(self):
         Command = self.model._meta.get_field("commands").remote_field.model
         return self.prefetch_related(Prefetch("commands", Command.objects.order_by("-retrieves_config")))
+
+
+class CommandQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
+    def set_file_paths(self, device, data_source):
+        """
+        Sets up 'path' attribute to each command
+        """
+        self.set_attribute("device", device)
+        self.set_attribute("data_source", data_source)
+        return self
+
+    def bind_attributes(self, instance):
+        initial_attrs = self._aux_attributes.copy()
+        device = self._aux_attributes.pop("device", None)
+        data_source = self._aux_attributes.pop("data_source", None)
+        if device and data_source:
+            path = data_source.get_command_path(device, instance)
+            instance.path = path
+        super().bind_attributes(instance)
+        self._aux_attributes = initial_attrs

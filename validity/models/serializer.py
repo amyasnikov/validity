@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import ExtractionMethodChoices
+from validity.compliance.serialization import serialize
 from validity.netbox_changes import DEVICE_ROLE_RELATION
 from .base import BaseModel, DataSourceMixin
 
@@ -17,6 +18,7 @@ class Serializer(DataSourceMixin, BaseModel):
 
     clone_fields = ("template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "template"
+    _serialize = serialize
 
     class Meta:
         ordering = ("name",)
@@ -54,3 +56,6 @@ class Serializer(DataSourceMixin, BaseModel):
     @property
     def effective_template(self) -> str:
         return self.effective_text_field()
+
+    def serialize(self, data: str) -> dict:
+        return self._serialize(self.extraction_method, data, self.effective_template)

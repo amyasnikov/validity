@@ -290,6 +290,7 @@ class DeviceReportSerializer(NestedDeviceSerializer):
 
 
 class CommandSerializer(NetBoxModelSerializer):
+    serializer = NestedSerializerSerializer(required=False)
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:command-detail")
 
     class Meta:
@@ -301,6 +302,7 @@ class CommandSerializer(NetBoxModelSerializer):
             "name",
             "label",
             "retrieves_config",
+            "serializer",
             "type",
             "parameters",
             "tags",

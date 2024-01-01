@@ -9,7 +9,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import CommandTypeChoices, ConnectionTypeChoices
-from validity.managers import PollerQS
+from validity.managers import CommandQS, PollerQS
 from validity.pollers import get_poller
 from validity.subforms import CLICommandForm
 from validity.utils.dbfields import EncryptedDictField
@@ -28,7 +28,8 @@ class Command(SubformMixin, BaseModel):
             RegexValidator(
                 regex="^[a-z][a-z0-9_]*$",
                 message=_("Only lowercase ASCII letters, numbers and underscores are allowed"),
-            )
+            ),
+            RegexValidator(regex="^config$", message=_("This label name is reserved"), inverse_match=True),
         ],
     )
     retrieves_config = models.BooleanField(
@@ -46,6 +47,8 @@ class Command(SubformMixin, BaseModel):
     )
     type = models.CharField(_("Type"), max_length=50, choices=CommandTypeChoices.choices)
     parameters = models.JSONField(_("Parameters"))
+
+    objects = CommandQS.as_manager()
 
     subform_type_field = "type"
     subform_json_field = "parameters"

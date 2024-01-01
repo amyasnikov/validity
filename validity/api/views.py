@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from validity import config, filtersets, models
 from validity.choices import SeverityChoices
-from validity.compliance.exceptions import DeviceConfigError
+from validity.compliance.exceptions import SerializationError
 from . import serializers
 
 
@@ -76,7 +76,7 @@ class PollerViewSet(NetBoxModelViewSet):
 
 
 class CommandViewSet(NetBoxModelViewSet):
-    queryset = models.Command.objects.prefetch_related("tags")
+    queryset = models.Command.objects.select_related("serializer").prefetch_related("tags")
     serializer_class = serializers.CommandSerializer
     filterset_class = filtersets.CommandFilterSet
 
@@ -113,7 +113,7 @@ class SerializedConfigView(APIView):
         try:
             serializer = serializers.SerializedConfigSerializer(device.device_config, context={"request": request})
             return Response(serializer.data)
-        except DeviceConfigError as e:
+        except SerializationError as e:
             return Response(
                 data={"detail": "Unable to fetch serialized config", "error": str(e)}, status=HTTPStatus.BAD_REQUEST
             )

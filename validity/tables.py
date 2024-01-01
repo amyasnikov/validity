@@ -115,10 +115,11 @@ class PollerTable(TotalDevicesMixin, NetBoxTable):
 class CommandTable(NetBoxTable):
     name = Column(linkify=True)
     type = ChoiceFieldColumn()
+    serializer = Column(linkify=True)
 
     class Meta(NetBoxTable.Meta):
         model = models.Command
-        fields = ("name", "type", "retrieves_config", "bound_pollers", "label")
+        fields = ("name", "type", "retrieves_config", "serializer", "label")
 
 
 class ExplanationColumn(Column):

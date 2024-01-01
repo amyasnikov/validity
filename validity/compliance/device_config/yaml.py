@@ -3,7 +3,7 @@ from typing import ClassVar
 import yaml
 
 from validity.utils.misc import reraise
-from ..exceptions import DeviceConfigError
+from ..exceptions import SerializationError
 from .base import DeviceConfig
 
 
@@ -14,7 +14,7 @@ class YAMLDeviceConfig(DeviceConfig):
         if not self.serialized or override:
             with reraise(
                 yaml.YAMLError,
-                DeviceConfigError,
+                SerializationError,
                 f"Trying to parse invalid YAML as device config for {self.device}",
             ):
                 self.serialized = yaml.safe_load(self.plain_config)

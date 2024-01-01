@@ -8,6 +8,7 @@ from .filterset import (
     PollerFilterForm,
     ReportGroupByForm,
     SerializerFilterForm,
+    StateSelectForm,
     TestResultFilterForm,
 )
 from .general import CommandForm, ComplianceSelectorForm, ComplianceTestForm, NameSetForm, PollerForm, SerializerForm

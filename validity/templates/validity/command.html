@@ -25,6 +25,11 @@
               <td>{{ object | colored_choice:"type" }}</td>
             </tr>
             <tr>
+            <tr>
+              <th scope="row">Serializer</th>
+              <td>{{ object.serializer | linkify | placeholder }}</td>
+            </tr>
+            <tr>
               <th scope="row">Pollers</th>
               <td>{{ object.pollers.all | linkify_list }}</td>
             </tr>

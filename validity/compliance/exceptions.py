@@ -1,10 +1,34 @@
-class EvalError(Exception):
-    def __init__(self, orig_error: Exception) -> None:
+class OrigErrorMixin:
+    def __init__(self, *args, orig_error: Exception | None = None) -> None:
         self.orig_error = orig_error
+        super().__init__(*args)
 
     def __str__(self) -> str:
-        return f"{type(self.orig_error).__name__}: {self.orig_error}"
+        if self.orig_error is not None:
+            return f"{type(self.orig_error).__name__}: {self.orig_error}"
+        return super().__str__()
 
 
-class DeviceConfigError(Exception):
+class EvalError(OrigErrorMixin, Exception):
+    pass
+
+
+class SerializationError(OrigErrorMixin, Exception):
+    pass
+
+
+class NoComponentError(SerializationError):
+    """
+    Indicates lack of the required component (e.g. serializer) to do serialization
+    """
+
+    def __init__(self, missing_component: str, orig_error: Exception | None = None) -> None:
+        self.missing_component = missing_component
+        super().__init__(orig_error)
+
+    def __str__(self) -> str:
+        return f"There is no bound {self.missing_component}"
+
+
+class BadDataFileContentsError(SerializationError):
     pass

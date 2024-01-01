@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, ClassVar
 
 from validity.utils.misc import reraise
-from ..exceptions import DeviceConfigError
+from ..exceptions import SerializationError
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class BaseDeviceConfig:
         Device MUST be annotated with ".data_file"
         Device MUST be annotated with ".serializer" pointing to appropriate config serializer instance
         """
-        with reraise((AssertionError, FileNotFoundError, AttributeError), DeviceConfigError):
+        with reraise((AssertionError, FileNotFoundError, AttributeError), SerializationError):
             assert getattr(
                 device, "data_file", None
             ), f"{device} has no bound data file. Either there is no data source attached or the file does not exist"

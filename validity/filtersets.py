@@ -121,7 +121,10 @@ class PollerFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 
 class CommandFilterSet(SearchMixin, NetBoxModelFilterSet):
+    serializer_id = ModelMultipleChoiceFilter(field_name="serializer", queryset=models.Serializer.objects.all())
+    poller_id = ModelMultipleChoiceFilter(field_name="pollers", queryset=models.Poller.objects.all())
+
     class Meta:
         model = models.Command
-        fields = ("id", "name", "label", "type", "retrieves_config")
+        fields = ("id", "name", "label", "type", "retrieves_config", "serializer_id", "poller_id")
         search_fields = ("name", "label")

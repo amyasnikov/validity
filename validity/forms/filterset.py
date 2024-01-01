@@ -99,6 +99,18 @@ class ReportGroupByForm(Form):
     )
 
 
+class StateSelectForm(Form):
+    state_item = PlaceholderChoiceField(
+        label=_("State Item"), placeholder=_("Select State Item"), required=False, choices=[("config", "config")]
+    )
+
+    def __init__(self, *args, state, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["state_item"].choices += [
+            (item.name, item.name) for item in state.values() if item.name != "config"
+        ]
+
+
 class NameSetFilterForm(NetBoxModelFilterSetForm):
     model = models.NameSet
     name = CharField(required=False)
@@ -158,3 +170,7 @@ class CommandFilterForm(NetBoxModelFilterSetForm):
     retrieves_config = NullBooleanField(
         label=_("Global"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES)
     )
+    serializer_id = DynamicModelMultipleChoiceField(
+        label=_("Serializer"), queryset=models.Serializer.objects.all(), required=False
+    )
+    poller_id = DynamicModelMultipleChoiceField(label=_("Poller"), queryset=models.Poller.objects.all(), required=False)

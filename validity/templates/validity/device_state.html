@@ -1,0 +1,81 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load validity %}
+{% load bootstrap5 %}
+{% block head %}
+{% endblock %}
+{% block title %}{{ object }}: Serialized State{% endblock %}
+{% block subtitle %}
+<div class="object-subtitle"></div>
+{% endblock %}
+{% block content %}
+<div class="row mb-2">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-2">Metainfo</h5>
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">Data Source</th>
+            <td>{{ object.data_source | linkify | placeholder }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Poller</th>
+            <td>{{ object.poller | linkify | placeholder }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Serializer</th>
+            <td>{{ state_item.serializer | linkify | placeholder }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Command</th>
+            <td>{{ state_item.command | linkify | placeholder }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Data File</th>
+            <td>
+              {% include "validity/inc/path_with_link.html" with data_file=state_item.data_file web_url=object.data_source.web_url only %}
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Local copy last modified</th>
+            <td>{{ state_item.data_file.last_updated | date:"Y-m-d G:i:s" | placeholder}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col col-md-4">
+    <div class="card">
+      <h5 class="card-header">State</h5>
+      <div class="card-body">
+        <form role="form" class="row" method="get">
+          {% bootstrap_form state_form layout="inline" %}
+          <div class="col-auto">{% buttons submit="Show" %}{% endbuttons %}</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row mx-1 mb-2">
+  {% if not error %}
+  <div class="card">
+    <div class="card-header">
+      <div class="row">
+        <h5 class="col">{{ state_item.verbose_name }}</h5>
+        <div class="col">{% include 'validity/inc/configcontext_format.html' %}</div>
+      </div>
+    </div>
+    <div class="card-body">
+      {% include 'extras/inc/configcontext_data.html' with data=state_item.serialized format=format %}
+    </div>
+  </div>
+  {% else %}
+  <div class="card bg-warning mt-3">
+    <div class="card-body">
+      <h6 class="card-title">{{ error }}</h6>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -6,7 +6,7 @@ import utilities.json
 import validity.models.base
 import validity.utils.dbfields
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
+import django.core.validators
 import django.db.models.deletion
 
 
@@ -89,10 +89,13 @@ class Migration(migrations.Migration):
                         max_length=100,
                         unique=True,
                         validators=[
-                            RegexValidator(
+                            django.core.validators.RegexValidator(
+                                message="Only lowercase ASCII letters, numbers and underscores are allowed",
                                 regex="^[a-z][a-z0-9_]*$",
-                                message=_("Only lowercase ASCII letters, numbers and underscores are allowed"),
-                            )
+                            ),
+                            django.core.validators.RegexValidator(
+                                inverse_match=True, message="This label name is reserved", regex="^config$"
+                            ),
                         ],
                     ),
                 ),

@@ -42,11 +42,17 @@ class VDataSource(DataSource):
 
     @property
     def config_path_template(self) -> str:
-        return self.cf.get("device_config_path", "")
+        return self.cf.get("device_config_path") or ""
 
     @property
     def command_path_template(self) -> str:
-        return self.cf.get("device_command_path", "")
+        return self.cf.get("device_command_path") or ""
+
+    def get_config_path(self, device) -> str:
+        return Environment().from_string(self.config_path_template).render(device=device)
+
+    def get_command_path(self, device, command) -> str:
+        return Environment().from_string(self.command_path_template).render(device=device, command=command)
 
     @contextmanager
     def _sync_status(self):

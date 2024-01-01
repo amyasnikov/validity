@@ -35,7 +35,7 @@ class PollingBackend(DataBackend):
         )
     }
 
-    devices_qs = VDevice.objects.prefetch_poller().annotate_datasource_id().order_by("poller_id")
+    devices_qs = VDevice.objects.prefetch_poller(with_commands=True).annotate_datasource_id().order_by("poller_id")
     metainfo_file = Path("polling_info.yaml")
 
     def bound_devices_qs(self, device_filter: Q):

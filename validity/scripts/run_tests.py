@@ -17,7 +17,7 @@ from simpleeval import InvalidExpression
 import validity
 import validity.compliance.eval.default_nameset as default_nameset
 from validity.compliance.eval import ExplanationalEval
-from validity.compliance.exceptions import DeviceConfigError, EvalError
+from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import (
     ComplianceReport,
     ComplianceSelector,
@@ -132,7 +132,7 @@ class RunTestsScript:
         for device in qs:
             try:
                 yield from self.run_tests_for_device(selector.tests.all(), device, report)
-            except DeviceConfigError as e:
+            except SerializationError as e:
                 self.log_failure(f"`{e}`, ignoring all tests for *{device}*")
                 continue
 

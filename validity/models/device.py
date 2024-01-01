@@ -1,43 +1,57 @@
 from functools import cached_property
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 from dcim.models import Device
 
-from validity.compliance.device_config import DeviceConfig
-from validity.j2_env import Environment
+from validity.compliance.serialization import Serializable
+from validity.compliance.state import State
 from validity.managers import VDeviceQS
-from .data import VDataFile, VDataSource
+from .data import VDataSource
+
+
+if TYPE_CHECKING:
+    from .selector import ComplianceSelector
 
 
 class VDevice(Device):
     objects = VDeviceQS.as_manager()
     data_source: VDataSource
+    selector: Optional["ComplianceSelector"]
 
     class Meta:
         proxy = True
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.selector = None
+    def _config_item(self) -> Serializable:
+        """
+        Serializable from  "device_config_path" file
+        """
+        try:
+            config_path = self.data_source.get_config_path(self)
+            data_file = self.data_source.datafiles.filter(path=config_path).first()
+            return Serializable(self.serializer, data_file=data_file)
+        except AttributeError as exc:
+            if exc.obj is not None:
+                raise
+            return Serializable(self.serializer, data_file=None)
 
     @property
-    def config_path(self) -> str:
-        assert hasattr(self, "data_source"), "You must prefetch data_source first"
-        template = Environment().from_string(self.data_source.config_path_template)
-        return template.render(device=self)
-
-    @cached_property
-    def data_file(self) -> VDataFile | None:
-        path = self.config_path
-        return self.data_source.datafiles.filter(path=path).first()
-
-    @cached_property
-    def device_config(self) -> DeviceConfig:
-        return DeviceConfig.from_device(self)
-
-    @cached_property
     def config(self) -> dict | list | None:
-        return self.device_config.serialized
+        return self.state.config
+
+    @cached_property
+    def state(self):
+        try:
+            commands = (
+                self.poller.commands.select_related("serializer")
+                .set_file_paths(self, self.data_source)
+                .custom_postfetch(
+                    "data_file", self.data_source.datafiles.all(), pk_field="path", remote_pk_field="path"
+                )
+            )
+        except AttributeError:
+            # if device has no poller or data_source
+            commands = []
+        return State.from_commands(commands).with_config(self._config_item())
 
     @cached_property
     def dynamic_pair(self) -> Optional["VDevice"]:
@@ -50,8 +64,3 @@ class VDevice(Device):
         if filter_ is None:
             return
         return type(self).objects.filter(filter_).first()
-
-    @property
-    def commands(self):
-        assert hasattr(self, "poller"), "You must prefetch poller first"
-        return self.poller.commands.all()
