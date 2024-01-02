@@ -21,9 +21,10 @@ urlpatterns = [
     path("reports/<int:pk>/devices/", views.DeviceReportView.as_view(), name="report_devices"),
 ] + router.urls
 
-app_name = "validity"
-
 
 dcim_urls.append(
-    path("devices/<int:pk>/serialized_config/", views.SerializedConfigView.as_view(), name="serialized_config")
+    path("devices/<int:pk>/serialized_state/", views.SerializedStateView.as_view(), name="serialized_state")
 )
+
+
+app_name = "validity"
