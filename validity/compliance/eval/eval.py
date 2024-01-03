@@ -1,20 +1,33 @@
 import ast
 import re
+from typing import Literal
 
 import deepdiff
-from simpleeval import EvalWithCompoundTypes, InvalidExpression
+from simpleeval import EvalWithCompoundTypes
 
+from validity.utils.misc import reraise
 from ..exceptions import EvalError
 from . import default_nameset, eval_defaults
 
 
 class ExplanationalEval(EvalWithCompoundTypes):
-
     do_not_explain = (ast.Constant, ast.Name, ast.Attribute, ast.Expr)
 
-    def __init__(self, operators=None, functions=None, names=None, deepdiff_types=None, *, load_defaults=False):
-        if deepdiff_types is None:
-            deepdiff_types = (list, dict, set, frozenset, tuple)
+    def __init__(
+        self,
+        operators=None,
+        functions=None,
+        names=None,
+        deepdiff_types=None,
+        *,
+        load_defaults=False,
+        verbosity: Literal[0, 1, 2] = 2,
+    ):
+        self.verbosity = verbosity
+        deepdiff_types = deepdiff_types or (list, dict, set, frozenset, tuple)
+        if verbosity < 2:
+            # disable deepdiff explanation
+            deepdiff_types = ()
         self.deepdiff_types = deepdiff_types
         self.explanation = []
         self._deepdiff = []
@@ -33,6 +46,8 @@ class ExplanationalEval(EvalWithCompoundTypes):
 
     def _eval(self, node):
         result = super()._eval(node)
+        if self.verbosity < 1:
+            return result
         unparsed = ast.unparse(node)
         if not isinstance(node, self.do_not_explain) and str(result) != unparsed and unparsed:
             self.explanation.append((self._format_unparsed(unparsed), result))
@@ -61,9 +76,5 @@ class ExplanationalEval(EvalWithCompoundTypes):
 
     def eval(self, expr):
         self.explanation = []
-        try:
+        with reraise(Exception, EvalError):
             return super().eval(expr)
-        except InvalidExpression:
-            raise
-        except Exception as e:
-            raise EvalError(e) from e

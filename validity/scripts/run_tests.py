@@ -1,21 +1,19 @@
-import builtins
 import time
-from inspect import getmembers
 from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
 import yaml
 from dcim.models import Device
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
-from extras.scripts import BooleanVar, MultiObjectVar
+from extras.models import Tag
+from extras.scripts import BooleanVar, ChoiceVar, MultiObjectVar
 from extras.webhooks import enqueue_object
 from netbox.context import webhooks_queue
-from simpleeval import InvalidExpression
 
 import validity
-import validity.compliance.eval.default_nameset as default_nameset
+from validity.choices import ExplanationVerbosityChoices
 from validity.compliance.eval import ExplanationalEval
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import (
@@ -28,6 +26,12 @@ from validity.models import (
     VDevice,
 )
 from validity.utils.misc import datasource_sync, null_request
+
+
+class RequiredChoiceVar(ChoiceVar):
+    def __init__(self, choices, *args, **kwargs):
+        super().__init__(choices, *args, **kwargs)
+        self.field_attrs["choices"] = choices
 
 
 class RunTestsScript:
@@ -44,14 +48,26 @@ class RunTestsScript:
     selectors = MultiObjectVar(
         model=ComplianceSelector,
         required=False,
-        label=__("Specific selectors"),
+        label=__("Specific Selectors"),
         description=__("Run the tests only for specific selectors"),
     )
     devices = MultiObjectVar(
         model=Device,
         required=False,
-        label=__("Specific devices"),
+        label=__("Specific Devices"),
         description=__("Run the tests only for specific devices"),
+    )
+    test_tags = MultiObjectVar(
+        model=Tag,
+        required=False,
+        label=__("Specific Test Tags"),
+        description=__("Run the tests which contain specific tags only"),
+    )
+    explanation_verbosity = RequiredChoiceVar(
+        choices=ExplanationVerbosityChoices.choices,
+        default=ExplanationVerbosityChoices.maximum,
+        label=__("Explanation Verbosity Level"),
+        required=False,
     )
 
     class Meta:
@@ -62,24 +78,16 @@ class RunTestsScript:
         super().__init__()
         self._nameset_functions = {}
         self.global_namesets = NameSet.objects.filter(_global=True)
+        self.verbosity = 2
         self.results_count = 0
         self.results_passed = 0
 
     def nameset_functions(self, namesets: Iterable[NameSet]) -> dict[str, Callable]:
-        def extract_nameset(nameset, globals_):
-            locs = {}
-            exec(nameset.effective_definitions, globals_, locs)
-            __all__ = set(locs.get("__all__", []))
-            return {k: v for k, v in locs.items() if k in __all__ and callable(v)}
-
         result = {}
-        globals_ = dict(getmembers(builtins)) | {
-            name: getattr(default_nameset, name) for name in default_nameset.__all__
-        }
         for nameset in chain(namesets, self.global_namesets):
             if nameset.name not in self._nameset_functions:
                 try:
-                    new_functions = extract_nameset(nameset, globals_)
+                    new_functions = nameset.extract()
                 except Exception as e:
                     self.log_warning(f"Cannot extract code from nameset {nameset}, {type(e).__name__}: {e}")
                     new_functions = {}
@@ -89,7 +97,9 @@ class RunTestsScript:
 
     def run_test(self, device: VDevice, test: ComplianceTest) -> tuple[bool, list[tuple[Any, Any]]]:
         functions = self.nameset_functions(test.namesets.all())
-        evaluator = ExplanationalEval(functions=functions, names={"device": device}, load_defaults=True)
+        evaluator = ExplanationalEval(
+            functions=functions, names={"device": device}, load_defaults=True, verbosity=self.verbosity
+        )
         passed = bool(evaluator.eval(test.effective_expression))
         return passed, evaluator.explanation
 
@@ -102,12 +112,11 @@ class RunTestsScript:
         for test in tests_qs:
             explanation = []
             try:
-                device.config
                 passed, explanation = self.run_test(device, test)
-            except (InvalidExpression, EvalError) as e:
-                self.log_failure(f"Failed to execute test *{test}* for device *{device}*, `{type(e).__name__}: {e}`")
+            except EvalError as exc:
+                self.log_failure(f"Failed to execute test **{test}** for device **{device}**, `{exc}`")
                 passed = False
-                explanation.append((f"{type(e).__name__}: {e}", None))
+                explanation.append((str(exc), None))
             self.results_count += 1
             self.results_passed += int(passed)
             yield ComplianceTestResult(
@@ -147,15 +156,24 @@ class RunTestsScript:
         if report:
             ComplianceReport.objects.delete_old()
 
+    def get_selectors(self, data: dict) -> QuerySet[ComplianceSelector]:
+        selectors = ComplianceSelector.objects.all()
+        if specific_selectors := data.get("selectors"):
+            selectors = selectors.filter(pk__in=specific_selectors)
+        test_qs = ComplianceTest.objects.all()
+        if test_tags := data.get("test_tags"):
+            test_qs = test_qs.filter(tags__pk__in=test_tags).distinct()
+            selectors = selectors.filter(tests__tags__pk__in=test_tags).distinct()
+        return selectors.prefetch_related(Prefetch("tests", test_qs.prefetch_related("namesets")))
+
     def run(self, data, commit):
+        self.verbosity = int(data.get("explanation_verbosity", self.verbosity))
         if data.get("sync_datasources"):
             datasource_sync(VDataSource.objects.exclude(custom_field_data__device_config_path=None))
         with null_request():
             report = ComplianceReport.objects.create() if data.get("make_report") else None
-        selectors = ComplianceSelector.objects.prefetch_related("tests", "tests__namesets")
+        selectors = self.get_selectors(data)
         device_ids = data.get("devices", [])
-        if specific_selectors := data.get("selectors"):
-            selectors = selectors.filter(pk__in=specific_selectors)
         results = chain.from_iterable(
             self.run_tests_for_selector(selector, report, device_ids) for selector in selectors
         )

@@ -6,6 +6,7 @@ from dcim.filtersets import DeviceFilterSet
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.db.models import Q
 from django_filters import BooleanFilter, ChoiceFilter, ModelMultipleChoiceFilter
+from extras.models import Tag
 from netbox.filtersets import NetBoxModelFilterSet
 from tenancy.models import Tenant
 
@@ -60,6 +61,7 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     platform_id = ModelMultipleChoiceFilter(field_name="device__platform", queryset=Platform.objects.all())
     location_id = ModelMultipleChoiceFilter(field_name="device__location", queryset=Location.objects.all())
     site_id = ModelMultipleChoiceFilter(field_name="device__site", queryset=Site.objects.all())
+    test_tag_id = ModelMultipleChoiceFilter(field_name="test__tags", queryset=Tag.objects.all())
     tag = None
 
     class Meta:

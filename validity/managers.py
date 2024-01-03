@@ -132,7 +132,7 @@ class ComplianceReportQS(RestrictedQuerySet):
 
 class VDeviceQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
     def set_selector(self, selector):
-        self.set_attribute("selector", selector)
+        return self.set_attribute("selector", selector)
 
     def annotate_datasource_id(self):
         from validity.models import VDataSource

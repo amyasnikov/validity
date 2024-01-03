@@ -173,7 +173,7 @@ class SetAttributesMixin(QuerySet):
         return c
 
     def bind_attributes(self, instance):
-        for attr, attr_value in self._aux_attributes:
+        for attr, attr_value in self._aux_attributes.items():
             setattr(instance, attr, attr_value)
 
     def _fetch_all(self):
@@ -184,3 +184,4 @@ class SetAttributesMixin(QuerySet):
 
     def set_attribute(self, name, value):
         self._aux_attributes[name] = value
+        return self

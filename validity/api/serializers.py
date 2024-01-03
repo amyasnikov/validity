@@ -1,4 +1,3 @@
-from rest_framework.fields import empty
 from core.api.nested_serializers import NestedDataFileSerializer, NestedDataSourceSerializer
 from dcim.api.nested_serializers import (
     NestedDeviceSerializer,
@@ -19,8 +18,8 @@ from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
 
 from validity import models
-from .helpers import EncryptedDictField, FieldsMixin, nested_factory, ListQPMixin
-from rest_framework.fields import empty
+from .helpers import EncryptedDictField, FieldsMixin, ListQPMixin, nested_factory
+
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:complianceselector-detail")
@@ -355,12 +354,12 @@ class SerializedStateItemSerializer(FieldsMixin, serializers.Serializer):
 
 class SerializedStateSerializer(ListQPMixin, serializers.Serializer):
     count = serializers.SerializerMethodField()
-    results = SerializedStateItemSerializer(many=True, read_only=True, source='*')
+    results = SerializedStateItemSerializer(many=True, read_only=True, source="*")
 
     def get_count(self, state):
         return len(state)
 
     def to_representation(self, instance):
-        if name_filter := self.get_list_param('name'):
+        if name_filter := self.get_list_param("name"):
             instance = [item for item in instance if item.name in set(name_filter)]
         return super().to_representation(instance)

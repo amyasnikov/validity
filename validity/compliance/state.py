@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from django.utils.translation import gettext_lazy as _
 
 from validity.compliance.serialization import Serializable
-from .exceptions import SerializationError
+from ..utils.misc import reraise
+from .exceptions import SerializationError, StateKeyError
 
 
 if TYPE_CHECKING:
@@ -73,7 +74,8 @@ class State(dict):
         return self[key]
 
     def __getitem__(self, key):
-        state_item = super().__getitem__(key)
+        with reraise(KeyError, StateKeyError):
+            state_item = super().__getitem__(key)
         return state_item.serialized
 
     def get(self, key, default=None, ignore_errors=False):

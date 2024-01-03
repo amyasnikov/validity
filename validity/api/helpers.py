@@ -42,11 +42,11 @@ class ListQPMixin:
     """
 
     def get_list_param(self, param: str) -> list[str] | None:
-        if "request" not in self.context or param not in self.context['request'].query_params:
+        if "request" not in self.context or param not in self.context["request"].query_params:
             return None
         param_value = self.context["request"].query_params.getlist(param)
         if len(param_value) == 1:
-            return param_value[0].split(',')
+            return param_value[0].split(",")
         return param_value
 
 

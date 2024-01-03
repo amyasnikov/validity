@@ -2,6 +2,7 @@ from core.models import DataSource
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.forms import CharField, Form, NullBooleanField, Select
 from django.utils.translation import gettext_lazy as _
+from extras.models import Tag
 from netbox.forms import NetBoxModelFilterSetForm
 from tenancy.models import Tenant
 from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES
@@ -67,13 +68,14 @@ class TestResultFilterForm(ExcludeMixin, Form):
     platform_id = DynamicModelMultipleChoiceField(required=False, label=_("Platform"), queryset=Platform.objects.all())
     location_id = DynamicModelMultipleChoiceField(required=False, label=_("Location"), queryset=Location.objects.all())
     site_id = DynamicModelMultipleChoiceField(required=False, label=_("Site"), queryset=Site.objects.all())
+    test_tag_id = DynamicModelMultipleChoiceField(required=False, label=_("Test Tags"), queryset=Tag.objects.all())
 
 
 class ComplianceTestResultFilterForm(TestResultFilterForm, NetBoxModelFilterSetForm):
     model = models.ComplianceTestResult
     fieldsets = (
         [_("Common"), ("latest", "passed", "selector_id")],
-        [_("Test"), ("severity", "test_id", "report_id")],
+        [_("Test"), ("severity", "test_id", "report_id", "test_tag_id")],
         [
             _("Device"),
             (

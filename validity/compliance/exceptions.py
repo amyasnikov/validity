@@ -32,3 +32,9 @@ class NoComponentError(SerializationError):
 
 class BadDataFileContentsError(SerializationError):
     pass
+
+
+class StateKeyError(KeyError):
+    def __str__(self) -> str:
+        key = str(self.args[0]).strip("\"'")
+        return f"State has no '{key}' item"
