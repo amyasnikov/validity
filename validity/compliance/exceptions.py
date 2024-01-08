@@ -22,12 +22,15 @@ class NoComponentError(SerializationError):
     Indicates lack of the required component (e.g. serializer) to do serialization
     """
 
-    def __init__(self, missing_component: str, orig_error: Exception | None = None) -> None:
+    def __init__(self, missing_component: str, parent: str | None = None) -> None:
         self.missing_component = missing_component
-        super().__init__(orig_error)
+        self.parent = parent
 
     def __str__(self) -> str:
-        return f"There is no bound {self.missing_component}"
+        result = f"There is no bound {self.missing_component}"
+        if self.parent:
+            result += f' for "{self.parent}"'
+        return result
 
 
 class BadDataFileContentsError(SerializationError):

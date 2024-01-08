@@ -74,6 +74,8 @@ def datasource_sync(
         except SyncError as e:
             if fail_handler:
                 fail_handler(datasource, e)
+            else:
+                raise
 
     with ThreadPoolExecutor(max_workers=threads) as tp:
         any(tp.map(sync_func, datasources))

@@ -99,3 +99,8 @@ class VDataSource(DataSource):
             new_datafiles = (new_data_file(path) for path in paths)
             created = len(DataFile.objects.bulk_create(new_datafiles, batch_size=batch_size))
             logger.debug("%s new files were created and %s existing files were updated during sync", created, updated)
+
+    def sync(self, device_filter: Q | None = None):
+        if device_filter is not None and self.type == "device_polling":
+            return self.partial_sync(device_filter)
+        return super().sync()

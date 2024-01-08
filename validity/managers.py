@@ -134,6 +134,9 @@ class VDeviceQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
     def set_selector(self, selector):
         return self.set_attribute("selector", selector)
 
+    def set_datasource(self, data_source):
+        return self.set_attribute("data_source", data_source)
+
     def annotate_datasource_id(self):
         from validity.models import VDataSource
 

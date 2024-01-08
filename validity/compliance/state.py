@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from validity.compliance.serialization import Serializable
 from ..utils.misc import reraise
-from .exceptions import SerializationError, StateKeyError
+from .exceptions import NoComponentError, SerializationError, StateKeyError
 
 
 if TYPE_CHECKING:
@@ -40,6 +40,14 @@ class StateItem(Serializable):
             return
         except SerializationError as exc:
             return exc
+
+    @property
+    def serialized(self):
+        try:
+            return super().serialized
+        except NoComponentError as exc:
+            exc.parent = self.name
+            raise
 
 
 class State(dict):

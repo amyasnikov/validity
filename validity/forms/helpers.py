@@ -1,8 +1,15 @@
 import json
-from typing import Sequence
+from typing import Any, Sequence
 
 from django.forms import ChoiceField, Select
 from utilities.forms import get_field_value
+
+
+class IntegerChoiceField(ChoiceField):
+    def to_python(self, value: Any | None) -> Any | None:
+        if value is not None:
+            value = int(value)
+        return value
 
 
 class SelectWithPlaceholder(Select):

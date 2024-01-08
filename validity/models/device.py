@@ -63,4 +63,8 @@ class VDevice(Device):
         filter_ = self.selector.dynamic_pair_filter(self)
         if filter_ is None:
             return
-        return type(self).objects.filter(filter_).first()
+        pair = type(self).objects.filter(filter_).first()
+        if pair:
+            pair.data_source = self.data_source
+            pair.poller = self.poller
+        return pair

@@ -1,20 +1,22 @@
+import operator
 import time
+from functools import reduce
 from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
 import yaml
+from core.models import DataSource
 from dcim.models import Device
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Prefetch, Q, QuerySet
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
 from extras.models import Tag
-from extras.scripts import BooleanVar, ChoiceVar, MultiObjectVar
+from extras.scripts import BooleanVar, MultiObjectVar, ObjectVar
 from extras.webhooks import enqueue_object
 from netbox.context import webhooks_queue
 
 import validity
 from validity.choices import ExplanationVerbosityChoices
-from validity.compliance.eval import ExplanationalEval
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import (
     ComplianceReport,
@@ -26,15 +28,11 @@ from validity.models import (
     VDevice,
 )
 from validity.utils.misc import datasource_sync, null_request
+from .script_data import RunTestsScriptData, ScriptDataMixin
+from .variables import VerbosityVar
 
 
-class RequiredChoiceVar(ChoiceVar):
-    def __init__(self, choices, *args, **kwargs):
-        super().__init__(choices, *args, **kwargs)
-        self.field_attrs["choices"] = choices
-
-
-class RunTestsScript:
+class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
     _sleep_between_tests = validity.settings.sleep_between_tests
     _result_batch_size = validity.settings.result_batch_size
 
@@ -42,7 +40,7 @@ class RunTestsScript:
         required=False,
         default=False,
         label=__("Sync Data Sources"),
-        description=__('Sync all Data Source instances which have "device_config_path" defined'),
+        description=__("Sync all referenced Data Sources"),
     )
     make_report = BooleanVar(default=True, label=__("Make Compliance Report"))
     selectors = MultiObjectVar(
@@ -63,11 +61,17 @@ class RunTestsScript:
         label=__("Specific Test Tags"),
         description=__("Run the tests which contain specific tags only"),
     )
-    explanation_verbosity = RequiredChoiceVar(
+    explanation_verbosity = VerbosityVar(
         choices=ExplanationVerbosityChoices.choices,
         default=ExplanationVerbosityChoices.maximum,
         label=__("Explanation Verbosity Level"),
         required=False,
+    )
+    override_datasource = ObjectVar(
+        model=DataSource,
+        required=False,
+        label=__("Override DataSource"),
+        description=__("Find all devices state/config data in this Data Source instead of bound ones"),
     )
 
     class Meta:
@@ -78,7 +82,6 @@ class RunTestsScript:
         super().__init__()
         self._nameset_functions = {}
         self.global_namesets = NameSet.objects.filter(_global=True)
-        self.verbosity = 2
         self.results_count = 0
         self.results_passed = 0
 
@@ -97,11 +100,7 @@ class RunTestsScript:
 
     def run_test(self, device: VDevice, test: ComplianceTest) -> tuple[bool, list[tuple[Any, Any]]]:
         functions = self.nameset_functions(test.namesets.all())
-        evaluator = ExplanationalEval(
-            functions=functions, names={"device": device}, load_defaults=True, verbosity=self.verbosity
-        )
-        passed = bool(evaluator.eval(test.effective_expression))
-        return passed, evaluator.explanation
+        return test.run(device, functions, verbosity=self.script_data.explanation_verbosity)
 
     def run_tests_for_device(
         self,
@@ -112,6 +111,7 @@ class RunTestsScript:
         for test in tests_qs:
             explanation = []
             try:
+                device.state
                 passed, explanation = self.run_test(device, test)
             except EvalError as exc:
                 self.log_failure(f"Failed to execute test **{test}** for device **{device}**, `{exc}`")
@@ -129,16 +129,20 @@ class RunTestsScript:
             )
             time.sleep(self._sleep_between_tests)
 
+    def get_device_qs(self, selector: ComplianceSelector) -> QuerySet[VDevice]:
+        device_qs = selector.devices.select_related().prefetch_serializer().prefetch_poller()
+        if self.script_data.override_datasource:
+            device_qs = device_qs.set_datasource(self.script_data.override_datasource.obj)
+        else:
+            device_qs = device_qs.prefetch_datasource()
+        if self.script_data.devices:
+            device_qs = device_qs.filter(pk__in=self.script_data.devices)
+        return device_qs
+
     def run_tests_for_selector(
-        self,
-        selector: ComplianceSelector,
-        report: ComplianceReport | None,
-        device_ids: list[int],
+        self, selector: ComplianceSelector, report: ComplianceReport | None
     ) -> Generator[ComplianceTestResult, None, None]:
-        qs = selector.devices.select_related().prefetch_datasource().prefetch_serializer().prefetch_poller()
-        if device_ids:
-            qs = qs.filter(pk__in=device_ids)
-        for device in qs:
+        for device in self.get_device_qs(selector):
             try:
                 yield from self.run_tests_for_device(selector.tests.all(), device, report)
             except SerializationError as e:
@@ -156,27 +160,37 @@ class RunTestsScript:
         if report:
             ComplianceReport.objects.delete_old()
 
-    def get_selectors(self, data: dict) -> QuerySet[ComplianceSelector]:
-        selectors = ComplianceSelector.objects.all()
-        if specific_selectors := data.get("selectors"):
-            selectors = selectors.filter(pk__in=specific_selectors)
+    def get_selectors(self) -> QuerySet[ComplianceSelector]:
+        selectors = self.script_data.selectors.queryset
         test_qs = ComplianceTest.objects.all()
-        if test_tags := data.get("test_tags"):
-            test_qs = test_qs.filter(tags__pk__in=test_tags).distinct()
-            selectors = selectors.filter(tests__tags__pk__in=test_tags).distinct()
+        if self.script_data.test_tags:
+            test_qs = test_qs.filter(tags__pk__in=self.script_data.test_tags).distinct()
+            selectors = selectors.filter(tests__tags__pk__in=self.script_data.test_tags).distinct()
         return selectors.prefetch_related(Prefetch("tests", test_qs.prefetch_related("namesets")))
 
-    def run(self, data, commit):
-        self.verbosity = int(data.get("explanation_verbosity", self.verbosity))
-        if data.get("sync_datasources"):
-            datasource_sync(VDataSource.objects.exclude(custom_field_data__device_config_path=None))
-        with null_request():
-            report = ComplianceReport.objects.create() if data.get("make_report") else None
-        selectors = self.get_selectors(data)
-        device_ids = data.get("devices", [])
-        results = chain.from_iterable(
-            self.run_tests_for_selector(selector, report, device_ids) for selector in selectors
+    def perform_datasource_sync(self) -> None:
+        device_filter = reduce(operator.or_, (selector.filter for selector in self.script_data.selectors.queryset))
+        if self.script_data.devices:
+            device_filter |= Q(pk__in=self.script_data.devices)
+        if self.script_data.override_datasource:
+            self.script_data.override_datasource.obj.sync(device_filter)
+            return
+        datasource_ids = (
+            VDevice.objects.filter(device_filter)
+            .annotate_datasource_id()
+            .values_list("data_source_id", flat=True)
+            .distinct()
         )
+        datasource_sync(VDataSource.objects.filter(pk__in=datasource_ids))
+
+    def run(self, data, commit):
+        self.script_data = self.script_data_cls(data)
+        selectors = self.get_selectors()
+        if self.script_data.sync_datasources:
+            self.perform_datasource_sync()
+        with null_request():
+            report = ComplianceReport.objects.create() if self.script_data.make_report else None
+        results = chain.from_iterable(self.run_tests_for_selector(selector, report) for selector in selectors)
         self.save_to_db(results, report)
         output = {"results": {"all": self.results_count, "passed": self.results_passed}}
         if report:

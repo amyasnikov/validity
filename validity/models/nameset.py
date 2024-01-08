@@ -1,6 +1,5 @@
 import ast
 import builtins
-from functools import cached_property
 from inspect import getmembers
 from typing import Any, Callable
 
@@ -56,7 +55,7 @@ class NameSet(DataSourceMixin, BaseModel):
     def effective_definitions(self):
         return self.effective_text_field()
 
-    @cached_property
+    @property
     def _globals(self):
         return dict(getmembers(builtins)) | {name: getattr(default_nameset, name) for name in default_nameset.__all__}
 
