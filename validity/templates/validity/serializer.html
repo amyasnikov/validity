@@ -22,6 +22,9 @@
           </div>
         </div>
       </div>
+      <div class="row mb-3">
+        {% include 'inc/panels/related_objects.html' %}
+      </div>
       <div class="row">
         {% include 'inc/panels/tags.html' %}
       </div>
@@ -38,7 +41,7 @@
   <div class="row">
     <div class="col col-md-12">
       <div class="card">
-        <h5 class="card-header">Bound Devices</h5>
+        <h5 class="card-header">All Bound Devices</h5>
         <div class="card-body">
           <div class="pt-0 mb-3 col col-md-3">
             {% include 'validity/inc/search_form.html' with model='Device' %}
