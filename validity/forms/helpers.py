@@ -1,14 +1,24 @@
 import json
 from typing import Any, Sequence
 
-from django.forms import ChoiceField, Select
+from django.forms import ChoiceField, JSONField, Select
 from utilities.forms import get_field_value
+
+from validity.fields import EncryptedDict
 
 
 class IntegerChoiceField(ChoiceField):
     def to_python(self, value: Any | None) -> Any | None:
         if value is not None:
             value = int(value)
+        return value
+
+
+class EncryptedDictField(JSONField):
+    def to_python(self, value: Any) -> Any:
+        value = super().to_python(value)
+        if isinstance(value, dict):
+            value = EncryptedDict(value)
         return value
 
 

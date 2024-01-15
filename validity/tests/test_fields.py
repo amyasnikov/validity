@@ -1,6 +1,6 @@
 import pytest
 
-from validity.utils.dbfields import EncryptedDict, EncryptedString
+from validity.fields import EncryptedDict, EncryptedString
 
 
 @pytest.fixture

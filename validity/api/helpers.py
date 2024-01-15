@@ -4,7 +4,7 @@ from typing import Sequence
 from netbox.api.serializers import WritableNestedSerializer
 from rest_framework.serializers import JSONField, ModelSerializer
 
-from validity.utils.dbfields import EncryptedDict
+from validity.fields.encrypted import EncryptedDict
 
 
 def nested_factory(

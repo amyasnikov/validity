@@ -4,7 +4,7 @@ from django.db import migrations, models
 import taggit.managers
 import utilities.json
 import validity.models.base
-import validity.utils.dbfields
+import validity.fields.encrypted
 from django.utils.translation import gettext_lazy as _
 import django.core.validators
 import django.db.models.deletion
@@ -132,7 +132,7 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=255, unique=True)),
                 ("connection_type", models.CharField(max_length=50)),
                 ("public_credentials", models.JSONField(blank=True, default=dict)),
-                ("private_credentials", validity.utils.dbfields.EncryptedDictField(blank=True)),
+                ("private_credentials", validity.fields.encrypted.EncryptedDictField(blank=True)),
                 ("commands", models.ManyToManyField(related_name="pollers", to="validity.command")),
                 ("tags", taggit.managers.TaggableManager(through="extras.TaggedItem", to="extras.Tag")),
             ],

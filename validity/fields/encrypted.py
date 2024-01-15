@@ -8,7 +8,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from django import forms
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Field, JSONField
@@ -123,6 +122,8 @@ class EncryptedDictField(JSONField):
         return EncryptedDict(value)
 
     def formfield(self, **kwargs):
+        from validity.forms.helpers import EncryptedDictField as EncryptedDictFormField
+
         return Field.formfield(
             self,
             **{
@@ -135,11 +136,3 @@ class EncryptedDictField(JSONField):
 
     def value_to_string(self, obj: Any) -> Any:
         return super().value_to_string(obj).encrypted
-
-
-class EncryptedDictFormField(forms.JSONField):
-    def to_python(self, value: Any) -> Any:
-        value = super().to_python(value)
-        if isinstance(value, dict):
-            value = EncryptedDict(value)
-        return value

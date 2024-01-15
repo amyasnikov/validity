@@ -8,10 +8,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import CommandTypeChoices, ConnectionTypeChoices
+from validity.fields import EncryptedDictField
 from validity.managers import CommandQS, PollerQS
 from validity.pollers import get_poller
 from validity.subforms import CLICommandForm
-from validity.utils.dbfields import EncryptedDictField
 from .base import BaseModel, SubformMixin
 from .serializer import Serializer
 
