@@ -84,7 +84,7 @@ class CustomPrefetch:
         return self._qs_map_from_keys(pk_values)
 
     def get_postfetch_qs_map(self, main_queryset: QuerySet):
-        pk_values = (getattr(obj, self.remote_pk_field) for obj in main_queryset._result_cache)
+        pk_values = (getattr(obj, self.pk_field) for obj in main_queryset._result_cache)
         return self._qs_map_from_keys(pk_values)
 
     def get_qs_map(self, main_queryset: QuerySet):
