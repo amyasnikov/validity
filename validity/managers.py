@@ -141,7 +141,7 @@ class VDeviceQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
         from validity.models import VDataSource
 
         return self.annotate(
-            bound_source=Cast(KeyTextTransform("config_data_source", "tenant__custom_field_data"), BigIntegerField())
+            bound_source=Cast(KeyTextTransform("data_source", "tenant__custom_field_data"), BigIntegerField())
         ).annotate(
             data_source_id=Case(
                 When(bound_source__isnull=False, then=F("bound_source")),

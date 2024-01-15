@@ -133,6 +133,9 @@ class EncryptedDictField(JSONField):
             },
         )
 
+    def value_to_string(self, obj: Any) -> Any:
+        return super().value_to_string(obj).encrypted
+
 
 class EncryptedDictFormField(forms.JSONField):
     def to_python(self, value: Any) -> Any:

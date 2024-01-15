@@ -76,7 +76,7 @@ class State(dict):
     def _blocked_op(self, *_):
         raise AttributeError("State is read only")
 
-    __setitem__ = __delitem__ = __ior__ = pop = popitem = update = setdefault = clear = _blocked_op
+    __setitem__ = __delitem__ = pop = popitem = update = setdefault = clear = _blocked_op
 
     def __getattr__(self, key):
         return self[key]

@@ -31,7 +31,7 @@ def create_custom_fields(db):
                 required=False,
             ),
             CustomField(
-                name="config_data_source",
+                name="data_source",
                 type="object",
                 object_type=ContentType.objects.get_for_model(DataSource),
                 required=False,
@@ -53,6 +53,11 @@ def create_custom_fields(db):
                 required=False,
             ),
             CustomField(
+                name="device_command_path",
+                type="string",
+                required=False,
+            ),
+            CustomField(
                 name="poller",
                 type="object",
                 object_type=ContentType.objects.get_for_model(Poller),
@@ -68,9 +73,9 @@ def create_custom_fields(db):
         ]
     )
     cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])
-    for cf in cfs[2:5]:
+    for cf in cfs[2:6]:
         cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
-    cfs[5].content_types.set(
+    cfs[6].content_types.set(
         [
             ContentType.objects.get_for_model(Device),
             ContentType.objects.get_for_model(DeviceType),

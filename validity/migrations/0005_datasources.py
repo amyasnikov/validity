@@ -51,8 +51,8 @@ def setup_datasource_cf(apps, schema_editor):
     for cf in datasource_cfs:
         cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
     tenant_cf = CustomField.objects.using(db).create(
-        name="config_data_source",
-        label=_("Config Data Source"),
+        name="data_source",
+        label=_("Data Source"),
         description=_("Required by Validity"),
         type="object",
         object_type=ContentType.objects.get_for_model(DataSource),

@@ -7,7 +7,6 @@ from factories import (
     CommandFactory,
     CompTestDBFactory,
     CompTestResultFactory,
-    ConfigFileFactory,
     DataFileFactory,
     DataSourceFactory,
     DeviceFactory,
@@ -25,9 +24,11 @@ from factories import (
     SiteFactory,
     TagFactory,
     TenantFactory,
+    state_item,
 )
 
 from validity import models
+from validity.compliance.state import State
 
 
 class TestDBNameSet(ViewTest):
@@ -139,14 +140,20 @@ class TestDSTest(ViewTest):
     }
 
 
+@pytest.mark.parametrize("item", [None, "config", "show_ver", "bad_cmd", "non-existent"])
 @pytest.mark.django_db
-def test_device_results(admin_client):
+def test_get_serialized_state(admin_client, item, monkeypatch):
     device = DeviceFactory()
-    ConfigFileFactory()
-    serializer = SerializerDBFactory()
-    device.custom_field_data["serializer"] = serializer.pk
-    device.save()
-    resp = admin_client.get(f"/dcim/devices/{device.pk}/serialized_config/")
+    state = State(
+        {
+            "config": state_item("config", {"vlans": [1, 2, 3]}),
+            "show_ver": state_item("show_ver", {"version": "v1.2.3"}),
+            "bad_cmd": state_item("bad_cmd", {}, data_file=None),
+        }
+    )
+    monkeypatch.setattr(models.VDevice, "state", state)
+    params = {"state_item": item} if item is not None else {}
+    resp = admin_client.get(f"/dcim/devices/{device.pk}/serialized_state/", params)
     assert resp.status_code == HTTPStatus.OK
 
 

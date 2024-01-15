@@ -7,6 +7,7 @@ from factory.django import DjangoModelFactory
 from tenancy.models import Tenant
 
 from validity import models
+from validity.compliance.state import StateItem
 
 
 class DataSourceFactory(DjangoModelFactory):
@@ -28,18 +29,6 @@ class DataFileFactory(DjangoModelFactory):
 
     class Meta:
         model = models.VDataFile
-
-
-class ConfigFileFactory(DataFileFactory):
-    path = "file-1.txt"
-    source = factory.SubFactory(
-        DataSourceFactory,
-        custom_field_data={
-            "default": True,
-            "device_config_path": path,
-            "web_url": "http://some_url.com/",
-        },
-    )
 
 
 class DataSourceLinkFactory(DjangoModelFactory):
@@ -231,3 +220,18 @@ class PollerFactory(DjangoModelFactory):
 
     class Meta:
         model = models.Poller
+
+
+_NOT_DEFINED = object()
+
+
+def state_item(name, serialized, data_file=_NOT_DEFINED, command=_NOT_DEFINED):
+    if data_file == _NOT_DEFINED:
+        data_file = DataFileFactory()
+    if command == _NOT_DEFINED:
+        command = CommandFactory()
+    command.label = name
+    serializer = SerializerDBFactory()
+    item = StateItem(serializer, data_file, command)
+    item.__dict__["serialized"] = serialized
+    return item

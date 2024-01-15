@@ -1,14 +1,11 @@
 from http import HTTPStatus
-from unittest.mock import Mock
 
 import pytest
 from base import ApiGetTest, ApiPostGetTest
-from django.utils import timezone
 from factories import (
     CommandFactory,
     CompTestDBFactory,
     CompTestResultFactory,
-    ConfigFileFactory,
     DataFileFactory,
     DataSourceFactory,
     DeviceFactory,
@@ -18,13 +15,13 @@ from factories import (
     PlatformFactory,
     ReportFactory,
     SelectorFactory,
-    SerializerDBFactory,
     SiteFactory,
     TagFactory,
     TenantFactory,
+    state_item,
 )
 
-from validity.compliance.device_config import DeviceConfig
+from validity.models import VDevice
 
 
 class TestDBNameSet(ApiPostGetTest):
@@ -148,27 +145,26 @@ class TestPoller(ApiPostGetTest):
     }
 
 
+@pytest.mark.parametrize("params", [{}, {"fields": ["name", "value"]}, {"name": ["config", "bad_cmd"]}])
 @pytest.mark.django_db
-def test_get_serialized_config(monkeypatch, admin_client):
+def test_get_serialized_state(admin_client, params, monkeypatch):
     device = DeviceFactory()
-    config_file = ConfigFileFactory()
-    device.custom_field_data["serializer"] = SerializerDBFactory().pk
-    device.save()
-    device.data_source = config_file.source
-    lm = timezone.now()
-    config = DeviceConfig(device=device, plain_config="", last_modified=lm, serialized={"key1": "value1"})
-    monkeypatch.setattr(DeviceConfig, "from_device", Mock(return_value=config))
-    resp = admin_client.get(f"/api/dcim/devices/{device.pk}/serialized_config/")
-    assert resp.status_code == HTTPStatus.OK
-    assert resp.json().keys() == {
-        "data_source",
-        "data_file",
-        "local_copy_last_updated",
-        "config_web_link",
-        "serialized_config",
+    state = {
+        "config": state_item("config", {"vlans": [1, 2, 3]}),
+        "show_ver": state_item("show_ver", {"version": "v1.2.3"}),
+        "bad_cmd": state_item("bad_cmd", {}, data_file=None),
     }
-    assert resp.json()["serialized_config"] == {"key1": "value1"}
-    assert resp.json()["local_copy_last_updated"] == lm.isoformat().replace("+00:00", "Z")
+    monkeypatch.setattr(VDevice, "state", state)
+    resp = admin_client.get(f"/api/dcim/devices/{device.pk}/serialized_state/", params)
+    assert resp.status_code == HTTPStatus.OK
+    answer = resp.json()
+    expected_result_count = len(params.get("name", [])) or 3
+    assert len(answer["results"]) == expected_result_count
+    assert answer["count"] == expected_result_count
+    for api_item in answer["results"]:
+        if "fields" in params:
+            assert api_item.keys() == set(params["fields"])
+        assert state[api_item["name"]].serialized == api_item["value"]
 
 
 @pytest.mark.django_db

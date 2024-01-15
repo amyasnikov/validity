@@ -2,9 +2,9 @@ from itertools import product
 from unittest.mock import Mock
 
 import pytest
-from factories import CompTestDBFactory, DeviceFactory
+from factories import CommandFactory, CompTestDBFactory, DataSourceFactory, DeviceFactory
 
-from validity.models import ComplianceReport, ComplianceTestResult
+from validity.models import Command, ComplianceReport, ComplianceTestResult
 
 
 @pytest.mark.parametrize("store_results", [3, 2, 1])
@@ -42,3 +42,16 @@ def test_delete_old_reports(store_reports):
     reports = [ComplianceReport.objects.create() for _ in range(10)]
     ComplianceReport.objects.delete_old(_settings=Mock(store_reports=store_reports))
     assert list(ComplianceReport.objects.order_by("created")) == reports[-store_reports:]
+
+
+@pytest.mark.django_db
+def test_set_file_paths(create_custom_fields):
+    CommandFactory(label="cmd1")
+    CommandFactory(label="cmd2")
+    device = DeviceFactory(name="d1")
+    ds = DataSourceFactory(
+        name="ds1", custom_field_data={"device_command_path": "path/{{device.name}}/{{command.label}}"}
+    )
+    commands = Command.objects.set_file_paths(device=device, data_source=ds)
+    for cmd in commands:
+        assert cmd.path == f"path/d1/{cmd.label}"

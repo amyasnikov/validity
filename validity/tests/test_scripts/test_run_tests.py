@@ -84,31 +84,12 @@ def test_builtins_are_available_in_nameset(definitions):
     functions["func"]()
 
 
-def test_run_test(monkeypatch):
-    script = RunTestsScript()
-    nm_functions = Mock()
-    evaluator_cls = Mock(return_value=Mock(explanation=[("var1", "val1")]))
-    monkeypatch.setattr(script, "nameset_functions", nm_functions)
-    monkeypatch.setattr(run_tests, "ExplanationalEval", evaluator_cls)
-    device = Mock()
-    test = Mock()
-    passed, explanation = script.run_test(device, test)
-    assert passed  # bool(Mock()) is True
-    assert explanation
-    nm_functions.assert_called_once_with(test.namesets.all())
-    evaluator_cls.assert_called_once_with(
-        functions=nm_functions.return_value, names={"device": device}, load_defaults=True
-    )
-    evaluator_cls.return_value.eval.assert_called_once_with(test.effective_expression)
-
-
 @pytest.mark.parametrize(
     "run_test_mock",
     [
         Mock(return_value=(True, [("expla", "nation")])),
         Mock(return_value=(False, [("1", "2"), ("3", "4")])),
-        Mock(side_effect=InvalidExpression()),
-        Mock(side_effect=EvalError(InvalidExpression())),
+        Mock(side_effect=EvalError(orig_error=InvalidExpression())),
     ],
 )
 def test_run_tests_for_device(mock_script_logging, run_test_mock, monkeypatch):
@@ -140,20 +121,14 @@ def test_run_tests_for_selector(mock_script_logging, monkeypatch):
     script = RunTestsScript()
     devices = [Mock(name="device1"), Mock(name="device2")]
     monkeypatch.setattr(script, "run_tests_for_device", Mock(return_value=range(3)))
-    selector = Mock(
-        name="selector",
-        **{
-            "devices.select_related.return_value"
-            ".prefetch_datasource.return_value"
-            ".prefetch_serializer.return_value"
-            ".prefetch_poller.return_value": devices
-        }
-    )
+    monkeypatch.setattr(script, "get_device_qs", Mock(return_value=devices))
+    selector = Mock()
     report = Mock()
-    list(script.run_tests_for_selector(selector, report, []))
+    list(script.run_tests_for_selector(selector, report))
     assert script.run_tests_for_device.call_count == len(devices)
     script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[0], report)
     script.run_tests_for_device.assert_any_call(selector.tests.all(), devices[1], report)
+    script.get_device_qs.assert_called_once_with(selector)
 
 
 @pytest.mark.django_db

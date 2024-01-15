@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from functools import cached_property
 from typing import Collection
 
@@ -101,19 +100,6 @@ class Poller(BaseModel):
 
     def get_backend(self):
         return get_poller(self.connection_type, self.credentials, self.commands.all())
-
-    def serialize_object(self):
-        with self.serializable_credentials():
-            return super().serialize_object()
-
-    @contextmanager
-    def serializable_credentials(self):
-        private_creds = self.private_credentials
-        try:
-            self.private_credentials = self.private_credentials.encrypted
-            yield
-        finally:
-            self.private_credentials = private_creds
 
     @staticmethod
     def validate_commands(connection_type: str, commands: Collection[Command]):
