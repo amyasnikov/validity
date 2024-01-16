@@ -68,7 +68,7 @@ def delete_polling_datasource(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("validity", "0006_script_change"),
+        ("validity", "0006_datasources"),
     ]
 
     operations = [

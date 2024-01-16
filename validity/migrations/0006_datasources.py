@@ -140,7 +140,7 @@ def switch_git_links(apps, schema_editor):
     db = schema_editor.connection.alias
     DataSource = apps.get_model("core", "DataSource")
     DataFile = apps.get_model("core", "DataFile")
-    models = [apps.get_model("validity", m) for m in ("ComplianceTest", "NameSet", "ConfigSerializer")]
+    models = [apps.get_model("validity", m) for m in ("ComplianceTest", "NameSet", "Serializer")]
     objects = chain.from_iterable(model.objects.all() for model in models)
     for obj in objects:
         if obj.repo is None:
@@ -156,7 +156,7 @@ def switch_git_links(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [("validity", "0004_netbox35_scripts"), ("core", "0001_initial")]
+    dependencies = [("validity", "0005_rename_serializer"), ("core", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
@@ -202,7 +202,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name="configserializer",
+            model_name="serializer",
             name="data_file",
             field=models.ForeignKey(
                 blank=True,
@@ -213,7 +213,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name="configserializer",
+            model_name="serializer",
             name="data_source",
             field=models.ForeignKey(
                 blank=True,
@@ -258,11 +258,11 @@ class Migration(migrations.Migration):
             name="repo",
         ),
         migrations.RemoveField(
-            model_name="configserializer",
+            model_name="serializer",
             name="file_path",
         ),
         migrations.RemoveField(
-            model_name="configserializer",
+            model_name="serializer",
             name="repo",
         ),
         migrations.RemoveField(

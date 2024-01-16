@@ -17,7 +17,7 @@ def change_contenttype(apps, schema_editor, current_ct_name, new_ct_name):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("validity", "0007_polling"),
+        ("validity", "0004_netbox35_scripts"),
     ]
 
     operations = [
