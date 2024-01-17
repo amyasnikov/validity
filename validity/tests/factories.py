@@ -1,5 +1,6 @@
 import datetime
 
+import django
 import factory
 from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from extras.models import Tag
@@ -8,6 +9,9 @@ from tenancy.models import Tenant
 
 from validity import models
 from validity.compliance.state import StateItem
+
+
+DJANGO_MAJOR_VERSION = django.VERSION[:2]
 
 
 class DataSourceFactory(DjangoModelFactory):
@@ -29,6 +33,11 @@ class DataFileFactory(DjangoModelFactory):
 
     class Meta:
         model = models.VDataFile
+
+    @factory.post_generation
+    def to_memoryview(self, *args, **kwargs):
+        if DJANGO_MAJOR_VERSION < (4, 2) and isinstance(self.data, bytes):
+            self.data = memoryview(self.data)
 
 
 class DataSourceLinkFactory(DjangoModelFactory):
