@@ -51,11 +51,11 @@ class ComplianceSelectorWithDevicesType(ComplianceSelectorType):
         fields = selector_fields
 
 
-class ConfigSerializerType(NetBoxObjectType):
+class SerializerType(NetBoxObjectType):
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
         fields = "__all__"
-        filterset_class = filtersets.ConfigSerializerFilterSet
+        filterset_class = filtersets.SerializerFilterSet
 
 
 class ComplianceTestType(NetBoxObjectType):
@@ -114,8 +114,8 @@ class Query(ObjectType):
     selector = ObjectField(ComplianceSelectorWithDevicesType)
     selector_list = ObjectListField(ComplianceSelectorType)
 
-    serializer = ObjectField(ConfigSerializerType)
-    serializer_list = ObjectListField(ConfigSerializerType)
+    serializer = ObjectField(SerializerType)
+    serializer_list = ObjectListField(SerializerType)
 
     test = ObjectField(ComplianceTestType)
     test_list = ObjectListField(ComplianceTestType)

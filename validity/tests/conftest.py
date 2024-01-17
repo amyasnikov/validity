@@ -9,7 +9,7 @@ from graphene_django.utils.testing import graphql_query
 from tenancy.models import Tenant
 
 import validity
-from validity.models import ConfigSerializer, Poller
+from validity.models import Poller, Serializer
 
 
 pytest.register_assert_rewrite("base")
@@ -27,17 +27,17 @@ def create_custom_fields(db):
             CustomField(
                 name="serializer",
                 type="object",
-                object_type=ContentType.objects.get_for_model(ConfigSerializer),
+                object_type=ContentType.objects.get_for_model(Serializer),
                 required=False,
             ),
             CustomField(
-                name="config_data_source",
+                name="data_source",
                 type="object",
                 object_type=ContentType.objects.get_for_model(DataSource),
                 required=False,
             ),
             CustomField(
-                name="device_config_default",
+                name="default",
                 type="boolean",
                 required=False,
                 default=False,
@@ -49,6 +49,11 @@ def create_custom_fields(db):
             ),
             CustomField(
                 name="web_url",
+                type="string",
+                required=False,
+            ),
+            CustomField(
+                name="device_command_path",
                 type="string",
                 required=False,
             ),
@@ -68,9 +73,9 @@ def create_custom_fields(db):
         ]
     )
     cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])
-    for cf in cfs[2:5]:
+    for cf in cfs[2:6]:
         cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
-    cfs[5].content_types.set(
+    cfs[6].content_types.set(
         [
             ContentType.objects.get_for_model(Device),
             ContentType.objects.get_for_model(DeviceType),

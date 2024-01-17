@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from functools import cached_property
 from typing import Collection
 
@@ -9,11 +8,12 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import CommandTypeChoices, ConnectionTypeChoices
-from validity.managers import PollerQS
+from validity.fields import EncryptedDictField
+from validity.managers import CommandQS, PollerQS
 from validity.pollers import get_poller
 from validity.subforms import CLICommandForm
-from validity.utils.dbfields import EncryptedDictField
 from .base import BaseModel, SubformMixin
+from .serializer import Serializer
 
 
 class Command(SubformMixin, BaseModel):
@@ -27,7 +27,8 @@ class Command(SubformMixin, BaseModel):
             RegexValidator(
                 regex="^[a-z][a-z0-9_]*$",
                 message=_("Only lowercase ASCII letters, numbers and underscores are allowed"),
-            )
+            ),
+            RegexValidator(regex="^config$", message=_("This label name is reserved"), inverse_match=True),
         ],
     )
     retrieves_config = models.BooleanField(
@@ -35,8 +36,18 @@ class Command(SubformMixin, BaseModel):
         default=False,
         help_text=_("There can be only one command to retrieve configuration within each poller"),
     )
+    serializer = models.ForeignKey(
+        Serializer,
+        on_delete=models.CASCADE,
+        verbose_name=_("Serializer"),
+        related_name="commands",
+        null=True,
+        blank=True,
+    )
     type = models.CharField(_("Type"), max_length=50, choices=CommandTypeChoices.choices)
     parameters = models.JSONField(_("Parameters"))
+
+    objects = CommandQS.as_manager()
 
     subform_type_field = "type"
     subform_json_field = "parameters"
@@ -89,19 +100,6 @@ class Poller(BaseModel):
 
     def get_backend(self):
         return get_poller(self.connection_type, self.credentials, self.commands.all())
-
-    def serialize_object(self):
-        with self.serializable_credentials():
-            return super().serialize_object()
-
-    @contextmanager
-    def serializable_credentials(self):
-        private_creds = self.private_credentials
-        try:
-            self.private_credentials = self.private_credentials.encrypted
-            yield
-        finally:
-            self.private_credentials = private_creds
 
     @staticmethod
     def validate_commands(connection_type: str, commands: Collection[Command]):

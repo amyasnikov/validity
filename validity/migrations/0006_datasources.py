@@ -1,7 +1,7 @@
 from itertools import chain
 from django.db import migrations
 from django.utils.translation import gettext_lazy as _
-from validity.utils.dbfields import EncryptedString
+from validity.fields.encrypted import EncryptedString
 from django.db import migrations, models
 import django.db.models.deletion
 from validity.utils.misc import datasource_sync
@@ -16,8 +16,8 @@ def setup_datasource_cf(apps, schema_editor):
     datasource_cfs = CustomField.objects.using(db).bulk_create(
         [
             CustomField(
-                name="device_config_default",
-                label=_("Default for Device Configs"),
+                name="default",
+                label=_("Default DataSource"),
                 description=_("Required by Validity"),
                 type="boolean",
                 required=False,
@@ -27,6 +27,14 @@ def setup_datasource_cf(apps, schema_editor):
                 name="device_config_path",
                 label=_("Device Config Path"),
                 description=_("Required by Validity. J2 syntax allowed, e.g. devices/{{device.name}}.txt"),
+                type="string",
+                required=False,
+                validation_regex=r"^[^/].*$",
+            ),
+            CustomField(
+                name="device_command_path",
+                label=_("Device Command Path"),
+                description=_("Required by Validity. J2 syntax allowed, e.g. {{device.name}}/{{command.label}}.txt"),
                 type="string",
                 required=False,
                 validation_regex=r"^[^/].*$",
@@ -43,8 +51,8 @@ def setup_datasource_cf(apps, schema_editor):
     for cf in datasource_cfs:
         cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
     tenant_cf = CustomField.objects.using(db).create(
-        name="config_data_source",
-        label=_("Config Data Source"),
+        name="data_source",
+        label=_("Data Source"),
         description=_("Required by Validity"),
         type="object",
         object_type=ContentType.objects.get_for_model(DataSource),
@@ -57,7 +65,7 @@ def delete_datasource_cf(apps, schema_editor):
     CustomField = apps.get_model("extras", "CustomField")
     CustomField.objects.using(schema_editor.connection.alias).filter(
         name__in=[
-            "device_config_default",
+            "default",
             "device_config_path",
             "web_url",
         ],
@@ -82,14 +90,7 @@ def setup_datasources(apps, schema_editor):
     datasources = []
     for repo in GitRepo.objects.using(db).all():
         try:
-            cf = get_fields(
-                repo,
-                {
-                    "web_url": "web_url",
-                    "device_config_path": "device_config_path",
-                    "default": "device_config_default",
-                },
-            )
+            cf = get_fields(repo, ["web_url", "device_config_path", "default"])
             parameters = get_fields(repo, ["username", "branch", "encrypted_password"])
             if encrypted_password := parameters.pop("encrypted_password", None):
                 parameters["password"] = EncryptedString.deserialize(encrypted_password).decrypt()
@@ -139,7 +140,7 @@ def switch_git_links(apps, schema_editor):
     db = schema_editor.connection.alias
     DataSource = apps.get_model("core", "DataSource")
     DataFile = apps.get_model("core", "DataFile")
-    models = [apps.get_model("validity", m) for m in ("ComplianceTest", "NameSet", "ConfigSerializer")]
+    models = [apps.get_model("validity", m) for m in ("ComplianceTest", "NameSet", "Serializer")]
     objects = chain.from_iterable(model.objects.all() for model in models)
     for obj in objects:
         if obj.repo is None:
@@ -155,7 +156,7 @@ def switch_git_links(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [("validity", "0004_netbox35_scripts"), ("core", "0001_initial")]
+    dependencies = [("validity", "0005_rename_serializer"), ("core", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
@@ -201,7 +202,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name="configserializer",
+            model_name="serializer",
             name="data_file",
             field=models.ForeignKey(
                 blank=True,
@@ -212,7 +213,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name="configserializer",
+            model_name="serializer",
             name="data_source",
             field=models.ForeignKey(
                 blank=True,
@@ -257,11 +258,11 @@ class Migration(migrations.Migration):
             name="repo",
         ),
         migrations.RemoveField(
-            model_name="configserializer",
+            model_name="serializer",
             name="file_path",
         ),
         migrations.RemoveField(
-            model_name="configserializer",
+            model_name="serializer",
             name="repo",
         ),
         migrations.RemoveField(

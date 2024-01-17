@@ -5,10 +5,9 @@ from contextlib import nullcontext
 
 import pytest
 from deepdiff.serialization import json_dumps
-from simpleeval import InvalidExpression
 
-from validity.config_compliance.eval import ExplanationalEval, default_nameset, eval_defaults
-from validity.config_compliance.exceptions import EvalError
+from validity.compliance.eval import ExplanationalEval, default_nameset, eval_defaults
+from validity.compliance.exceptions import EvalError
 
 
 EXPR_1 = '{"param_1": "val_1", "param_2": "val_2"} == {"param_1": "val_1"}'
@@ -31,7 +30,7 @@ EXPLANATION_2 = [
         pytest.param(EXPR_1, EXPLANATION_1, None, id="EXPR_1"),
         pytest.param(EXPR_2, EXPLANATION_2, None, id="EXPR_2"),
         pytest.param("some invalid syntax", [], EvalError, id="invalid syntax"),
-        pytest.param("def f(): pass", [], InvalidExpression, id="invalif expression"),
+        pytest.param("def f(): pass", [], EvalError, id="invalid expression"),
     ],
 )
 def test_explanation(expression, explanation, error):

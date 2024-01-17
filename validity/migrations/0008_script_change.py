@@ -44,7 +44,7 @@ def reverse_func(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("validity", "0005_datasources"),
+        ("validity", "0007_polling"),
     ]
 
     operations = [

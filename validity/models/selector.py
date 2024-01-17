@@ -12,7 +12,7 @@ from extras.models import Tag
 from tenancy.models import Tenant
 
 from validity.choices import BoolOperationChoices, DynamicPairsChoices
-from validity.config_compliance.dynamic_pairs import DynamicPairNameFilter, dpf_factory
+from validity.compliance.dynamic_pairs import DynamicPairNameFilter, dpf_factory
 from validity.utils.misc import reraise
 from .base import BaseModel
 from .device import VDevice

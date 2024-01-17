@@ -1,6 +1,6 @@
 from typing import Any, Optional, TypeVar
 
-from django.db.models import TextChoices
+from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import ChoicesMeta
 from django.utils.translation import gettext_lazy as _
 
@@ -77,7 +77,7 @@ class SeverityChoices(MemberMixin, TextChoices, metaclass=ColoredChoiceMeta):
         return cls.labels[index:]
 
 
-class ConfigExtractionChoices(TextChoices, metaclass=ColoredChoiceMeta):
+class ExtractionMethodChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
     YAML = "YAML", "YAML", "info"
     ROUTEROS = "ROUTEROS", "ROUTEROS", "green"
@@ -121,3 +121,9 @@ class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
 
 class CommandTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
     CLI = "CLI", "CLI", "blue"
+
+
+class ExplanationVerbosityChoices(IntegerChoices):
+    disabled = 0, _("0 - Disabled")
+    medium = 1, _("1 - Medium")
+    maximum = 2, _("2 - Maximum")

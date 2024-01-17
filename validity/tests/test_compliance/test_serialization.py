@@ -1,12 +1,9 @@
 import json
-from unittest.mock import Mock
 
 import pytest
 import yaml
-from factories import DataFileFactory, DeviceFactory
 
-from validity.config_compliance.device_config import DeviceConfig
-from validity.models.data import VDataFile
+from validity.compliance.serialization import serialize
 
 
 JSON_CONFIG = """
@@ -101,22 +98,15 @@ ROUTEROS_SERIALIZED = {
 
 
 @pytest.mark.parametrize(
-    "extraction_method, contents, serialized",
+    "extraction_method, contents, template, serialized",
     [
-        pytest.param("YAML", JSON_CONFIG, json.loads(JSON_CONFIG), id="YAML-JSON"),
-        pytest.param("YAML", YAML_CONFIG, yaml.safe_load(YAML_CONFIG), id="YAML"),
-        pytest.param("TTP", TTP_CONFIG, TTP_SERIALIZED, id="TTP"),
-        pytest.param("ROUTEROS", ROUTEROS_CONFIG, ROUTEROS_SERIALIZED, id="ROUTEROS"),
+        pytest.param("YAML", JSON_CONFIG, "", json.loads(JSON_CONFIG), id="YAML-JSON"),
+        pytest.param("YAML", YAML_CONFIG, "", yaml.safe_load(YAML_CONFIG), id="YAML"),
+        pytest.param("TTP", TTP_CONFIG, TTP_TEMPLATE, TTP_SERIALIZED, id="TTP"),
+        pytest.param("ROUTEROS", ROUTEROS_CONFIG, "", ROUTEROS_SERIALIZED, id="ROUTEROS"),
     ],
 )
 @pytest.mark.django_db
-def test_device_config(extraction_method, contents, serialized):
-    device = DeviceFactory()
-    device.serializer = Mock(name="some_serializer", extraction_method=extraction_method)
-    if extraction_method == "TTP":
-        device.serializer.effective_template = TTP_TEMPLATE
-    DataFileFactory(data=contents.encode())
-    device.data_file = VDataFile.objects.first()
-    device_config = DeviceConfig.from_device(device)
-    assert extraction_method.lower() in type(device_config).__name__.lower()
-    assert device_config.serialized == serialized
+def test_serialization(extraction_method, contents, template, serialized):
+    serialize_result = serialize(extraction_method, contents, template)
+    assert serialize_result == serialized

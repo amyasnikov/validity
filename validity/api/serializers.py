@@ -1,5 +1,3 @@
-from urllib.parse import urljoin
-
 from core.api.nested_serializers import NestedDataFileSerializer, NestedDataSourceSerializer
 from dcim.api.nested_serializers import (
     NestedDeviceSerializer,
@@ -20,7 +18,7 @@ from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
 
 from validity import models
-from .helpers import EncryptedDictField, nested_factory
+from .helpers import EncryptedDictField, FieldsMixin, ListQPMixin, nested_factory
 
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
@@ -190,15 +188,15 @@ NestedComplianceTestResultSerializer = nested_factory(
 )
 
 
-class ConfigSerializerSerializer(NetBoxModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:configserializer-detail")
-    ttp_template = serializers.CharField(write_only=True, required=False)
+class SerializerSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:serializer-detail")
+    template = serializers.CharField(write_only=True, required=False)
     effective_template = serializers.ReadOnlyField()
     data_source = NestedDataSourceSerializer(required=False)
     data_file = NestedDataFileSerializer(required=False)
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
         fields = (
             "id",
             "url",
@@ -206,7 +204,7 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
             "name",
             "extraction_method",
             "effective_template",
-            "ttp_template",
+            "template",
             "data_source",
             "data_file",
             "tags",
@@ -216,7 +214,7 @@ class ConfigSerializerSerializer(NetBoxModelSerializer):
         )
 
 
-NestedConfigSerializerSerializer = nested_factory(ConfigSerializerSerializer, ("id", "url", "display", "name"))
+NestedSerializerSerializer = nested_factory(SerializerSerializer, ("id", "url", "display", "name"))
 
 
 class NameSetSerializer(NetBoxModelSerializer):
@@ -260,18 +258,6 @@ class NameSetSerializer(NetBoxModelSerializer):
 NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "display", "name"))
 
 
-class SerializedConfigSerializer(serializers.Serializer):
-    serializer = NestedConfigSerializerSerializer(read_only=True, source="device.serializer")
-    data_source = NestedDataSourceSerializer(read_only=True, source="device.data_source")
-    data_file = NestedDataFileSerializer(read_only=True, source="device.data_file")
-    local_copy_last_updated = serializers.DateTimeField(allow_null=True, source="last_modified")
-    config_web_link = serializers.SerializerMethodField()
-    serialized_config = serializers.JSONField(source="serialized")
-
-    def get_config_web_link(self, obj):
-        return urljoin(obj.device.data_source.web_url, obj.device.config_path)
-
-
 class DeviceReportSerializer(NestedDeviceSerializer):
     compliance_passed = serializers.BooleanField()
     results_passed = serializers.IntegerField()
@@ -290,6 +276,7 @@ class DeviceReportSerializer(NestedDeviceSerializer):
 
 
 class CommandSerializer(NetBoxModelSerializer):
+    serializer = NestedSerializerSerializer(required=False)
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:command-detail")
 
     class Meta:
@@ -301,6 +288,7 @@ class CommandSerializer(NetBoxModelSerializer):
             "name",
             "label",
             "retrieves_config",
+            "serializer",
             "type",
             "parameters",
             "tags",
@@ -346,3 +334,32 @@ class PollerSerializer(NetBoxModelSerializer):
 
 
 NestedPollerSerializer = nested_factory(PollerSerializer, ("id", "url", "display", "name"))
+
+
+class SerializedStateItemSerializer(FieldsMixin, serializers.Serializer):
+    name = serializers.CharField(read_only=True)
+    serializer = NestedSerializerSerializer(read_only=True)
+    data_source = NestedDataSourceSerializer(read_only=True, source="data_file.source")
+    data_file = NestedDataFileSerializer(read_only=True)
+    command = NestedCommandSerializer(read_only=True)
+    last_updated = serializers.DateTimeField(allow_null=True, source="data_file.last_updated", read_only=True)
+    error = serializers.CharField(read_only=True)
+    value = serializers.SerializerMethodField(source="serialized", method_name="get_serialized")
+
+    def get_serialized(self, state_item):
+        if state_item.error is not None:
+            return None
+        return state_item.serialized
+
+
+class SerializedStateSerializer(ListQPMixin, serializers.Serializer):
+    count = serializers.SerializerMethodField()
+    results = SerializedStateItemSerializer(many=True, read_only=True, source="*")
+
+    def get_count(self, state):
+        return len(state)
+
+    def to_representation(self, instance):
+        if name_filter := self.get_list_param("name"):
+            instance = [item for item in instance if item.name in set(name_filter)]
+        return super().to_representation(instance)

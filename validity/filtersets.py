@@ -6,6 +6,7 @@ from dcim.filtersets import DeviceFilterSet
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.db.models import Q
 from django_filters import BooleanFilter, ChoiceFilter, ModelMultipleChoiceFilter
+from extras.models import Tag
 from netbox.filtersets import NetBoxModelFilterSet
 from tenancy.models import Tenant
 
@@ -60,6 +61,7 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     platform_id = ModelMultipleChoiceFilter(field_name="device__platform", queryset=Platform.objects.all())
     location_id = ModelMultipleChoiceFilter(field_name="device__location", queryset=Location.objects.all())
     site_id = ModelMultipleChoiceFilter(field_name="device__site", queryset=Site.objects.all())
+    test_tag_id = ModelMultipleChoiceFilter(field_name="test__tags", queryset=Tag.objects.all())
     tag = None
 
     class Meta:
@@ -85,11 +87,11 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
         return queryset.only_latest(exclude=not value)
 
 
-class ConfigSerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
+class SerializerFilterSet(SearchMixin, NetBoxModelFilterSet):
     datasource_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
         fields = ("id", "name", "extraction_method", "datasource_id")
         search_fields = ("name",)
 
@@ -121,7 +123,10 @@ class PollerFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 
 class CommandFilterSet(SearchMixin, NetBoxModelFilterSet):
+    serializer_id = ModelMultipleChoiceFilter(field_name="serializer", queryset=models.Serializer.objects.all())
+    poller_id = ModelMultipleChoiceFilter(field_name="pollers", queryset=models.Poller.objects.all())
+
     class Meta:
         model = models.Command
-        fields = ("id", "name", "label", "type", "retrieves_config")
+        fields = ("id", "name", "label", "type", "retrieves_config", "serializer_id", "poller_id")
         search_fields = ("name", "label")

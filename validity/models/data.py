@@ -1,6 +1,5 @@
 import logging
 from contextlib import contextmanager
-from functools import cached_property
 from itertools import chain
 
 from core.choices import DataSourceStatusChoices
@@ -13,7 +12,6 @@ from django.utils import timezone
 from validity.j2_env import Environment
 from validity.managers import VDataFileQS, VDataSourceQS
 from validity.utils.misc import batched
-from validity.utils.orm import QuerySetMap
 
 
 logger = logging.getLogger(__name__)
@@ -29,20 +27,12 @@ class VDataFile(DataFile):
 class VDataSource(DataSource):
     objects = VDataSourceQS.as_manager()
 
-    @cached_property
-    def configfiles_by_path(self) -> QuerySetMap:
-        """
-        Returns "path: datafile" mapping for config files
-        """
-        assert hasattr(self, "config_files"), "You must call .prefetch_config_files() first"
-        return QuerySetMap(self.config_files.all(), attribute="path")
-
     class Meta:
         proxy = True
 
     @property
     def is_default(self):
-        return self.cf.get("device_config_default", False)
+        return self.cf.get("default", False)
 
     @property
     def web_url(self) -> str:
@@ -52,7 +42,17 @@ class VDataSource(DataSource):
 
     @property
     def config_path_template(self) -> str:
-        return self.cf.get("device_config_path", "")
+        return self.cf.get("device_config_path") or ""
+
+    @property
+    def command_path_template(self) -> str:
+        return self.cf.get("device_command_path") or ""
+
+    def get_config_path(self, device) -> str:
+        return Environment().from_string(self.config_path_template).render(device=device)
+
+    def get_command_path(self, device, command) -> str:
+        return Environment().from_string(self.command_path_template).render(device=device, command=command)
 
     @contextmanager
     def _sync_status(self):
@@ -99,3 +99,8 @@ class VDataSource(DataSource):
             new_datafiles = (new_data_file(path) for path in paths)
             created = len(DataFile.objects.bulk_create(new_datafiles, batch_size=batch_size))
             logger.debug("%s new files were created and %s existing files were updated during sync", created, updated)
+
+    def sync(self, device_filter: Q | None = None):
+        if device_filter is not None and self.type == "device_polling":
+            return self.partial_sync(device_filter)
+        return super().sync()

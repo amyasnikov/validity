@@ -1,5 +1,6 @@
 import datetime
 
+import django
 import factory
 from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from extras.models import Tag
@@ -7,6 +8,10 @@ from factory.django import DjangoModelFactory
 from tenancy.models import Tenant
 
 from validity import models
+from validity.compliance.state import StateItem
+
+
+DJANGO_MAJOR_VERSION = django.VERSION[:2]
 
 
 class DataSourceFactory(DjangoModelFactory):
@@ -29,17 +34,10 @@ class DataFileFactory(DjangoModelFactory):
     class Meta:
         model = models.VDataFile
 
-
-class ConfigFileFactory(DataFileFactory):
-    path = "file-1.txt"
-    source = factory.SubFactory(
-        DataSourceFactory,
-        custom_field_data={
-            "device_config_default": True,
-            "device_config_path": path,
-            "web_url": "http://some_url.com/",
-        },
-    )
+    @factory.post_generation
+    def to_memoryview(self, *args, **kwargs):
+        if DJANGO_MAJOR_VERSION < (4, 2) and isinstance(self.data, bytes):
+            self.data = memoryview(self.data)
 
 
 class DataSourceLinkFactory(DjangoModelFactory):
@@ -80,17 +78,17 @@ class SelectorFactory(DjangoModelFactory):
 class SerializerDBFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"serializer-{n}")
     extraction_method = "TTP"
-    ttp_template = "interface {{ interface }}"
+    template = "interface {{ interface }}"
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
 
 
 class SerializerDSFactory(DataSourceLinkFactory, SerializerDBFactory):
-    ttp_template = ""
+    template = ""
 
     class Meta:
-        model = models.ConfigSerializer
+        model = models.Serializer
 
 
 class CompTestDBFactory(DjangoModelFactory):
@@ -231,3 +229,18 @@ class PollerFactory(DjangoModelFactory):
 
     class Meta:
         model = models.Poller
+
+
+_NOT_DEFINED = object()
+
+
+def state_item(name, serialized, data_file=_NOT_DEFINED, command=_NOT_DEFINED):
+    if data_file == _NOT_DEFINED:
+        data_file = DataFileFactory()
+    if command == _NOT_DEFINED:
+        command = CommandFactory()
+    command.label = name
+    serializer = SerializerDBFactory()
+    item = StateItem(serializer, data_file, command)
+    item.__dict__["serialized"] = serialized
+    return item

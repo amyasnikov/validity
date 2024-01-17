@@ -1,9 +1,13 @@
 import ast
+import builtins
+from inspect import getmembers
+from typing import Any, Callable
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+import validity.compliance.eval.default_nameset as default_nameset
 from .base import BaseModel, DataSourceMixin
 from .test import ComplianceTest
 
@@ -50,3 +54,16 @@ class NameSet(DataSourceMixin, BaseModel):
     @property
     def effective_definitions(self):
         return self.effective_text_field()
+
+    @property
+    def _globals(self):
+        return dict(getmembers(builtins)) | {name: getattr(default_nameset, name) for name in default_nameset.__all__}
+
+    def extract(self, extra_globals: dict[str, Any] | None = None) -> dict[str, Callable]:
+        all_globals = self._globals
+        if extra_globals:
+            all_globals |= extra_globals
+        locs = {}
+        exec(self.effective_definitions, all_globals, locs)
+        __all__ = set(locs.get("__all__", []))
+        return {k: v for k, v in locs.items() if k in __all__ and callable(v)}

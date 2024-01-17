@@ -6,6 +6,6 @@
 <tr>
   <th scope="row">File Path</th>
   <td>
-    {% include "validity/inc/path_with_link.html" with file_path=object.data_file.path web_url=object.data_source.web_url only %}
+    {% include "validity/inc/path_with_link.html" with data_file=object.data_file web_url=object.data_source.web_url only %}
   </td>
 </tr>

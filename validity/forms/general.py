@@ -6,7 +6,7 @@ from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
 from utilities.forms import get_field_value
-from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
 from validity import models
@@ -85,18 +85,18 @@ class ComplianceSelectorForm(NetBoxModelForm):
         return result
 
 
-class ConfigSerializerForm(SyncedDataMixin, NetBoxModelForm):
-    ttp_template = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
+class SerializerForm(SyncedDataMixin, NetBoxModelForm):
+    template = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
-        (_("Config Serializer"), ("name", "extraction_method", "tags")),
+        (_("Serializer"), ("name", "extraction_method", "tags")),
         (_("Template from Data Source"), ("data_source", "data_file")),
-        (_("Template from DB"), ("ttp_template",)),
+        (_("Template from DB"), ("template",)),
     )
 
     class Meta:
-        model = models.ConfigSerializer
-        fields = ("name", "extraction_method", "ttp_template", "data_source", "data_file", "tags")
+        model = models.Serializer
+        fields = ("name", "extraction_method", "template", "data_source", "data_file", "tags")
 
 
 class NameSetForm(NetBoxModelForm):
@@ -132,11 +132,13 @@ class PollerForm(NetBoxModelForm):
 
 
 class CommandForm(SubformMixin, NetBoxModelForm):
+    serializer = DynamicModelChoiceField(queryset=models.Serializer.objects.all(), required=False)
+
     main_fieldsets = [
-        (_("Command"), ("name", "label", "type", "retrieves_config", "tags")),
+        (_("Command"), ("name", "label", "type", "retrieves_config", "serializer", "tags")),
     ]
 
     class Meta:
         model = models.Command
-        fields = ("name", "label", "type", "retrieves_config", "tags")
+        fields = ("name", "label", "type", "retrieves_config", "serializer", "tags")
         widgets = {"type": HTMXSelect()}

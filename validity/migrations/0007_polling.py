@@ -4,9 +4,10 @@ from django.db import migrations, models
 import taggit.managers
 import utilities.json
 import validity.models.base
-import validity.utils.dbfields
+import validity.fields.encrypted
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
+import django.core.validators
+import django.db.models.deletion
 
 
 def create_cf(apps, schema_editor):
@@ -50,8 +51,8 @@ def create_polling_datasource(apps, schema_editor):
         source_url="/",
         description=_("Required by Validity. Polls bound devices and stores the results"),
         custom_field_data={
-            "device_config_path": "{{device | slugify}}/{{ device.poller.config_command.label }}.txt",
-            "device_config_default": False,
+            "device_config_path": "{{device | slugify}}/{{ command.label }}.txt",
+            "default": False,
             "web_url": "",
         },
     )
@@ -67,7 +68,7 @@ def delete_polling_datasource(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("validity", "0006_script_change"),
+        ("validity", "0006_datasources"),
     ]
 
     operations = [
@@ -88,14 +89,27 @@ class Migration(migrations.Migration):
                         max_length=100,
                         unique=True,
                         validators=[
-                            RegexValidator(
+                            django.core.validators.RegexValidator(
+                                message="Only lowercase ASCII letters, numbers and underscores are allowed",
                                 regex="^[a-z][a-z0-9_]*$",
-                                message=_("Only lowercase ASCII letters, numbers and underscores are allowed"),
-                            )
+                            ),
+                            django.core.validators.RegexValidator(
+                                inverse_match=True, message="This label name is reserved", regex="^config$"
+                            ),
                         ],
                     ),
                 ),
                 ("retrieves_config", models.BooleanField(default=False)),
+                (
+                    "serializer",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="commands",
+                        to="validity.serializer",
+                    ),
+                ),
                 ("type", models.CharField(max_length=50)),
                 ("parameters", models.JSONField()),
                 ("tags", taggit.managers.TaggableManager(through="extras.TaggedItem", to="extras.Tag")),
@@ -118,7 +132,7 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=255, unique=True)),
                 ("connection_type", models.CharField(max_length=50)),
                 ("public_credentials", models.JSONField(blank=True, default=dict)),
-                ("private_credentials", validity.utils.dbfields.EncryptedDictField(blank=True)),
+                ("private_credentials", validity.fields.encrypted.EncryptedDictField(blank=True)),
                 ("commands", models.ManyToManyField(related_name="pollers", to="validity.command")),
                 ("tags", taggit.managers.TaggableManager(through="extras.TaggedItem", to="extras.Tag")),
             ],

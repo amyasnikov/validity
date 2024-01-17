@@ -10,7 +10,7 @@ router = NetBoxRouter()
 router.register("selectors", views.ComplianceSelectorViewSet)
 router.register("tests", views.ComplianceTestViewSet)
 router.register("test-results", views.ComplianceTestResultViewSet)
-router.register("serializers", views.ConfigSerializerViewSet)
+router.register("serializers", views.SerializerViewSet)
 router.register("namesets", views.NameSetViewSet)
 router.register("reports", views.ComplianceReportViewSet)
 router.register("pollers", views.PollerViewSet)
@@ -21,9 +21,10 @@ urlpatterns = [
     path("reports/<int:pk>/devices/", views.DeviceReportView.as_view(), name="report_devices"),
 ] + router.urls
 
-app_name = "validity"
-
 
 dcim_urls.append(
-    path("devices/<int:pk>/serialized_config/", views.SerializedConfigView.as_view(), name="serialized_config")
+    path("devices/<int:pk>/serialized_state/", views.SerializedStateView.as_view(), name="serialized_state")
 )
+
+
+app_name = "validity"

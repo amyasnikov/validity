@@ -6,7 +6,7 @@
     <div class="col col-md-4">
       <div class="row mb-3">
         <div class="card">
-          <h5 class="card-header">Config Serializer</h5>
+          <h5 class="card-header">Serializer</h5>
           <div class="card-body">
             <table class="table table-hover attr-table">
               <tr>
@@ -14,7 +14,7 @@
                 <td>{{ object.name }}</td>
               </tr>
               <tr>
-                <th scope="row">Config Extraction Method</th>
+                <th scope="row">Extraction Method</th>
                 <td>{{ object | colored_choice:"extraction_method" }}</td>
               </tr>
               {% include "validity/inc/datasource_link.html" %}
@@ -22,13 +22,16 @@
           </div>
         </div>
       </div>
+      <div class="row mb-3">
+        {% include 'inc/panels/related_objects.html' %}
+      </div>
       <div class="row">
         {% include 'inc/panels/tags.html' %}
       </div>
     </div>
     <div class="col col-md-8">
       <div class="card">
-        <h5 class="card-header">TTP Template [Source: {{ object | data_source }}]</h5>
+        <h5 class="card-header">Template [Source: {{ object | data_source }}]</h5>
         <div class="card-body">
           {% include 'extras/inc/configcontext_data.html' with data=object.effective_template %}
         </div>
@@ -38,7 +41,7 @@
   <div class="row">
     <div class="col col-md-12">
       <div class="card">
-        <h5 class="card-header">Bound Devices</h5>
+        <h5 class="card-header">All Bound Devices</h5>
         <div class="card-body">
           <div class="pt-0 mb-3 col col-md-3">
             {% include 'validity/inc/search_form.html' with model='Device' %}

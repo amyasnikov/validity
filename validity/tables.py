@@ -88,14 +88,14 @@ class TotalDevicesMixin(NetBoxTable):
         return self.total_devices_map.get(record.id, 0)
 
 
-class ConfigSerializerTable(TotalDevicesMixin, NetBoxTable):
+class SerializerTable(TotalDevicesMixin, NetBoxTable):
     name = Column(linkify=True)
     extraction_method = ChoiceFieldColumn()
 
     count_per = "serializer"
 
     class Meta(NetBoxTable.Meta):
-        model = models.ConfigSerializer
+        model = models.Serializer
         fields = ("name", "extraction_method", "total_devices")
         default_columns = fields
 
@@ -115,10 +115,11 @@ class PollerTable(TotalDevicesMixin, NetBoxTable):
 class CommandTable(NetBoxTable):
     name = Column(linkify=True)
     type = ChoiceFieldColumn()
+    serializer = Column(linkify=True)
 
     class Meta(NetBoxTable.Meta):
         model = models.Command
-        fields = ("name", "type", "retrieves_config", "bound_pollers", "label")
+        fields = ("name", "type", "retrieves_config", "serializer", "label")
 
 
 class ExplanationColumn(Column):

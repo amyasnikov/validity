@@ -2,17 +2,16 @@ import io
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import ClassVar, Generator, Literal
+from typing import Generator, Literal
 
 from validity.utils.misc import reraise
-from ..exceptions import DeviceConfigError
-from .base import DeviceConfig
+from ..exceptions import SerializationError
 
 
 logger = logging.getLogger(__name__)
 
 
-class LineParsingError(DeviceConfigError):
+class LineParsingError(SerializationError):
     pass
 
 
@@ -147,10 +146,6 @@ def parse_config(plain_config: str) -> dict:
     return result
 
 
-class RouterOSDeviceConfig(DeviceConfig):
-    extract_method: ClassVar[str] = "ROUTEROS"
-
-    def serialize(self, override: bool = False) -> None:
-        if not self.serialized or override:
-            with reraise(Exception, DeviceConfigError):
-                self.serialized = parse_config(self.plain_config)
+def serialize_ros(plain_data: str, template: str = ""):
+    with reraise(Exception, SerializationError):
+        return parse_config(plain_data)

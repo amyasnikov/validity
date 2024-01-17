@@ -14,7 +14,7 @@ from factories import (
 @pytest.mark.parametrize(
     "factory, prop_name, expected_value",
     [
-        (p(SerializerDBFactory, ttp_template="template"), "effective_template", "template"),
+        (p(SerializerDBFactory, template="template"), "effective_template", "template"),
         (p(SerializerDSFactory, contents="template2"), "effective_template", "template2"),
         (p(NameSetDBFactory, definitions="def f(): pass"), "effective_definitions", "def f(): pass"),
         (p(NameSetDSFactory, contents="def f2(): pass"), "effective_definitions", "def f2(): pass"),

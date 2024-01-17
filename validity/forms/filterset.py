@@ -2,6 +2,7 @@ from core.models import DataSource
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.forms import CharField, Form, NullBooleanField, Select
 from django.utils.translation import gettext_lazy as _
+from extras.models import Tag
 from netbox.forms import NetBoxModelFilterSetForm
 from tenancy.models import Tenant
 from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES
@@ -11,10 +12,10 @@ from validity import models
 from validity.choices import (
     BoolOperationChoices,
     CommandTypeChoices,
-    ConfigExtractionChoices,
     ConnectionTypeChoices,
     DeviceGroupByChoices,
     DynamicPairsChoices,
+    ExtractionMethodChoices,
     SeverityChoices,
 )
 from .helpers import ExcludeMixin, PlaceholderChoiceField
@@ -67,13 +68,14 @@ class TestResultFilterForm(ExcludeMixin, Form):
     platform_id = DynamicModelMultipleChoiceField(required=False, label=_("Platform"), queryset=Platform.objects.all())
     location_id = DynamicModelMultipleChoiceField(required=False, label=_("Location"), queryset=Location.objects.all())
     site_id = DynamicModelMultipleChoiceField(required=False, label=_("Site"), queryset=Site.objects.all())
+    test_tag_id = DynamicModelMultipleChoiceField(required=False, label=_("Test Tags"), queryset=Tag.objects.all())
 
 
 class ComplianceTestResultFilterForm(TestResultFilterForm, NetBoxModelFilterSetForm):
     model = models.ComplianceTestResult
     fieldsets = (
         [_("Common"), ("latest", "passed", "selector_id")],
-        [_("Test"), ("severity", "test_id", "report_id")],
+        [_("Test"), ("severity", "test_id", "report_id", "test_tag_id")],
         [
             _("Device"),
             (
@@ -99,6 +101,18 @@ class ReportGroupByForm(Form):
     )
 
 
+class StateSelectForm(Form):
+    state_item = PlaceholderChoiceField(
+        label=_("State Item"), placeholder=_("Select State Item"), required=False, choices=[("config", "config")]
+    )
+
+    def __init__(self, *args, state, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["state_item"].choices += [
+            (item.name, item.name) for item in state.values() if item.name != "config"
+        ]
+
+
 class NameSetFilterForm(NetBoxModelFilterSetForm):
     model = models.NameSet
     name = CharField(required=False)
@@ -119,11 +133,11 @@ class ComplianceSelectorFilterForm(NetBoxModelFilterSetForm):
     )
 
 
-class ConfigSerializerFilterForm(NetBoxModelFilterSetForm):
-    model = models.ConfigSerializer
+class SerializerFilterForm(NetBoxModelFilterSetForm):
+    model = models.Serializer
     name = CharField(required=False)
     extraction_method = PlaceholderChoiceField(
-        required=False, placeholder=_("Extraction Method"), choices=ConfigExtractionChoices.choices
+        required=False, placeholder=_("Extraction Method"), choices=ExtractionMethodChoices.choices
     )
     datasource_id = DynamicModelMultipleChoiceField(
         label=_("Data Source"), queryset=DataSource.objects.all(), required=False
@@ -158,3 +172,7 @@ class CommandFilterForm(NetBoxModelFilterSetForm):
     retrieves_config = NullBooleanField(
         label=_("Global"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES)
     )
+    serializer_id = DynamicModelMultipleChoiceField(
+        label=_("Serializer"), queryset=models.Serializer.objects.all(), required=False
+    )
+    poller_id = DynamicModelMultipleChoiceField(label=_("Poller"), queryset=models.Poller.objects.all(), required=False)

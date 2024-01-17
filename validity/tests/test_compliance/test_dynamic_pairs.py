@@ -5,12 +5,7 @@ from django.db.models import Q
 from extras.models import Tag
 from factories import DeviceFactory, SelectorFactory, TagFactory
 
-from validity.config_compliance.dynamic_pairs import (
-    DynamicPairNameFilter,
-    DynamicPairTagFilter,
-    NoneFilter,
-    dpf_factory,
-)
+from validity.compliance.dynamic_pairs import DynamicPairNameFilter, DynamicPairTagFilter, NoneFilter, dpf_factory
 
 
 @pytest.mark.parametrize(
