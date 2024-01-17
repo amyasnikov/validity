@@ -67,7 +67,7 @@ known_first_party = ["validity"]
 [tool.flake8]
 max-line-length = 120
 exclude = ["migrations", "__pycache__"]
-per-file-ignores = ["__init__.py:F401"]
+per-file-ignores = ["__init__.py:F401", "validity/netbox_changes.py:F401"]
 extend-ignore = "E203"
 
 

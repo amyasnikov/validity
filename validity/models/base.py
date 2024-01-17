@@ -11,8 +11,9 @@ from netbox.models import (
     ExportTemplatesMixin,
     NetBoxModel,
     RestrictedQuerySet,
-    WebhooksMixin,
 )
+
+from validity.netbox_changes import EventRulesMixin
 
 
 logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ class BaseReadOnlyModel(
     CustomLinksMixin,
     CustomValidationMixin,
     ExportTemplatesMixin,
-    WebhooksMixin,
+    EventRulesMixin,
     models.Model,
 ):
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)

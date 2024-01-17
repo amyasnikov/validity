@@ -12,8 +12,6 @@ from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
 from extras.models import Tag
 from extras.scripts import BooleanVar, MultiObjectVar, ObjectVar
-from extras.webhooks import enqueue_object
-from netbox.context import webhooks_queue
 
 import validity
 from validity.choices import ExplanationVerbosityChoices
@@ -27,6 +25,7 @@ from validity.models import (
     VDataSource,
     VDevice,
 )
+from validity.netbox_changes import enqueue_object, events_queue
 from validity.utils.misc import datasource_sync, null_request
 from .script_data import RunTestsScriptData, ScriptDataMixin
 from .variables import VerbosityVar
@@ -151,7 +150,7 @@ class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
 
     def fire_report_webhook(self, report_id: int) -> None:
         report = ComplianceReport.objects.filter(pk=report_id).annotate_result_stats().count_devices_and_tests().first()
-        queue = webhooks_queue.get()
+        queue = events_queue.get()
         enqueue_object(queue, report, self.request.user, self.request.id, ObjectChangeActionChoices.ACTION_CREATE)
 
     def save_to_db(self, results: Iterable[ComplianceTestResult], report: ComplianceReport | None) -> None:
