@@ -54,12 +54,12 @@ class TestState:
     @pytest.mark.django_db
     def test_get_item(self):
         item1 = state_item("item1", {"k1": "v1"})
-        item2 = state_item("item2", {"k2": "v2"})
+        item2 = state_item("item2", {"k2": "v2"}, command=CommandFactory(retrieves_config=True))
         item_err = state_item("item_err", {}, data_file=None)
         del item_err.__dict__["serialized"]
-        state = State({item1.name: item1, item2.name: item2, item_err.name: item_err})
+        state = State({"item1": item1, "config": item2, "item_err": item_err}, config_command_label="item2")
         assert state["item1"] == state.item1 == {"k1": "v1"}
-        assert state["item2"] == state.item2 == {"k2": "v2"}
+        assert state["item2"] == state.item2 == state.config == state["config"] == {"k2": "v2"}
         assert state.get_full_item("item1") == item1
         assert state.get("item3") is None
         assert state.get("item_err", ignore_errors=True) is None

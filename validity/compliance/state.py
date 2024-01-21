@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from django.utils.translation import gettext_lazy as _
 
 from validity.compliance.serialization import Serializable
-from ..utils.misc import reraise
+from validity.utils.misc import reraise
 from .exceptions import NoComponentError, SerializationError, StateKeyError
 
 
@@ -82,6 +82,8 @@ class State(dict):
         return self[key]
 
     def __getitem__(self, key):
+        if self.config_command_label and key == self.config_command_label:
+            key = "config"
         with reraise(KeyError, StateKeyError):
             state_item = super().__getitem__(key)
         return state_item.serialized
