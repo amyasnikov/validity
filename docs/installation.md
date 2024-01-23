@@ -7,7 +7,7 @@ Validity is the [NetBox](https://netbox.dev/) plugin. So, before installing vali
 
 | **Python** | **NetBox**      |
 |------------|-----------------|
-| >=3.10     | 3.4 &#124; 3.5  |
+| >=3.10     | 3.5 &#124; 3.6 &#124; 3.7 |
 
 ## Installation steps
 Once you have installed NetBox, you should follow these steps
@@ -27,6 +27,19 @@ PLUGINS = [
 ]
 ```
 
+* Add Data Source [custom validator](https://docs.netbox.dev/en/stable/customization/custom-validation/) to prevent creation of more than one Data Source with `default=True`
+```
+#configuration.py
+
+CUSTOM_VALIDATORS = {
+    "core.datasource": ["validity.custom_validators.DataSourceValidator"]
+}
+
+```
+!!! warning
+    According to [this NetBox bug](https://github.com/netbox-community/netbox/issues/14349) custom validation for Data Source **does not work** prior to NetBox v3.6.6
+
+
 * Create DB tables
 ```console
 ./manage.py migrate validity
@@ -38,14 +51,3 @@ PLUGINS = [
 ```
 
 * Change plugin settings according to your needs via **PLUGINS_CONFIG** variable. Read more: [Plugin Settings](plugin_settings.md)
-
-!!! warning
-    The final instruction below is for **NetBox 3.4.x only**. Do not execute it for NetBox 3.5.x or above
-
-* To place Validity [custom scripts](https://docs.netbox.dev/en/stable/customization/custom-scripts/) inside **SCRIPTS_ROOT** directory run
-```console
-./manage.py linkscripts
-```
-This command will create symbolic links inside **SCRIPTS_ROOT** for each validity script (originally resided in *validity/scripts*).
-!!! note
-    if you use [netbox-docker](https://github.com/netbox-community/netbox-docker) as a deployment mechanism, check and fix your volume permissions in **docker-compose.yml**. By default, netbox-docker allows read-only access to SCRIPTS_ROOT, so `./manage.py linkscripts` will fail.

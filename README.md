@@ -5,35 +5,41 @@
         <img src="https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg" alt="CI">
         <img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/amyasnikov/9e518ae8babd18b7edd8ee5aad58146b/raw/cov.json" alt="Coverage">
         <img src="https://img.shields.io/badge/Python-3.10+-blue.svg" alt="Python version">
-        <img src="https://img.shields.io/badge/NetBox-3.4|3.5|3.6-blue.svg" alt="NetBox version">
+        <img src="https://img.shields.io/badge/NetBox-3.5|3.6|3.7-blue.svg" alt="NetBox version">
     </p>
 </div>
 
 <!--mkdocs-start-->
 ## What?
-Validity is the [NetBox](https://netbox.dev) plugin to write "auto tests" for configuration. You define compliance tests and Validity checks network device configuration files against these tests. As a result you can find out which devices are provisioned properly (according to the tests you have written) and which are not.
+Validity is the [NetBox](https://netbox.dev) plugin to write "auto tests" for your network devices. You define compliance tests and Validity checks device state or configuration against these tests. The two most obvious use cases for such a functionality include:
 
-To use validity you need:
+* **Configuration compliance**. You can make sure your devices are provisioned properly, and their config follows the rules you have defined via tests.
+* **Pre- / post-configuration checks**. You can make sure your network is in the expected state before or/and after configuration changes have been made. You can use Validity API to include these checks into your automation pipelines.
 
-1. Store configuration files of your devices in a Git repository. Validity does not collect the configs from your network, you have to do it by third-party tool (e.g. [oxidized](https://github.com/ytti/oxidized)).
+**Validity usage workflow:**
 
-2. Define [TTP Template](https://ttp.readthedocs.io/en/latest/) to translate the config from vendor specific format into JSON.
+1. Gather state/config of your devices. Pull it from Git repository or poll the devices directly.
 
-3. Write compliance test as a python expression, e.g.<br/>
-`device.config["ntp-servers"] == ["1.2.3.4", "5.6.7.8"]`
+2. Define [serialization method](https://validity.readthedocs.io/en/latest/entities/serializers/) (the way to translate your raw data into JSON-like structure).
+
+3. Write compliance test as a Python expression, e.g.<br/>
+`device.config["ntp-servers"] == ["1.2.3.4", "5.6.7.8"]`<br/>
+or<br/>
+`not device.state.show_stp['enabled']`
 
 4. Apply created test to specific devices and get the results per device (passed or failed).
 
 
 ## Why?
-Configuration compliance is one of the very common problems that arises in every company with the growth of their network. Usually companies solve this problem with some kind of scripts that do all the things at the same time: they parse configs, apply some compliance logic and push the results into some DB or third-party OSS system. Usually after the addition of several vendors (or even several software revisions of one model) these scripts become unreadable and almost no one can definitely say which rules the script checks for.
+Validity helps you to concentrate on what really matters - defining the criteria of healthy and valid network and following these criteria.
 
-Validity completely separates compliance test code from all other things like config serialization. This one encourages you to write short, clean and understandable compliance tests together with the mandatory description.
+Validity completely separates compliance test code from all other things like data collection, serialization and storage. This one encourages you to write short, clean and understandable compliance tests together with the mandatory description.
 
 
 ## Key Features
 * Truly vendor-agnostic. You can easily integrate any vendor config format using [TTP](https://github.com/dmulyalin/ttp)
 * Writing compliance tests using Python expressions and [JQ](https://stedolan.github.io/jq/manual/)
+* Direct polling of the devices via SSH or Telnet. More than 100 different platforms are available through [netmiko](https://github.com/ktbyers/netmiko) library.
 * Flexible selector system to apply the tests only to a specific subset of devices
 * Concept of **dynamic pairs**. With dynamic pair you can compare 2 different devices between each other (e.g. compare the configuration of 2 MC-LAG members).
 * **Test result explanation**. When some test fails, you can get the **explanation** of the calculation process step by step. It helps to identify the cause of the failure.

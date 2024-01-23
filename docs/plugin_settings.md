@@ -4,18 +4,6 @@
 Validity has some settings which could be changed through [PLUGINS_CONFIG](https://docs.netbox.dev/en/stable/plugins/#configure-plugin) variable inside your `configuration.py`.
 
 ## Settings
-### git_folder
-
-*Default:* `/opt/git_repos/`
-
-*Type:* `str`
-
-This variable should contain the path to folder where git repositories will be stored.
-
-!!! warning
-    The contents of the **git_folder** MUST be shared between NetBox **Web app** and the **RQ Worker** (the instance that executes custom scripts).
-    For instance, if you use docker to deploy NetBox, a shared **docker volume** MUST be bound to **git_folder**.
-
 
 ### sleep_between_tests
 
@@ -25,7 +13,7 @@ This variable should contain the path to folder where git repositories will be s
 
 The amount of seconds system will wait between executing each Compliance Test.
 
-Compliance Test execution may cause a lot of DB queries, because Compliance Test is dynamic by its nature and the system cannot prefetch all the required instances before the test. If you're realizing that `Run Compliance Tests` script overwhelms your DB with a lot of queries, you can adjust this setting to spread the queries over time.
+Compliance Test execution may cause a lot of DB queries, because Compliance Test is dynamic by its nature and the system cannot prefetch all the required DB data before the test. If you're realizing that `Run Compliance Tests` script overwhelms your DB with a lot of queries, you can adjust this setting to spread the queries over time.
 
 
 ### result_batch_size
@@ -74,7 +62,6 @@ Here is the full example of Validity settings:
 
 PLUGINS_CONFIG = {
     'validity': {
-        'git_folder': '/opt/git/',
         'sleep_between_tests': 0.02,
         'result_batch_size': 300,
         'store_reports': 7,

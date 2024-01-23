@@ -91,11 +91,11 @@ Inside this field at the Name Set page you can view your functions/classes defin
 At the add/edit form this field is used to store the definitions code inside the DB.
 This option fits well when you want to quickly check your Name Set or just don't want to make things complex with Git.
 
-#### Git Repository and File Path
+#### Data Source and Data File
 
 !!! info
-    You can use only one option per one test instance: you either store your definitions in the DB (Definitions field) or via Git (Git Repository and File Path fields). You can't use both approaches at the same time for the same Name Set.
+    You can use only one option per one Name Set instance: you either store your definitions in the DB (Definitions field) or via Data Source. You can't use both approaches at the same time for the same Name Set.
 
-This pair of fields allows you to store definitions as a file in the Git repository.
+This pair of fields allows you to store definitions as a file in a Data Source (likely pointing to git repository).
 
 This is the best option if you have plenty of complex Name Sets and want to get all the benefits from storing them under version control.

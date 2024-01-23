@@ -7,14 +7,16 @@ You can figure out how to work with Validity using NetBox Web UI in this video:
 [![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)
 
 # CLI Quick Start
-
 !!! note
     This guide uses [pynetbox](https://github.com/netbox-community/pynetbox) library and regular REST API to interact with NetBox. Going this way facilitates the readability and reproducibility of the guide. Moreover, it may be just more convenient way for an engineer to gather information from code examples rather than from GUI screenshots.
     Of course, **you can do exactly all the same things using web GUI**.
 
 
-## Preparing Git repository
+## Polling
+    Current guide is based on a Git repository as a source of device configuration data. If you want get device configuration or other data directly from network devices, consider [Quick Start With Polling](quickstart_polling.md) article.
 
+
+## Preparing Git repository
 * Create repository on github.com with device configurations. E.g. <br/>
 `https://github.com/amyasnikov/device_repo`
 
@@ -75,31 +77,38 @@ device1 = nb.dcim.devices.create(
     name='device1',
     site=site.id,
     device_type=devtype.id,
-    device_role=role.id
+    role=role.id
 )
 device2 = nb.dcim.devices.create(
     name='device2',
     site=site.id,
     device_type=devtype.id,
-    device_role=role.id
+    role=role.id
 )
 ```
 
-### Repo and Serializer instances
-* Create **device_repo** Repository entity, mark it as default
+### Data Source and Serializer instances
+* Create **device_repo** Data Source entity, mark it as default
+
+!!! warning
+    Unfortunately, according to this [NetBox bug](https://github.com/netbox-community/netbox/issues/14879), configuration of custom fields for a Data Source is not available through REST API prior to NetBox v3.7.2
+    Hence, you may have to set up custom field values via GUI.
 
 ```python
-repo = nb.plugins.validity.git_repositories.create(
+data_source = nb.core.data_sources.create(
     name='device_repo',
-    git_url='https://github.com/amyasnikov/device_repo',
-    web_url='https://github.com/amyasnikov/device_repo/blob/{{branch}}',
-    device_config_path='{{device.name}}.txt',
-    branch='master',
-    default=True,
+    type='git',
+    source_url='https://github.com/amyasnikov/device_repo',
+    parameters={'branch': 'master'},
+    custom_fields={
+        'default': True,
+        'device_config_path': '{{device.name}}.txt',
+        'web_url': 'https://github.com/amyasnikov/device_repo/blob/{{branch}}'
+    }
 )
 ```
 
-* Create Config Serializer to translate device configuration into JSON and then bind this serializer to created devices (e.g. via device type).
+* Create Serializer to translate device configuration into JSON and then bind this serializer to created devices (e.g. via device type).
 
 ```python
 template = '''
@@ -113,29 +122,26 @@ interface {{ interface }}
 serializer = nb.plugins.validity.serializers.create(
     name='serializer1',
     extraction_method='TTP',
-    ttp_template=template
+    template=template
 )
-devtype.custom_fields = {'config_serializer': serializer.id}
+devtype.custom_fields = {'serializer': serializer.id}
 devtype.save()
 ```
 
 Now let's run git config sync to download our configs from github.
-Suddenly, pynetbox has no ability to execute custom scripts. Let's use `requests` to do it.
+Unfortunately, it cannot be done via pynetbox. Let's use `requests` to do it.
 
 ```python
 import requests, time
 
-resp = requests.post(
-    'http://127.0.0.1:8000/api/extras/scripts/validity_git.SyncGitRepos/',
-    headers={'Authorization': f'Token {token}'},
-    json={'commit': True, 'data': {}},
+requests.post(
+    f'http://127.0.0.1:8000/api/core/data-sources/{data_source.id}/sync/',
+    headers={'Authorization': f'Token {token}'}
 )
 
-result_id = resp.json()['result']['id']
-
-while (status := nb.extras.job_results.get(id=result_id).status.value) != 'completed':
+while (status := nb.core.data_sources.get(id=data_source.id).status.value) != 'completed':
     print(f'Not finished yet, current status: {status}')
-    time.sleep(5) # we need to wait until script finishes
+    time.sleep(1) # we need to wait until sync finishes
 ```
 
 Now when plain configs are downloaded from github, we can see how serialized configs look like:
@@ -143,12 +149,13 @@ Now when plain configs are downloaded from github, we can see how serialized con
 ```python
 import json
 
-config_info = requests.get(
-    f'http://127.0.0.1:8000/api/dcim/devices/{device1.id}/serialized_config/',
+serialized_state = requests.get(
+    f'http://127.0.0.1:8000/api/dcim/devices/{device1.id}/serialized_state/',
+    params={'name': 'config', 'fields': 'value'},
     headers={'Authorization': f'Token {token}'}
 ).json()
 
-print(json.dumps(config_info['serialized_config'], indent=4))
+print(json.dumps(serialized_state['results'][0]['value'], indent=4))
 # {
 #     "interfaces": [
 #         {
@@ -188,7 +195,7 @@ test = nb.plugins.validity.tests.create(
     name='iface_description',
     description='all interfaces must have a description',
     expression=expression,
-    severity= "MIDDLE",
+    severity='MIDDLE',
     selectors=[selector.id]
 )
 ```
@@ -197,7 +204,7 @@ This test checks the equality of 2 JQ expressions:
 1. List of interfaces (interface names) which have `description` parameter
 2. List of all interfaces
 
-So, if these 2 lists are equal, then each interface on the device has a description and the test would be marked as passed. Otherwise, the lists would not be equal, and the test would fail.
+So, if these 2 lists are equal, then each interface on the device has a description and the test will be marked as passed. Otherwise, the lists will not be equal, and the test will fail.
 
 
 ## Running the script and evaluating the results
@@ -205,24 +212,21 @@ So, if these 2 lists are equal, then each interface on the device has a descript
 Now all the required entities are created, and you can execute the test you created.
 This could be done via **RunTests** script.
 
-!!! warning
-    Starting from NetBox 3.5 **job results** were renamed to just **jobs** and moved into **core** directory. Therefore, you have to use **nb.core.jobs** in the examples below instead of **nb.extras.job_results** if you have NetBox >=3.5
-
 ```python
 resp = requests.post(
-    'http://127.0.0.1:8000/api/extras/scripts/validity_run_tests.RunTestsScript/',
+    'http://127.0.0.1:8000/api/extras/scripts/validity_scripts/RunTests/',
     headers={'Authorization': f'Token {token}'},
     json={'commit': True, 'data': {'make_report': False}},
 )
 
 result_id = resp.json()['result']['id']
 
-while (status := nb.extras.job_results.get(id=result_id).status.value) != 'completed':
+while (status := nb.core.jobs.get(id=result_id).status.value) != 'completed':
     print(f'Not finished yet, current status: {status}')
-    time.sleep(5) # we need to wait until script finishes
+    time.sleep(1) # we need to wait until script finishes
 ```
 
-Now when the script have finished its work we can check the test results.
+Now when the script has finished its work we can check the test results.
 You can see that our test is passed for device1 and failed for device2. As you may remember from the beginning, interface **ge0/0/1** from **device2** has no description.
 
 !!! note
