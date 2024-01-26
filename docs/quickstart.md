@@ -13,7 +13,7 @@ You can figure out how to work with Validity using NetBox Web UI in this video:
 
 
 ## Polling
-    Current guide is based on a Git repository as a source of device configuration data. If you want get device configuration or other data directly from network devices, consider [Quick Start With Polling](quickstart_polling.md) article.
+Current guide is based on a Git repository as a source of device configuration data. If you want to get device configuration or other data directly from network devices, consider [Quick Start With Polling](quickstart_polling.md) article.
 
 
 ## Preparing Git repository
@@ -88,7 +88,7 @@ device2 = nb.dcim.devices.create(
 ```
 
 ### Data Source and Serializer instances
-* Create **device_repo** Data Source entity, mark it as default
+* Create Data Source entity, mark it as default
 
 !!! warning
     Unfortunately, according to this [NetBox bug](https://github.com/netbox-community/netbox/issues/14879), configuration of custom fields for a Data Source is not available through REST API prior to NetBox v3.7.2
@@ -108,7 +108,7 @@ data_source = nb.core.data_sources.create(
 )
 ```
 
-* Create Serializer to translate device configuration into JSON and then bind this serializer to created devices (e.g. via device type).
+* Create Serializer to translate device configuration into JSON and then bind this Serializer to created devices (e.g. via device type).
 
 ```python
 template = '''
@@ -177,7 +177,7 @@ print(json.dumps(serialized_state['results'][0]['value'], indent=4))
 
 ### Compliance Test
 
-* Create a selector. Selector is used to gather some subset of devices to later apply compliance tests only to that subset. For now, we just need a selector that gathers all the devices
+* Create a Selector. Selector is used to gather some subset of devices to later apply Compliance Tests only to that subset. For now, we just need a selector that gathers all the devices
 
 ```python
 selector = nb.plugins.validity.selectors.create(name='all', name_filter='.*')
@@ -209,8 +209,8 @@ So, if these 2 lists are equal, then each interface on the device has a descript
 
 ## Running the script and evaluating the results
 
-Now all the required entities are created, and you can execute the test you created.
-This could be done via **RunTests** script.
+Now all the required entities are created, and you can execute the test you've created.
+This can be done via **RunTests** script.
 
 ```python
 resp = requests.post(

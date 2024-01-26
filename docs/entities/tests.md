@@ -142,13 +142,13 @@ One of the `LOW`, `MIDDLE` or `HIGH`. This param influences the future analysis 
 The list of selectors this test is bound to.
 
 #### Description
-Description of the test is mandatory. Writing the meaningful description for each of your tests may facilitate the future usage/modification of this test and is considered a best practice.
+Description of the test is mandatory. Writing meaningful description for each of your tests may facilitate the future usage/modification of this test and is considered a best practice.
 
 #### Expression
-Inside this field at the test page you can view your expression defined either via DB or via Git.
+Inside this field at the test page you can view your expression defined either via DB or via Data Source.
 
 At the add/edit form this field is used to store an expression code inside the DB.
-This option fits well when you want to quickly check your test or just don't want to make things complex with Git.
+This option fits well when you want to quickly check your test or just don't want to make things complex with Git-based storage.
 
 #### Data Source and Data File
 

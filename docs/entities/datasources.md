@@ -26,9 +26,9 @@ For instance, if you had Github repository `https://github.com/amyasnikov/device
 
 #### Device Config Path
 
-This is the template of the path to device config file inside the repository. You can use [Jinja2](https://jinja.palletsprojects.com/en/3.0.x/templates/) expressions for this template. The only available context variable is `device`.
+This is the template of the path to device config file inside the Data Source. You can use [Jinja2](https://jinja.palletsprojects.com/en/3.0.x/templates/) expressions for this template. The only available context variable is `device`.
 
-Let's suppose that you have a repository with device configurations
+Let's suppose that you have a Data Source with device configurations
 
 ```console
 device_repo

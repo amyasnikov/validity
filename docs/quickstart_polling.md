@@ -62,7 +62,7 @@ ip2 = nb.ipam.ip_addresses.create(
     assigned_object_id=junos2_fxp.id
 )
 ```
-When IPs are bound to interfaces and interfaces are bound to devices, primary IPs can be assigned
+When IPs are bound to interfaces and interfaces are bound to devices, primary IPs can be assigned to devices
 
 ```python
 junos1.primary_ip4 = ip1.id
@@ -75,6 +75,7 @@ Now both devices have Primary IP and are ready to be polled.
 
 #### Commands and Poller
 Let's set up 2 [Commands](entities/commands.md):
+
 * **show configuration**
 * **show chassis routing-engine**
 
@@ -95,7 +96,7 @@ show_re = nb.plugins.validity.commands.create(
     label='show_re',
     serializer=json_serializer.id,
     type='CLI',
-    parameters={'cli_command': 'show configuration | display json | no-more'}
+    parameters={'cli_command': 'show chassis routing-engine | display json | no-more'}
 )
 ```
 
@@ -114,7 +115,7 @@ junos_poller = nb.plugins.validity.pollers.create(
 Finally, Poller has to be bound to appropriate Devices. Let's do it at Manufacturer level.
 
 ```python
-juniper.custom_fields = {'poller': junos_poller}
+juniper.custom_fields = {'poller': junos_poller.id}
 juniper.save()
 ```
 
@@ -122,11 +123,11 @@ juniper.save()
 
 For polling purposes Validity creates one special Data Source: **Validity Polling**. "Sync" of this Data Source causes polling of all bound Devices.
 
-Bind Devices to Data Source can be done in 2 ways: either by marking the Data Source as default or by assigning the Data Source to a Tenant which contains required Devices.
+Binding of devices to Data Source can be done in 2 ways: either by marking the Data Source as default or by assigning the Data Source to a Tenant which contains required devices.
 
-Let's create a Tenant with bound Data Source and bind our Junos Devices to this Tenant.
+Let's create a Tenant with bound Data Source and bind our Junos devices to this Tenant.
 ```python
-validity_polling = nb.plugins.validity.get(name='Validity Polling')
+validity_polling = nb.core.data_sources.get(name='Validity Polling')
 
 tenant1 = nb.tenancy.tenants.create(
     name='tenant1',
@@ -135,7 +136,7 @@ tenant1 = nb.tenancy.tenants.create(
 )
 
 junos1.tenant = tenant1.id
-junos2.tenant = tenant2.id
+junos2.tenant = tenant1.id
 
 junos1.save()
 junos2.save()

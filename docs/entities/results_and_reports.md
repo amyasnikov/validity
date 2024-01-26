@@ -60,7 +60,7 @@ For this expression you can get the following explanation:
 
 Report ties together Test Results generated from one execution of the [Run Compliance Tests](scripts.md#run-compliance-tests) script.
 
-The user may choose either to create a report together with the Test Results during the Run Compliance Tests script execution or no.
+A user may choose either to create a report together with the Test Results during the Run Compliance Tests script execution or no.
 
 At the report page you can observe test result statistics (total and grouped by severity). Moreover, in web GUI you can choose an additional param to group the results by and display the statistics for each group.
 

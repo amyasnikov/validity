@@ -1,6 +1,6 @@
 # Name Sets
 
-Name Sets is the method of creating some arbitrary Python functions or classes to later use them in Compliance Tests. Name Sets also could be used to inject some Python standard library functions into test expressions.
+Name Sets is the method of creating some arbitrary Python functions or classes to later use them in Compliance Tests. Name Sets also can be used to inject some Python standard library functions into test expressions.
 
 One of the common approaches is to move complex expression from tests into a nameset function with appropriate name.
 Consider this serialized config:

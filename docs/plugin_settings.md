@@ -1,7 +1,7 @@
 # Plugin Settings
 
 
-Validity has some settings which could be changed through [PLUGINS_CONFIG](https://docs.netbox.dev/en/stable/plugins/#configure-plugin) variable inside your `configuration.py`.
+Validity has some settings which can be changed through [PLUGINS_CONFIG](https://docs.netbox.dev/en/stable/plugins/#configure-plugin) variable inside your `configuration.py`.
 
 ## Settings
 
