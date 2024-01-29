@@ -51,7 +51,7 @@ def create_polling_datasource(apps, schema_editor):
         source_url="/",
         description=_("Required by Validity. Polls bound devices and stores the results"),
         custom_field_data={
-            "device_config_path": "{{device | slugify}}/{{ command.label }}.txt",
+            "device_command_path": "{{device | slugify}}/{{ command.label }}.txt",
             "default": False,
             "web_url": "",
         },

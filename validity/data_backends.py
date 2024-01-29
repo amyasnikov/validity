@@ -51,9 +51,8 @@ class PollingBackend(DataBackend):
 
     @contextmanager
     def fetch(self, device_filter: Q | None = None):
-        device_filter = device_filter or Q()
         with TemporaryDirectory() as dir_name:
-            devices = self.bound_devices_qs(device_filter)
+            devices = self.bound_devices_qs(device_filter or Q())
             result_generators = [
                 poller.get_backend().poll(device_group)
                 for poller, device_group in groupby(devices, key=lambda device: device.poller)
