@@ -44,17 +44,17 @@ def create_custom_fields(db):
             ),
             CustomField(
                 name="device_config_path",
-                type="string",
+                type="text",
                 required=False,
             ),
             CustomField(
                 name="web_url",
-                type="string",
+                type="text",
                 required=False,
             ),
             CustomField(
                 name="device_command_path",
-                type="string",
+                type="text",
                 required=False,
             ),
             CustomField(
