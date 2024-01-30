@@ -11,7 +11,7 @@ from netbox.models import (
     ExportTemplatesMixin,
     NetBoxModel,
     RestrictedQuerySet,
-    WebhooksMixin,
+    EventRulesMixin,
 )
 
 from validity.utils import git
@@ -89,7 +89,7 @@ class BaseReadOnlyModel(
     CustomLinksMixin,
     CustomValidationMixin,
     ExportTemplatesMixin,
-    WebhooksMixin,
+    EventRulesMixin,
     models.Model,
 ):
 
