@@ -12,7 +12,7 @@ from .base import BaseModel, DataSourceMixin
 class Serializer(DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     extraction_method = models.CharField(
-        _("Config Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices, default="TTP"
+        _("Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices, default="TTP"
     )
     template = models.TextField(_("Template"), blank=True)
 
