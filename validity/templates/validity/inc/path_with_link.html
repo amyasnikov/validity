@@ -4,9 +4,11 @@
     <div class="col mt-0 mb-0 pt-0 pb-0">
       {{ data_file | linkify | placeholder }}
     </div>
-    {% if file_path and web_url %}
+    {% if data_file and web_url %}
     <div class="col mt-0 mb-0 pt-0 pb-0 justify-content-end align-self-end d-flex">
-      <a class="btn btn-gray btn-sm" target=”_blank” href="{% urljoin web_url data_file.path %}">⤴</a>
+      <a class="btn btn-gray btn-sm" target=”_blank” href="{% urljoin web_url data_file.path %}">
+        <i class="mdi mdi-arrow-up-right"></i>
+      </a>
     </div>
     {% endif %}
 </div>
