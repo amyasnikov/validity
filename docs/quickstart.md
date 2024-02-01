@@ -4,7 +4,7 @@
 
 You can figure out how to work with Validity using NetBox Web UI in this video:
 
-[![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)
+[![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://www.youtube.com/watch?v=QR04rGwMuPQ)
 
 # CLI Quick Start
 !!! note

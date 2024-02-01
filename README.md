@@ -65,7 +65,7 @@ Read the full documentation on [validity.readthedocs.io](https://validity.readth
 
 A short video about first steps with Validity:
 
-[![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://youtu.be/Hs2IUE6rKC4)
+[![Watch the video](https://img.youtube.com/vi/Hs2IUE6rKC4/0.jpg)](https://www.youtube.com/watch?v=QR04rGwMuPQ)
 
 
 ## Contributing
