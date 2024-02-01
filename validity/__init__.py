@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 class NetBoxValidityConfig(PluginConfig):
     name = "validity"
-    verbose_name = "Validity: Configuration Compliance"
-    description = "Vendor-agnostic framework to build your own configuration compliance rule set"
+    verbose_name = "Validity"
+    description = "Write and run auto tests for network devices"
     author = "Anton Miasnikov"
     author_email = "anton2008m@gmail.com"
-    version = "1.4.2"
+    version = "2.0.0"
     base_url = "validity"
     django_apps = ["bootstrap5"]
-    min_version = "3.4.0"
+    min_version = "3.5.0"
 
     # custom field
     netbox_version = NetboxVersion(VERSION)
