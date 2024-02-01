@@ -1,7 +1,7 @@
 {% load validity %}
 <div class="float-end">
     <div class="btn-group btn-group-sm" role="group">
-        <a href="{{ request.get_full_path | add_query_param:"format=json" }}" type="button" class="btn btn-outline-dark{% if format == 'json' %} active{% endif %}">JSON</a>
-        <a href="{{ request.get_full_path | add_query_param:"format=yaml"}}" type="button" class="btn btn-outline-dark{% if format == 'yaml' %} active{% endif %}">YAML</a>
+        <a href="{% url_with_query_params request format='json' %}" type="button" class="btn btn-outline-dark{% if format == 'json' %} active{% endif %}">JSON</a>
+        <a href="{% url_with_query_params request format='yaml' %}" type="button" class="btn btn-outline-dark{% if format == 'yaml' %} active{% endif %}">YAML</a>
     </div>
 </div>

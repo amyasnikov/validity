@@ -2,6 +2,7 @@ from typing import Any
 
 from django import template
 from django.db.models import Model
+from django.http.request import HttpRequest
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from utilities.templatetags.builtins.filters import linkify, placeholder
@@ -47,6 +48,14 @@ def add_query_param(url: str, param: str) -> str:
 @register.filter
 def colorful_percentage(percent):
     return _colorful_percentage(percent)
+
+
+@register.simple_tag
+def url_with_query_params(request: HttpRequest, **params):
+    params = {k: [v] if not isinstance(v, list) else v for k, v in params.items()}
+    query_params = request.GET.copy()
+    query_params |= params
+    return f"{request.path}?{query_params.urlencode()}"
 
 
 @register.simple_tag
