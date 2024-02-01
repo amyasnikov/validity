@@ -57,9 +57,11 @@ jq.first(expression: str, json: dict | list | str | int | float) -> Any
 
 This is the representation of the current device the test is running against. The instance of NetBox `Device` model
 
-**device.config** - the serialized config of the device
+**device.state** - special dictionary which contains all device [State](../features/state.md). Keys of the dictionary are either command labels or "config". Allows getting access to its values by attribute name, e.g. `device.state.show_version` is equal to `device.state['show_version']`
 
-**device.dynamic_pair** - dynamic pair for this device, it is also `Device` instance. May be equal to `None` if 
+**device.state.config**, **device.config** - the serialized config of the Device
+
+**device.dynamic_pair** - dynamic pair for this device, it is also `Device` instance. May be equal to `None`
 
 Device has multiple built-in fields and methods that can be used in test expressions.
 
@@ -101,6 +103,15 @@ jq.first(".interfaces.ge0/0/1", device.config) == jq.first(
 Here we used `config()` function, because the peering device obtained from ORM has no `.config` property
 
 
+#### state()
+
+```python
+state(device: Device) -> dict
+```
+
+Function to get device state (the same as device.state) if **.state** property is not available (see previous example with **config()**)
+
+
 #### Expression restrictions
 
 In test expressions you **CANNOT USE**:
@@ -131,19 +142,19 @@ One of the `LOW`, `MIDDLE` or `HIGH`. This param influences the future analysis 
 The list of selectors this test is bound to.
 
 #### Description
-Description of the test is mandatory. Writing the meaningful description for each of your tests may facilitate the future usage/modification of this test and is considered a best practice.
+Description of the test is mandatory. Writing meaningful description for each of your tests may facilitate the future usage/modification of this test and is considered a best practice.
 
 #### Expression
-Inside this field at the test page you can view your expression defined either via DB or via Git.
+Inside this field at the test page you can view your expression defined either via DB or via Data Source.
 
 At the add/edit form this field is used to store an expression code inside the DB.
-This option fits well when you want to quickly check your test or just don't want to make things complex with Git.
+This option fits well when you want to quickly check your test or just don't want to make things complex with Git-based storage.
 
-#### Git Repository and File Path
+#### Data Source and Data File
 
 !!! info
-    You can use only one option per one test instance: you either define your expression via DB (Expression field) or via Git (Git Repository and File Path fields). You can't use both approaches at the same time for the same test.
+    You can use only one option per one Test instance: you either define your expression via DB (Expression field) or via Data Source (Data Source and Data File fields). You can't use both approaches at the same time for the same Test.
 
-This pair of fields allows you to define the expression as a file in the Git repository.
+This pair of fields allows you to store test expression as a file in a Data Source (likely pointing to a git repository).
 
-This is the best option if you have plenty of complex tests and want to get all the benefits from storing them under version control.
+This is the best option if you have plenty of complex Tests and want to get all the benefits from storing them under version control.

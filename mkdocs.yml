@@ -6,16 +6,18 @@ nav:
   - Installation: installation.md
   - Plugin Settings: plugin_settings.md
   - Quickstart: quickstart.md
+  - 'Quickstart: Polling': quickstart_polling.md
   - Entities:
-    - Git Repositories: entities/git_repos.md
+    - Data Sources: entities/datasources.md
     - Selectors: entities/selectors.md
-    - Config Serializers: entities/serializers.md
+    - Serializers: entities/serializers.md
     - Compliance Tests: entities/tests.md
     - Name Sets: entities/namesets.md
     - Results & Reports: entities/results_and_reports.md
     - Scripts: entities/scripts.md
   - Features & Tips:
     - How to write the Tests: features/howto_write_tests.md
+    - How to work with Device State: features/state.md
     - Dynamic Pairs: features/dynamic_pairs.md
     - Webhooks: features/webhooks.md
 

@@ -2,25 +2,7 @@
 
 Validity is shipped together with some [Custom Scripts](https://docs.netbox.dev/en/stable/customization/custom-scripts/).
 
-The scripts are available under `Other > Scripts` GUI menu.
-
-!!! note
-    If you don't see Validity scripts under `Other > Scripts`, please check the [installation](../installation.md) steps related to custom scripts.
-
-## Sync Git Repositories
-
-This is the script to pull the changes from remote Git repository into a local copy.
-
-The local copy is then used to display serialized configs and leverage the entities defined through git files (Tests, Name Sets, Serializers).
-
-You can run this script for an individual Git Repository via `Sync` button at the Repository web page.
-
-#### Params
-
-| **Param**    | **Description**                         |
-|--------------|-----------------------------------------|
-| Repositories | Specific list of repositories to update |
-
+The scripts are available under `Customization > Scripts` GUI menu.
 
 ## Run Compliance Tests
 
@@ -32,9 +14,12 @@ The script may generate a lot of DB queries. To spread the queries over time you
 
 #### Params
 
-| **Param**              | **API Param** | **Description**                                              |
-|------------------------|---------------|--------------------------------------------------------------|
-| Sync Repositories      | repositories  | Update all Git Repositories before the run                   |
-| Make Compliance Report | make_report   | Create Report together with Test Results                     | 
-| Specific selectors     | selectors     | Run the tests only for a limited number of selectors         |
-| Specific devices       | devices       | Run the tests only for a limited number of devices.          |
+| **Param**                   | **API Param** | **Description**                                                   |
+|-----------------------------|---------------|-------------------------------------------------------------------|
+| Sync Data Sources           | sync_datasources  | Sync all Data Sources which are bound to Devices<br/> participating in the script execution|
+| Make Compliance<br/>Report  | make_report   | Create Report together with Test Results                          | 
+| Specific Selectors          | selectors     | Run the tests only for a limited number of selectors              |
+| Specific Devices            | devices       | Run the tests only for a limited number of devices.               |
+| Specific Test Tags          | test_tags     | Run only those tests which have at least one of<br/> the specified tags|
+| Explanation Verbosity<br/>Level | explanation_verbosity | **0** - No explanation at all.<br/>**1** - Explanation of the calculation steps<br/>**2** - the same as **1** plus deepdiff value in case of<br/> comparisons|
+| Override DataSource         | override_datasource| Ignore Data Sources bound to Devices and use<br/> this one instead. It may be useful if you want to<br/> use **Validity Polling** Data Source just to run some<br/> operational tests only for now.|

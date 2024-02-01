@@ -8,7 +8,7 @@ The concept of 2 similar network devices working together and providing redundan
 ## How to define a dynamic pair
 
 Dynamic pairs are defined under **Selector** instance (**Dynamic Pairs** field).
-The main idea is to define some kind of rule which can definitely match one device with another within one Selector.
+The main idea is to define some kind of a rule which can definitely match one device with another within one Selector.
 
 #### By Name
 

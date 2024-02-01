@@ -8,7 +8,7 @@ This works in the following manner: you define one or more filters and choose ho
 An additional purpose of a selector is to define how dynamic pairs for the devices are formed.
 
 !!! Warning
-    Bear in mind that one device could belong to different selectors. If you applied the same test to multiple selectors containing the same device, this test will be executed multiple times for this device.
+    Bear in mind that one device can belong to different selectors. If you apply the same test to multiple selectors containing the same device, this test will be executed multiple times for this device.
 
 
 ## Fields
@@ -54,9 +54,10 @@ For instance, if you have Location filter "`room-403`, `room-404`", this will se
 
 #### Dynamic Pairs
 This field manages the creation of dynamic pairs during the test.
-For now, it has 2 possible values:
+For now, it has 3 possible values:
 
 * **NO** - dynamic pairs won't be created
 * **By name** - dynamic pairs will be created according to the **Device Name Filter** value
+* **By tag** - dynamic pairs will be created based on tags assigned to devices
 
 More info: [Dynamic Pairs](../features/dynamic_pairs.md).
