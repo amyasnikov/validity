@@ -1,7 +1,7 @@
 from dcim.filtersets import DeviceFilterSet
 from dcim.models import Device, DeviceType, Manufacturer
 from dcim.tables import DeviceTable
-from django.db.models import Q
+from django.db.models import Count, Q
 from netbox.views import generic
 from utilities.views import register_model_view
 
@@ -10,7 +10,7 @@ from .base import TableMixin
 
 
 class SerializerListView(generic.ObjectListView):
-    queryset = models.Serializer.objects.all()
+    queryset = models.Serializer.objects.annotate(command_count=Count("commands"))
     table = tables.SerializerTable
     filterset = filtersets.SerializerFilterSet
     filterset_form = forms.SerializerFilterForm

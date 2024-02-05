@@ -79,7 +79,9 @@ class SeverityChoices(MemberMixin, TextChoices, metaclass=ColoredChoiceMeta):
 
 class ExtractionMethodChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
+    TEXTFSM = "TEXTFSM", "TEXTFSM", "blue"
     YAML = "YAML", "YAML", "info"
+    XML = "XML", "XML", "orange"
     ROUTEROS = "ROUTEROS", "ROUTEROS", "green"
 
 

@@ -18,6 +18,7 @@ class Serializer(DataSourceMixin, BaseModel):
 
     clone_fields = ("template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "template"
+    requires_template = {"TTP", "TEXTFSM"}
     _serialize = serialize
 
     class Meta:
@@ -32,16 +33,18 @@ class Serializer(DataSourceMixin, BaseModel):
 
     @property
     def _validate_db_or_git_filled(self) -> bool:
-        return self.extraction_method == "TTP"
+        return self.extraction_method in self.requires_template
 
     def clean(self) -> None:
         super().clean()
-        if self.extraction_method != "TTP" and self.template:
-            raise ValidationError({"template": _("Template must be empty if extraction method is not TTP")})
-        if self.extraction_method != "TTP" and (self.data_source or self.data_file):
-            raise ValidationError(_("Git properties may be set only if extraction method is TTP"))
-        if self.extraction_method == "TTP" and not (self.template or self.data_source):
-            raise ValidationError(_("Template must be defined if extraction method is TTP"))
+        if self.extraction_method not in self.requires_template and self.template:
+            raise ValidationError({"template": _("Template must be empty for selected extraction method")})
+        if self.extraction_method not in self.requires_template and (self.data_source or self.data_file):
+            raise ValidationError(_("Data Source/File properties cannot be set for selected extraction method"))
+        if self.extraction_method in self.requires_template and not (
+            self.template or self.data_source and self.data_file
+        ):
+            raise ValidationError(_("Template must be defined for selected extraction method"))
 
     @property
     def bound_devices(self) -> models.QuerySet[Device]:
