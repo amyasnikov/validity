@@ -11,7 +11,7 @@ from validity.choices import CommandTypeChoices, ConnectionTypeChoices
 from validity.fields import EncryptedDictField
 from validity.managers import CommandQS, PollerQS
 from validity.pollers import get_poller
-from validity.subforms import CLICommandForm
+from validity.subforms import CLICommandForm, JSONAPICommandForm, NetconfCommandForm
 from .base import BaseModel, SubformMixin
 from .serializer import Serializer
 
@@ -51,7 +51,7 @@ class Command(SubformMixin, BaseModel):
 
     subform_type_field = "type"
     subform_json_field = "parameters"
-    subforms = {"CLI": CLICommandForm}
+    subforms = {"CLI": CLICommandForm, "json_api": JSONAPICommandForm, "netconf": NetconfCommandForm}
 
     class Meta:
         ordering = ("name",)

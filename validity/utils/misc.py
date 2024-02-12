@@ -1,8 +1,9 @@
+import copy
 import inspect
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from itertools import islice
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from typing import TYPE_CHECKING, Any, Callable, Collection, Iterable
 
 from core.exceptions import SyncError
 from django.utils.html import format_html
@@ -91,3 +92,26 @@ def batched(iterable: Iterable, n: int, container: type = list):
         if not batch:
             return
         yield batch
+
+
+Json = dict[str, "Json"] | list["Json"] | int | float | str | None
+
+
+def process_json_values(data: Json, match_fn: Callable[[Json], bool], transform_fn: Callable[[Json], Json]) -> Json:
+    """
+    Traverse JSON-like struct recursively and apply "tranform_fn" to values matched by "match_fn"
+    """
+
+    def transform(data_item: Json) -> None:
+        if not isinstance(data_item, Collection):
+            return
+        iterator = data_item.items() if isinstance(data_item, dict) else enumerate(data_item)
+        for key, value in iterator:
+            if match_fn(value):
+                data_item[key] = transform_fn(value)
+            elif isinstance(value, Collection):
+                transform(value)
+
+    data_copy = copy.deepcopy(data)
+    transform(data_copy)
+    return data_copy

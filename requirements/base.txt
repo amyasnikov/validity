@@ -5,6 +5,7 @@ jq>=1.4.0,<2
 deepdiff>=6.2.0,<7
 simpleeval==0.9.*
 netmiko>=4.0.0,<5
+scrapli_netconf==2024.1.30
 textfsm>=1.1.3,<2
 xmltodict<1
 
