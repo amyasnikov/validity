@@ -4,6 +4,7 @@ from netbox.views import generic
 from utilities.views import register_model_view
 
 from validity import filtersets, forms, models, tables
+from validity.pollers.default_credentials import all_credentials
 from .base import TableMixin
 
 
@@ -40,3 +41,7 @@ class PollerBulkDeleteView(generic.BulkDeleteView):
 class PollerEditView(generic.ObjectEditView):
     queryset = models.Poller.objects.all()
     form = forms.PollerForm
+    template_name = "validity/poller_edit.html"
+
+    def get_extra_context(self, request, instance):
+        return {"default_credentials": all_credentials}

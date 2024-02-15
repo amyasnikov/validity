@@ -79,7 +79,7 @@ class Poller(BaseModel):
         return self.name
 
     @property
-    def credentials(self):
+    def credentials(self) -> dict:
         return self.public_credentials | self.private_credentials.decrypted
 
     def get_connection_type_color(self):

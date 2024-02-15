@@ -1,15 +1,16 @@
 from core.forms.mixins import SyncedDataMixin
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import CharField, Textarea, ValidationError
+from django.forms import CharField, ChoiceField, Select, Textarea, ValidationError
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
-from utilities.forms import get_field_value
+from utilities.forms import add_blank_choice, get_field_value
 from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
 from validity import models
+from validity.choices import ConnectionTypeChoices
 from .helpers import SubformMixin
 
 
@@ -115,6 +116,9 @@ class NameSetForm(NetBoxModelForm):
 
 
 class PollerForm(NetBoxModelForm):
+    connection_type = ChoiceField(
+        choices=add_blank_choice(ConnectionTypeChoices.choices), widget=Select(attrs={"id": "connection_type_select"})
+    )
     commands = DynamicModelMultipleChoiceField(queryset=models.Command.objects.all())
     public_credentials = CharField(
         required=False,

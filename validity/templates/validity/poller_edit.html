@@ -1,0 +1,14 @@
+{% extends 'generic/object_edit.html' %}
+{% load static %}
+{% block javascript %}
+{{ block.super }}
+<script id="default_credentials" type="text/json">
+{{ default_credentials.model_dump_json | safe }}
+</script>
+<script
+  defer
+  type="text/javascript"
+  src="{% static 'validity/connection-type-select.js' %}"
+  onerror="window.location='{% url 'media_failure' %}?filename=validity/connection-type-select.js'">
+</script>
+{% endblock %}
