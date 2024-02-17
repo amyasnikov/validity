@@ -1,10 +1,23 @@
 import json
+from contextlib import suppress
 from typing import Any, Sequence
 
-from django.forms import ChoiceField, JSONField, Select
+from django.forms import ChoiceField, JSONField, Select, Textarea
 from utilities.forms import get_field_value
 
 from validity.fields import EncryptedDict
+
+
+class PrettyJSONWidget(Textarea):
+    def __init__(self, attrs=None, indent=2) -> None:
+        super().__init__(attrs)
+        self.attrs.setdefault("style", "font-family:monospace")
+        self.indent = indent
+
+    def format_value(self, value: Any) -> str | None:
+        with suppress(Exception):
+            return json.dumps(json.loads(value), indent=self.indent)
+        return super().format_value(value)
 
 
 class IntegerChoiceField(ChoiceField):

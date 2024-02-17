@@ -11,7 +11,7 @@ from utilities.forms.widgets import HTMXSelect
 
 from validity import models
 from validity.choices import ConnectionTypeChoices
-from .helpers import SubformMixin
+from .helpers import PrettyJSONWidget, SubformMixin
 
 
 class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
@@ -120,23 +120,14 @@ class PollerForm(NetBoxModelForm):
         choices=add_blank_choice(ConnectionTypeChoices.choices), widget=Select(attrs={"id": "connection_type_select"})
     )
     commands = DynamicModelMultipleChoiceField(queryset=models.Command.objects.all())
-    public_credentials = CharField(
-        required=False,
-        help_text=_("Enter non-private parameters of the connection type in JSON format."),
-        widget=Textarea(attrs={"style": "font-family:monospace"}),
-    )
-    private_credentials = CharField(
-        required=False,
-        help_text=_(
-            "Enter private parameters of the connection type in JSON format. "
-            "All the values are going to be encrypted."
-        ),
-        widget=Textarea(attrs={"style": "font-family:monospace"}),
-    )
 
     class Meta:
         model = models.Poller
         fields = ("name", "commands", "connection_type", "public_credentials", "private_credentials", "tags")
+        widgets = {
+            "public_credentials": PrettyJSONWidget(),
+            "private_credentials": PrettyJSONWidget(),
+        }
 
     def clean(self):
         connection_type = self.cleaned_data.get("connection_type") or get_field_value(self, "connection_type")

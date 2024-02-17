@@ -66,8 +66,20 @@ class Command(SubformMixin, BaseModel):
 class Poller(BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     connection_type = models.CharField(_("Connection Type"), max_length=50, choices=ConnectionTypeChoices.choices)
-    public_credentials = models.JSONField(_("Public Credentials"), default=dict, blank=True)
-    private_credentials = EncryptedDictField(_("Private Credentials"), blank=True)
+    public_credentials = models.JSONField(
+        _("Public Credentials"),
+        default=dict,
+        blank=True,
+        help_text=_("Enter non-private parameters of the connection type in JSON format."),
+    )
+    private_credentials = EncryptedDictField(
+        _("Private Credentials"),
+        blank=True,
+        help_text=_(
+            "Enter private parameters of the connection type in JSON format. "
+            "All the values are going to be encrypted."
+        ),
+    )
     commands = models.ManyToManyField(Command, verbose_name=_("Commands"), related_name="pollers")
 
     objects = PollerQS.as_manager()
