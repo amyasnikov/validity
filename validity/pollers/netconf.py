@@ -14,5 +14,6 @@ class ScrapliNetconfPoller(ConsecutivePoller):
     host_param_name = "host"
 
     def poll_one_command(self, driver: NetconfDriver, command: "Command") -> str:
-        response = driver.rpc(command.parameters["rpc"])
-        return response.result
+        with driver:
+            response = driver.rpc(command.parameters["rpc"])
+            return response.result

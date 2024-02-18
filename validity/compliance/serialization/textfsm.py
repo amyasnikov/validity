@@ -3,7 +3,7 @@ import io
 import textfsm
 
 
-def serialize_textfsm(plain_data: str, template: str):
+def serialize_textfsm(plain_data: str, template: str) -> list[dict]:
     dict_results = []
     template_file = io.StringIO(template)
     fsm = textfsm.TextFSM(template_file)

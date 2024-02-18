@@ -3,6 +3,7 @@ Subforms are needed to
     1. Render part of the main form for JSON Field
     2. Validate JSON Field
 """
+import textwrap
 import xml.etree.ElementTree as ET
 
 from django import forms
@@ -31,7 +32,16 @@ class JSONAPICommandForm(BootstrapMixin, forms.Form):
 
 
 class NetconfCommandForm(BootstrapMixin, forms.Form):
-    rpc = forms.CharField(label=_("RPC"), widget=forms.Textarea(attrs={"placeholder": "<get-config/>"}))
+    get_config = textwrap.dedent(
+        """
+        <get-config>
+          <source>
+            <running/>
+          </source>
+        </get-config>
+        """
+    ).lstrip("\n")
+    rpc = forms.CharField(label=_("RPC"), widget=forms.Textarea(attrs={"placeholder": get_config}))
 
     def clean_rpc(self):
         rpc = self.cleaned_data["rpc"]
