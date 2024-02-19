@@ -207,6 +207,7 @@ class SerializerSerializer(NetBoxModelSerializer):
             "template",
             "data_source",
             "data_file",
+            "parameters",
             "tags",
             "custom_fields",
             "created",

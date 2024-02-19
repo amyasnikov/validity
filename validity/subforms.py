@@ -6,12 +6,20 @@ Subforms are needed to
 import textwrap
 import xml.etree.ElementTree as ET
 
+import jq
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from utilities.forms import BootstrapMixin
 
 from validity.choices import JSONAPIMethodChoices
 from validity.utils.misc import reraise
+
+
+class EmptyForm(BootstrapMixin, forms.Form):
+    pass
+
+
+# Command Subforms
 
 
 class CLICommandForm(BootstrapMixin, forms.Form):
@@ -21,9 +29,6 @@ class CLICommandForm(BootstrapMixin, forms.Form):
 class JSONAPICommandForm(BootstrapMixin, forms.Form):
     method = forms.ChoiceField(label=_("Method"), initial="GET", choices=JSONAPIMethodChoices.choices)
     url_path = forms.CharField(label=_("URL Path"))
-    jq_query = forms.CharField(
-        label=_("JQ Query"), required=False, help_text=_("Process API answer with this JQ expression")
-    )
     body = forms.JSONField(
         label=_("Body"),
         required=False,
@@ -48,3 +53,25 @@ class NetconfCommandForm(BootstrapMixin, forms.Form):
         with reraise(Exception, forms.ValidationError, {"rpc": "Invalid XML"}):
             ET.fromstring(rpc)
         return rpc
+
+
+# Serializer Subforms
+
+
+class SerializerBaseForm(BootstrapMixin, forms.Form):
+    jq_expression = forms.CharField(
+        label=_("JQ Expression"),
+        required=False,
+        help_text=_("Post-process parsing result with this JQ expression"),
+        widget=forms.TextInput(attrs={"style": "font-family:monospace"}),
+    )
+
+    def clean_jq_expression(self):
+        if jq_expression := self.cleaned_data.get("jq_expression"):
+            with reraise(Exception, forms.ValidationError, {"jq_expression": "Invalid JQ Expression"}):
+                jq.compile(jq_expression)
+        return jq_expression
+
+
+class XMLSerializerForm(SerializerBaseForm):
+    drop_attributes = forms.BooleanField(label=_("Drop XML Attributes"), initial=False, required=False)

@@ -23,6 +23,9 @@
         </div>
       </div>
       <div class="row mb-3">
+        {% include 'validity/inc/parameters.html' with title='Parameters' parameters=object.parameters form=object.parameters_form only %}
+      </div>
+      <div class="row mb-3">
         {% include 'inc/panels/related_objects.html' %}
       </div>
       <div class="row">

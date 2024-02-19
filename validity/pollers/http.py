@@ -1,15 +1,12 @@
-import json
 from typing import TYPE_CHECKING
 
-import jq
 import requests
 from dcim.models import Device
 from pydantic import BaseModel, Field
 
 from validity.j2_env import Environment
-from validity.utils.misc import process_json_values, reraise
+from validity.utils.json import transform_json
 from .base import ConsecutivePoller
-from .exceptions import PollingError
 
 
 if TYPE_CHECKING:
@@ -30,10 +27,13 @@ class HttpDriver:
         self.request_params = RequestParams.model_validate(poller_credentials)
 
     def render_body(self, orig_body: dict, command: "Command"):
-        return process_json_values(
+        return transform_json(
             orig_body,
-            match_fn=lambda val: isinstance(val, str),
-            transform_fn=lambda val: Environment().from_string(val).render(device=self.device, command=command),
+            match_fn=lambda _, value: isinstance(value, str),
+            transform_fn=lambda key, value: (
+                key,
+                Environment().from_string(value).render(device=self.device, command=command),
+            ),
         )
 
     def request(self, command: "Command") -> str:
@@ -52,9 +52,4 @@ class RequestsPoller(ConsecutivePoller):
         return self.credentials | {"device": device}
 
     def poll_one_command(self, driver: HttpDriver, command: "Command") -> str:
-        answer = driver.request(command)
-        with reraise((json.JSONDecodeError, ValueError), PollingError, device_wide=False):
-            json_answer = json.loads(answer)
-            if jq_query := command.parameters.get("jq_query"):
-                json_answer = jq.first(jq_query, json_answer)
-            return json.dumps(json_answer)
+        return driver.request(command)

@@ -39,25 +39,7 @@
       {% include 'inc/panels/tags.html' %}
     </div>
     <div class="col col-md-7">
-      <div class="card">
-        <h5 class="card-header">Parameters</h5>
-        <div class="card-body">
-          <table class="table table-hover attr-table">
-            {% for field_name, field in object.parameters_form.base_fields.items %}
-            <tr>
-              <th scope="row">{{ field.label }}</th>
-              <td>{{ object.parameters | get_key:field_name | placeholder }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="2" class="text-muted">
-                No parameters defined
-              </td>
-            </tr>
-            {% endfor %}
-          </table>
-        </div>
-      </div>
+      {% include 'validity/inc/parameters.html' with title='Parameters' parameters=object.parameters form=object.parameters_form only %}
     </div>
   </div>
 {% endblock content %}

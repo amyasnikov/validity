@@ -6,20 +6,31 @@ from django.utils.translation import gettext_lazy as _
 from validity.choices import ExtractionMethodChoices
 from validity.compliance.serialization import serialize
 from validity.netbox_changes import DEVICE_ROLE_RELATION
-from .base import BaseModel, DataSourceMixin
+from validity.subforms import EmptyForm, SerializerBaseForm, XMLSerializerForm
+from .base import BaseModel, DataSourceMixin, SubformMixin
 
 
-class Serializer(DataSourceMixin, BaseModel):
+class Serializer(SubformMixin, DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     extraction_method = models.CharField(
         _("Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices, default="TTP"
     )
     template = models.TextField(_("Template"), blank=True)
+    parameters = models.JSONField(_("Parameters"), default=dict)
 
     clone_fields = ("template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "template"
     requires_template = {"TTP", "TEXTFSM"}
     _serialize = serialize
+    subform_json_field = "parameters"
+    subform_type_field = "extraction_method"
+    subforms = {
+        "ROUTEROS": EmptyForm,
+        "XML": XMLSerializerForm,
+        "TTP": SerializerBaseForm,
+        "TEXTFSM": SerializerBaseForm,
+        "YAML": SerializerBaseForm,
+    }
 
     class Meta:
         ordering = ("name",)
@@ -61,4 +72,4 @@ class Serializer(DataSourceMixin, BaseModel):
         return self.effective_text_field()
 
     def serialize(self, data: str) -> dict:
-        return self._serialize(self.extraction_method, data, self.effective_template)
+        return self._serialize(self, data)

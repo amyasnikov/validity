@@ -86,10 +86,10 @@ class ComplianceSelectorForm(NetBoxModelForm):
         return result
 
 
-class SerializerForm(SyncedDataMixin, NetBoxModelForm):
+class SerializerForm(SyncedDataMixin, SubformMixin, NetBoxModelForm):
     template = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
-    fieldsets = (
+    main_fieldsets = (
         (_("Serializer"), ("name", "extraction_method", "tags")),
         (_("Template from Data Source"), ("data_source", "data_file")),
         (_("Template from DB"), ("template",)),
@@ -98,6 +98,7 @@ class SerializerForm(SyncedDataMixin, NetBoxModelForm):
     class Meta:
         model = models.Serializer
         fields = ("name", "extraction_method", "template", "data_source", "data_file", "tags")
+        widgets = {"extraction_method": HTMXSelect()}
 
 
 class NameSetForm(NetBoxModelForm):

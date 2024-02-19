@@ -89,7 +89,7 @@ class SubformMixin:
     @property
     def fieldsets(self):
         field_sets = list(self.main_fieldsets)
-        if self.subform:
+        if self.subform and self.subform.fields:
             field_sets.append((self.fieldset_title, self.subform.fields.keys()))
         return field_sets
 

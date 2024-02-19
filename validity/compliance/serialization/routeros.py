@@ -146,5 +146,5 @@ def parse_config(plain_config: str) -> dict:
     return result
 
 
-def serialize_ros(plain_data: str, template: str = ""):
+def serialize_ros(plain_data: str, template: str, parameters: dict):
     return parse_config(plain_data)
