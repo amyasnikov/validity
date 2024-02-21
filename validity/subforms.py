@@ -75,3 +75,20 @@ class SerializerBaseForm(BootstrapMixin, forms.Form):
 
 class XMLSerializerForm(SerializerBaseForm):
     drop_attributes = forms.BooleanField(label=_("Drop XML Attributes"), initial=False, required=False)
+    requires_template = False
+
+
+class TTPSerializerForm(SerializerBaseForm):
+    requires_template = True
+
+
+class TEXTFSMSerializerForm(SerializerBaseForm):
+    requires_template = True
+
+
+class RouterOSSerializerForm(EmptyForm):
+    requires_template = False
+
+
+class YAMLSerializerForm(SerializerBaseForm):
+    requires_template = False

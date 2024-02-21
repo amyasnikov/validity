@@ -1,6 +1,6 @@
 import json
 from contextlib import suppress
-from typing import Any, Sequence
+from typing import Any, Literal, Sequence
 
 from django.forms import ChoiceField, JSONField, Select, Textarea
 from utilities.forms import get_field_value
@@ -62,7 +62,7 @@ class ExcludeMixin:
 
 
 class SubformMixin:
-    main_fieldsets: Sequence[tuple[str, Sequence]]
+    main_fieldsets: Sequence[tuple[str, Sequence] | Literal["__subform__"]]
 
     @property
     def type_field_name(self):
@@ -88,9 +88,15 @@ class SubformMixin:
 
     @property
     def fieldsets(self):
+        if not self.subform or not self.subform.fields:
+            return [fs for fs in self.main_fieldsets if fs != "__subform__"]
         field_sets = list(self.main_fieldsets)
-        if self.subform and self.subform.fields:
-            field_sets.append((self.fieldset_title, self.subform.fields.keys()))
+        try:
+            subforms_idx = field_sets.index("__subform__")
+        except ValueError:
+            field_sets.append(None)
+            subforms_idx = -1
+        field_sets[subforms_idx] = (self.fieldset_title, self.subform.fields.keys())
         return field_sets
 
     def __init__(self, *args, **kwargs):

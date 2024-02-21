@@ -6,15 +6,19 @@ from django.utils.translation import gettext_lazy as _
 from validity.choices import ExtractionMethodChoices
 from validity.compliance.serialization import serialize
 from validity.netbox_changes import DEVICE_ROLE_RELATION
-from validity.subforms import EmptyForm, SerializerBaseForm, XMLSerializerForm
+from validity.subforms import (
+    RouterOSSerializerForm,
+    TEXTFSMSerializerForm,
+    TTPSerializerForm,
+    XMLSerializerForm,
+    YAMLSerializerForm,
+)
 from .base import BaseModel, DataSourceMixin, SubformMixin
 
 
 class Serializer(SubformMixin, DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
-    extraction_method = models.CharField(
-        _("Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices, default="TTP"
-    )
+    extraction_method = models.CharField(_("Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices)
     template = models.TextField(_("Template"), blank=True)
     parameters = models.JSONField(_("Parameters"), default=dict)
 
@@ -25,11 +29,11 @@ class Serializer(SubformMixin, DataSourceMixin, BaseModel):
     subform_json_field = "parameters"
     subform_type_field = "extraction_method"
     subforms = {
-        "ROUTEROS": EmptyForm,
+        "ROUTEROS": RouterOSSerializerForm,
         "XML": XMLSerializerForm,
-        "TTP": SerializerBaseForm,
-        "TEXTFSM": SerializerBaseForm,
-        "YAML": SerializerBaseForm,
+        "TTP": TTPSerializerForm,
+        "TEXTFSM": TEXTFSMSerializerForm,
+        "YAML": YAMLSerializerForm,
     }
 
     class Meta:

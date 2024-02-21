@@ -91,9 +91,23 @@ class SerializerForm(SyncedDataMixin, SubformMixin, NetBoxModelForm):
 
     main_fieldsets = (
         (_("Serializer"), ("name", "extraction_method", "tags")),
+        "__subform__",
         (_("Template from Data Source"), ("data_source", "data_file")),
         (_("Template from DB"), ("template",)),
     )
+
+    @property
+    def fieldsets(self):
+        fs = super().fieldsets
+        if not self.subform or not self.subform.requires_template:
+            fs = fs[:-2]  # drop "Template from..." fieldsets
+        return fs
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.subform or not self.subform.requires_template:
+            for field in ["template", "data_source", "data_file"]:
+                del self.fields[field]
 
     class Meta:
         model = models.Serializer
