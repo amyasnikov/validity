@@ -2,7 +2,7 @@ import json
 from contextlib import suppress
 from typing import Any, Literal, Sequence
 
-from django.forms import ChoiceField, JSONField, Select, Textarea
+from django.forms import ChoiceField, Form, JSONField, Select, Textarea
 from utilities.forms import get_field_value
 
 from validity.fields import EncryptedDict
@@ -65,17 +65,23 @@ class SubformMixin:
     main_fieldsets: Sequence[tuple[str, Sequence] | Literal["__subform__"]]
 
     @property
-    def type_field_name(self):
+    def subform_cls(self) -> type[Form]:
+        return getattr(self.instance, self.json_field_name + "_form")
+
+    @property
+    def type_field_name(self) -> str:
         return self.instance.subform_type_field
 
     @property
-    def json_field_name(self):
+    def json_field_name(self) -> str:
         return self.instance.subform_json_field
 
     @property
-    def json_field_value(self):
-        if self.json_field_name in self.initial:
-            return json.loads(self.initial[self.json_field_name])
+    def json_field_value(self) -> dict:
+        if self.data:
+            return {k: v for k, v in self.data.items() if k in self.subform_cls.base_fields}
+        if value := self.initial.get(self.json_field_name):
+            return json.loads(value)
         return getattr(self.instance, self.json_field_name)
 
     @json_field_value.setter
@@ -105,8 +111,7 @@ class SubformMixin:
         type_field_value = get_field_value(self, self.type_field_name)
         if type_field_value:
             setattr(self.instance, self.type_field_name, type_field_value)
-            subform_cls = getattr(self.instance, self.json_field_name + "_form")
-            self.subform = subform_cls(self.json_field_value)
+            self.subform = self.subform_cls(self.json_field_value)
             self.fields |= self.subform.fields
             self.initial |= self.subform.data
 
@@ -118,3 +123,10 @@ class SubformMixin:
                     json_field[name] = self.cleaned_data[name]
             self.json_field_value = json_field
         return super().save(commit)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.subform:
+            for field, error in self.subform.errors.items():
+                self.add_error(field, error)
+        return cleaned_data

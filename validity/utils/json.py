@@ -1,6 +1,8 @@
 import copy
 from typing import Callable, Collection, Protocol
 
+import jq as pyjq
+
 
 Json = dict[str, "Json"] | list["Json"] | int | float | str | None
 
@@ -43,3 +45,30 @@ def transform_json(data: Json, match_fn: Callable[[int | str, Json], bool], tran
     data_copy = copy.deepcopy(data)
     transform(data_copy)
     return data_copy
+
+
+class jq:
+    _extra_functions = [
+        # ensures that expression at "pth" is an array
+        'def mkarr(pth): . | pth as $tgt | . | pth = if $tgt | type != "array" then [$tgt] else $tgt end'
+    ]
+
+    @classmethod
+    def _add_extra_functions(cls, expression):
+        extra_funcs = ";".join(cls._extra_functions)
+        return f"{extra_funcs};{expression}"
+
+    @classmethod
+    def first(cls, expression, data):
+        return pyjq.first(cls._add_extra_functions(expression), data)
+
+    @classmethod
+    def all(cls, expression, data):
+        return pyjq.all(cls._add_extra_functions(expression), data)
+
+    @classmethod
+    def compile(cls, expression):
+        return pyjq.compile(cls._add_extra_functions(expression))
+
+    def __init__(self, *args, **kwargs) -> None:
+        raise TypeError("jq is not callable")

@@ -1,6 +1,6 @@
 from functools import wraps
 
-import jq
+from validity.utils.json import jq
 
 
 def postprocess_jq(func):

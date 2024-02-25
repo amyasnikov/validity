@@ -1,8 +1,7 @@
 from builtins import *  # noqa
 
-import jq as pyjq
-
 from validity.models import VDevice
+from validity.utils.json import jq  # noqa
 
 
 builtins = [
@@ -53,14 +52,6 @@ builtins = [
 
 
 __all__ = ["jq", "config", "state"] + builtins
-
-
-class jq:
-    first = staticmethod(pyjq.first)
-    all = staticmethod(pyjq.all)
-
-    def __init__(self, *args, **kwargs) -> None:
-        raise TypeError("jq is not callable")
 
 
 def state(device):

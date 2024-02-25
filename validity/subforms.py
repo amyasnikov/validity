@@ -6,12 +6,12 @@ Subforms are needed to
 import textwrap
 import xml.etree.ElementTree as ET
 
-import jq
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from utilities.forms import BootstrapMixin
 
 from validity.choices import JSONAPIMethodChoices
+from validity.utils.json import jq
 from validity.utils.misc import reraise
 
 
@@ -68,7 +68,7 @@ class SerializerBaseForm(BootstrapMixin, forms.Form):
 
     def clean_jq_expression(self):
         if jq_expression := self.cleaned_data.get("jq_expression"):
-            with reraise(Exception, forms.ValidationError, {"jq_expression": "Invalid JQ Expression"}):
+            with reraise(Exception, forms.ValidationError, "Invalid JQ Expression"):
                 jq.compile(jq_expression)
         return jq_expression
 
