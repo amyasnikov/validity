@@ -14,8 +14,11 @@ if TYPE_CHECKING:
 
 
 class RequestParams(BaseModel, extra="allow"):
-    url: str = Field("https://{{device.primary_ip}}/{{command.parameters.url_path.lstrip('/')}}", exclude=True)
+    url: str = Field(
+        "https://{{device.primary_ip.address.ip}}/{{command.parameters.url_path.lstrip('/')}}", exclude=True
+    )
     verify: bool | str = False
+    auth: tuple[str, ...] | None = None
 
     def rendered_url(self, device: "Device", command: "Command") -> str:
         return Environment().from_string(self.url).render(device=device, command=command)

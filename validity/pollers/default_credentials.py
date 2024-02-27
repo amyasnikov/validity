@@ -27,7 +27,7 @@ class ScrapliNeconfPrivateCreds(BaseModel):
 
 
 class RequestsPublicCreds(BaseModel):
-    url: str = "https://{{device.primary_ip}}/{{command.parameters.url_path.lstrip('/')}}"
+    url: str = "https://{{device.primary_ip.address.ip}}/{{command.parameters.url_path.lstrip('/')}}"
 
 
 class ConnectionTypeCredentials(BaseModel):
