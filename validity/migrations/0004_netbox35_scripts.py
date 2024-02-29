@@ -15,14 +15,15 @@ def forward_func(apps, schema_editor):
     if config.netbox_version < "3.5.0":
         return
 
-    from core.models import DataSource
+    from validity.models import VDataSource
     from extras.models import ScriptModule
 
     db_alias = schema_editor.connection.alias
-    data_source = DataSource.objects.using(db_alias).create(
+    data_source = VDataSource.objects.using(db_alias).create(
         name=DATASOURCE_NAME, type="local", source_url="file://" + SCRIPTS_FOLDER, description=_("Required by Validity")
     )
-    data_source.sync()
+    DataFile = apps.get_model("core", "DataFile")
+    data_source.sync_in_migration(DataFile)
     for data_file in data_source.datafiles.using(db_alias).all():
         if data_file.path.endswith("__init__.py") or data_file.path.endswith(".pyc"):
             continue

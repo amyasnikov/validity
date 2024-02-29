@@ -11,10 +11,11 @@ SCRIPT_NAME = "validity_scripts.py"
 
 
 def forward_func(apps, schema_editor):
-    from core.models import DataSource
+    from validity.models import VDataSource
     from extras.models import ScriptModule
 
-    datasource, _ = DataSource.objects.get_or_create(
+    DataFile = apps.get_model("core", "DataFile")
+    datasource, _ = VDataSource.objects.get_or_create(
         name=DATASOURCE_NAME,
         type="local",
         defaults={"source_url": f"file://{SCRIPTS_INSTALL_FOLDER.parent}", "description": __("Required by Validity")},
@@ -23,7 +24,7 @@ def forward_func(apps, schema_editor):
     ScriptModule.objects.filter(data_source=datasource).delete()
     datasource.source_url = f"file://{SCRIPTS_INSTALL_FOLDER}"
     datasource.save()
-    datasource.sync()
+    datasource.sync_in_migration(DataFile)
     module = ScriptModule(
         data_source=datasource,
         data_file=datasource.datafiles.get(path=SCRIPT_NAME),
