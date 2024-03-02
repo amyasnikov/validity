@@ -15,18 +15,22 @@ from validity.utils.json import jq
 from validity.utils.misc import reraise
 
 
-class EmptyForm(BootstrapMixin, forms.Form):
-    pass
+class BaseSubform(BootstrapMixin, forms.Form):
+    def clean(self):
+        if self.data.keys() - self.base_fields.keys():
+            allowed_fields = ", ".join(self.base_fields.keys())
+            raise forms.ValidationError(_("Only these keys are allowed: %(fields)s"), params={"fields": allowed_fields})
+        return self.cleaned_data
 
 
 # Command Subforms
 
 
-class CLICommandForm(BootstrapMixin, forms.Form):
+class CLICommandForm(BaseSubform):
     cli_command = forms.CharField(label=_("CLI Command"))
 
 
-class JSONAPICommandForm(BootstrapMixin, forms.Form):
+class JSONAPICommandForm(BaseSubform):
     method = forms.ChoiceField(label=_("Method"), initial="GET", choices=JSONAPIMethodChoices.choices)
     url_path = forms.CharField(label=_("URL Path"))
     body = forms.JSONField(
@@ -36,7 +40,7 @@ class JSONAPICommandForm(BootstrapMixin, forms.Form):
     )
 
 
-class NetconfCommandForm(BootstrapMixin, forms.Form):
+class NetconfCommandForm(BaseSubform):
     get_config = textwrap.dedent(
         """
         <get-config>
@@ -58,7 +62,7 @@ class NetconfCommandForm(BootstrapMixin, forms.Form):
 # Serializer Subforms
 
 
-class SerializerBaseForm(BootstrapMixin, forms.Form):
+class SerializerBaseForm(BaseSubform):
     jq_expression = forms.CharField(
         label=_("JQ Expression"),
         required=False,
@@ -86,7 +90,7 @@ class TEXTFSMSerializerForm(SerializerBaseForm):
     requires_template = True
 
 
-class RouterOSSerializerForm(EmptyForm):
+class RouterOSSerializerForm(BaseSubform):
     requires_template = False
 
 

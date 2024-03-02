@@ -1,6 +1,8 @@
 from itertools import chain
 from typing import Sequence
 
+from django.core.exceptions import ValidationError
+from django.db.models import ManyToManyField
 from netbox.api.serializers import WritableNestedSerializer
 from rest_framework.serializers import JSONField, ModelSerializer
 
@@ -63,3 +65,22 @@ class FieldsMixin(ListQPMixin):
                 field_name: field for field_name, field in self.fields.items() if field_name in set(query_fields)
             }
         return super().to_representation(instance)
+
+
+class SubformValidationMixin:
+    """
+    Serializer Mixin. Validates JSON field according to a subform
+    """
+
+    def validate(self, attrs):
+        instance = self.instance or self.Meta.model()
+        for field, field_value in attrs.items():
+            if not isinstance(instance._meta.get_field(field), ManyToManyField):
+                setattr(instance, field, field_value)
+        subform = instance.subform_cls(instance.subform_json)
+        if not subform.is_valid():
+            errors = [
+                ": ".join((field, err[0])) if field != "__all__" else err for field, err in subform.errors.items()
+            ]
+            raise ValidationError({instance.subform_json_field: errors})
+        return attrs

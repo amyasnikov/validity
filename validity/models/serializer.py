@@ -20,7 +20,7 @@ class Serializer(SubformMixin, DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     extraction_method = models.CharField(_("Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices)
     template = models.TextField(_("Template"), blank=True)
-    parameters = models.JSONField(_("Parameters"), default=dict)
+    parameters = models.JSONField(_("Parameters"), default=dict, blank=True)
 
     clone_fields = ("template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "template"

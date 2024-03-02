@@ -39,7 +39,7 @@
       {% include 'inc/panels/tags.html' %}
     </div>
     <div class="col col-md-7">
-      {% include 'validity/inc/parameters.html' with title='Parameters' parameters=object.parameters form=object.parameters_form only %}
+      {% include 'validity/inc/parameters.html' with title='Parameters' parameters=object.parameters form=object.subform_cls only %}
     </div>
   </div>
 {% endblock content %}

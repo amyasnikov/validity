@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="serializer",
             name="parameters",
-            field=models.JSONField(default=dict),
+            field=models.JSONField(default=dict, blank=True),
         ),
     ]

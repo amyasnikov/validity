@@ -2,7 +2,7 @@ import json
 from contextlib import suppress
 from typing import Any, Literal, Sequence
 
-from django.forms import ChoiceField, Form, JSONField, Select, Textarea
+from django.forms import ChoiceField, JSONField, Select, Textarea
 from utilities.forms import get_field_value
 
 from validity.fields import EncryptedDict
@@ -65,28 +65,16 @@ class SubformMixin:
     main_fieldsets: Sequence[tuple[str, Sequence] | Literal["__subform__"]]
 
     @property
-    def subform_cls(self) -> type[Form]:
-        return getattr(self.instance, self.json_field_name + "_form")
-
-    @property
-    def type_field_name(self) -> str:
-        return self.instance.subform_type_field
-
-    @property
     def json_field_name(self) -> str:
         return self.instance.subform_json_field
 
     @property
     def json_field_value(self) -> dict:
         if self.data:
-            return {k: v for k, v in self.data.items() if k in self.subform_cls.base_fields}
+            return {k: v for k, v in self.data.items() if k in self.instance.subform_cls.base_fields}
         if value := self.initial.get(self.json_field_name):
             return json.loads(value)
-        return getattr(self.instance, self.json_field_name)
-
-    @json_field_value.setter
-    def json_field_value(self, value):
-        setattr(self.instance, self.json_field_name, value)
+        return self.instance.subform_json
 
     @property
     def fieldset_title(self):
@@ -108,10 +96,10 @@ class SubformMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subform = None
-        type_field_value = get_field_value(self, self.type_field_name)
+        type_field_value = get_field_value(self, self.instance.subform_type_field)
         if type_field_value:
-            setattr(self.instance, self.type_field_name, type_field_value)
-            self.subform = self.subform_cls(self.json_field_value)
+            self.instance.subform_type = type_field_value
+            self.subform = self.instance.subform_cls(self.json_field_value)
             self.fields |= self.subform.fields
             self.initial |= self.subform.data
 
@@ -121,7 +109,7 @@ class SubformMixin:
             for name in self.fields:
                 if name in self.subform.fields:
                     json_field[name] = self.cleaned_data[name]
-            self.json_field_value = json_field
+            self.instance.subform_json = json_field
         return super().save(commit)
 
     def clean(self):
