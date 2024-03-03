@@ -39,7 +39,7 @@ class HttpDriver:
             ),
         )
 
-    def request(self, command: "Command") -> str:
+    def request(self, command: "Command", *, requests=requests) -> str:
         request_kwargs = self.request_params.model_dump()
         request_kwargs["url"] = self.request_params.rendered_url(self.device, command)
         request_kwargs["method"] = command.parameters["method"]

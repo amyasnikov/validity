@@ -1,9 +1,11 @@
 import json
+from unittest.mock import Mock
 
 import pytest
 import yaml
 
 from validity.compliance.serialization import serialize
+from validity.compliance.serialization.common import postprocess_jq
 
 
 JSON_CONFIG = """
@@ -97,6 +99,31 @@ ROUTEROS_SERIALIZED = {
 }
 
 
+TEXTFSM_TEMPLATE = r"""Value INTF (\S+)
+Value ADDR (\S+)
+Value STATUS (up|down)
+Value PROTO (up|down)
+
+Start
+  ^${INTF}\s+${ADDR}\s+\w+\s+\w+\s+${STATUS}\s+${PROTO} -> Record
+"""
+
+TEXTFSM_STATE = """
+Interface                  IP-Address      OK? Method Status                Protocol
+FastEthernet0/0            15.0.15.1       YES manual up                    up
+FastEthernet0/1            10.0.12.1       YES manual up                    up
+FastEthernet0/2            unassigned      YES manual up                    up
+Loopback100                100.0.0.1       YES manual up                    up
+"""
+
+TEXTFSM_SERIALIZED = [
+    {"ADDR": "15.0.15.1", "INTF": "FastEthernet0/0", "PROTO": "up", "STATUS": "up"},
+    {"ADDR": "10.0.12.1", "INTF": "FastEthernet0/1", "PROTO": "up", "STATUS": "up"},
+    {"ADDR": "unassigned", "INTF": "FastEthernet0/2", "PROTO": "up", "STATUS": "up"},
+    {"ADDR": "100.0.0.1", "INTF": "Loopback100", "PROTO": "up", "STATUS": "up"},
+]
+
+
 @pytest.mark.parametrize(
     "extraction_method, contents, template, serialized",
     [
@@ -104,9 +131,26 @@ ROUTEROS_SERIALIZED = {
         pytest.param("YAML", YAML_CONFIG, "", yaml.safe_load(YAML_CONFIG), id="YAML"),
         pytest.param("TTP", TTP_CONFIG, TTP_TEMPLATE, TTP_SERIALIZED, id="TTP"),
         pytest.param("ROUTEROS", ROUTEROS_CONFIG, "", ROUTEROS_SERIALIZED, id="ROUTEROS"),
+        pytest.param("XML", "<a><b>text</b></a>", "", {"a": {"b": "text"}}, id="XML"),
+        pytest.param("TEXTFSM", TEXTFSM_STATE, TEXTFSM_TEMPLATE, TEXTFSM_SERIALIZED, id="TEXTFSM"),
     ],
 )
 @pytest.mark.django_db
 def test_serialization(extraction_method, contents, template, serialized):
-    serialize_result = serialize(extraction_method, contents, template)
+    serializer = Mock(extraction_method=extraction_method, effective_template=template, parameters={})
+    serialize_result = serialize(serializer, contents)
     assert serialize_result == serialized
+
+
+@pytest.mark.parametrize(
+    "serialized_data, jq_expression, expected_result",
+    [({"a": {"b": [1, 2]}}, ".a.b", [1, 2]), ({"a": {"b": "c"}}, ". | mkarr(.a.b)", {"a": {"b": ["c"]}})],
+)
+def test_postprocess_jq(serialized_data, jq_expression, expected_result):
+    @postprocess_jq
+    def serialization_method(plain_data, template, parameters):
+        return json.loads(plain_data)
+
+    json_data = json.dumps(serialized_data)
+    result = serialization_method(json_data, "", {"jq_expression": jq_expression})
+    assert result == expected_result

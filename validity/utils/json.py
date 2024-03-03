@@ -8,7 +8,7 @@ Json = dict[str, "Json"] | list["Json"] | int | float | str | None
 
 
 class TransformFn(Protocol):
-    def __call__(self, key: int | str, value: Json) -> tuple[int | str, Json] | None:
+    def __call__(self, key: int | str, value: Json, /) -> tuple[int | str, Json] | None:
         ...
 
 

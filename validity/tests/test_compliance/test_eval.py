@@ -22,6 +22,12 @@ EXPLANATION_2 = [
     ("Deepdiff for previous comparison [#2]", {"values_changed": {"root[1]": {"new_value": 12, "old_value": 11}}}),
 ]
 
+JQ_EXPR = "jq.first('. | mkarr(.a)', {'a': 1}) == {'a': [1]}"
+JQ_EXPLANATION = [
+    ("jq.first('. | mkarr(.a)', {'a': 1})", {"a": [1]}),
+    ("jq.first('. | mkarr(.a)', {'a': 1}) == {'a': [1]}", True),
+]
+
 
 @pytest.mark.parametrize(
     "expression, explanation, error",
@@ -31,10 +37,11 @@ EXPLANATION_2 = [
         pytest.param(EXPR_2, EXPLANATION_2, None, id="EXPR_2"),
         pytest.param("some invalid syntax", [], EvalError, id="invalid syntax"),
         pytest.param("def f(): pass", [], EvalError, id="invalid expression"),
+        pytest.param(JQ_EXPR, JQ_EXPLANATION, None, id="jq_expr"),
     ],
 )
 def test_explanation(expression, explanation, error):
-    evaluator = ExplanationalEval()
+    evaluator = ExplanationalEval(load_defaults=True)
     context = nullcontext() if error is None else pytest.raises(error)
     with context:
         evaluator.eval(expression)
