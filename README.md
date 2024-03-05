@@ -25,7 +25,7 @@ Validity is the [NetBox](https://netbox.dev) plugin to write "auto tests" for yo
 3. Write compliance test as a Python expression, e.g.<br/>
 `device.config["ntp-servers"] == ["1.2.3.4", "5.6.7.8"]`<br/>
 or<br/>
-`not device.state.show_stp['enabled']`
+`'10.0.0.0/8' in {entry['prefix'] for entry in device.state.show_route}`
 
 4. Apply created test to specific devices and get the results per device (passed or failed).
 
@@ -33,13 +33,13 @@ or<br/>
 ## Why?
 Validity helps you to concentrate on what really matters - defining the criteria of healthy and valid network and following these criteria.
 
-Validity completely separates compliance test code from all other things like data collection, serialization and storage. This one encourages you to write short, clean and understandable compliance tests together with the mandatory description.
+Validity completely separates compliance test code from all the other things like data collection, parsing and storage. It encourages you to write short, clean and understandable compliance tests together with the mandatory description.
 
 
 ## Key Features
-* Truly vendor-agnostic. You can easily integrate any vendor config format using [TTP](https://github.com/dmulyalin/ttp)
+* Truly vendor-agnostic. You can easily integrate any vendor config format using [TTP](https://github.com/dmulyalin/ttp) or a bunch of other [serialization options](https://validity.readthedocs.io/en/latest/entities/serializers/)
 * Writing compliance tests using Python expressions and [JQ](https://stedolan.github.io/jq/manual/)
-* Direct polling of the devices via SSH or Telnet. More than 100 different platforms are available through [netmiko](https://github.com/ktbyers/netmiko) library.
+* Gathering configuration or state info directly from the devices via **SSH**, **Telnet**, **Netconf** or **REST API**.
 * Flexible selector system to apply the tests only to a specific subset of devices
 * Concept of **dynamic pairs**. With dynamic pair you can compare 2 different devices between each other (e.g. compare the configuration of 2 MC-LAG members).
 * **Test result explanation**. When some test fails, you can get the **explanation** of the calculation process step by step. It helps to identify the cause of the failure.
