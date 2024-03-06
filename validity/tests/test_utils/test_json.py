@@ -1,4 +1,6 @@
-from validity.utils.json import transform_json
+import pytest
+
+from validity.utils.json import jq, transform_json
 
 
 class TestTransformJson:
@@ -31,3 +33,16 @@ class TestTransformJson:
         )
         assert result["groups"]["admin2"] == self.JSON["groups"]["admin"]
         assert "admin" not in result["groups"]
+
+
+@pytest.mark.parametrize(
+    "data, expression, result",
+    [
+        ({"a": {"b": "one", "c": "two"}}, ". | mkarr(.a.b)", {"a": {"b": ["one"], "c": "two"}}),
+        ({"a": {"b": ["one"], "c": "two"}}, ". | mkarr(.a.b)", {"a": {"b": ["one"], "c": "two"}}),
+        ({"a": "10.2", "b": {"c": "20"}}, ". | mknum(.b)", {"a": "10.2", "b": {"c": 20}}),
+        ({"a": "10.2", "b": {"c": "20"}}, ". | mknum", {"a": 10.2, "b": {"c": 20}}),
+    ],
+)
+def test_jq(data, expression, result):
+    assert jq.first(expression, data) == result

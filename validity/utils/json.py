@@ -52,8 +52,8 @@ class jq:
         # ensures that expression at "pth" is an array
         'def mkarr(pth): . | pth as $tgt | . | pth = if $tgt | type != "array" then [$tgt] else $tgt end',
         # recursively converts all number-like strings to numbers
-        'def mknum(pth):. | pth as $tgt | . | pth = '
-            '($tgt | walk(if type == "string" and test("[+-]?([0-9]*[.])?[0-9]+") then . | tonumber else . end))',
+        "def mknum(pth):. | pth as $tgt | . | pth = "
+        '($tgt | walk(if type == "string" and test("[+-]?([0-9]*[.])?[0-9]+") then . | tonumber else . end))',
         'def mknum: walk(if type == "string" and test("[+-]?([0-9]*[.])?[0-9]+") then . | tonumber else . end)',
     ]
 
