@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django_tables2 import Column, RequestConfig, Table, TemplateColumn
 from netbox.tables import BooleanColumn as BooleanColumn
 from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
-from netbox.tables.columns import ActionsColumn
+from netbox.tables.columns import ActionsColumn, LinkedCountColumn
 from utilities.paginator import EnhancedPaginator
 
 from validity import models
@@ -91,12 +91,15 @@ class TotalDevicesMixin(NetBoxTable):
 class SerializerTable(TotalDevicesMixin, NetBoxTable):
     name = Column(linkify=True)
     extraction_method = ChoiceFieldColumn()
+    command_count = LinkedCountColumn(
+        verbose_name=_("Commands"), viewname="plugins:validity:command_list", url_params={"serializer_id": "pk"}
+    )
 
     count_per = "serializer"
 
     class Meta(NetBoxTable.Meta):
         model = models.Serializer
-        fields = ("name", "extraction_method", "total_devices")
+        fields = ("name", "extraction_method", "total_devices", "command_count")
         default_columns = fields
 
 

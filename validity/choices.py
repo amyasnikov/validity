@@ -79,7 +79,9 @@ class SeverityChoices(MemberMixin, TextChoices, metaclass=ColoredChoiceMeta):
 
 class ExtractionMethodChoices(TextChoices, metaclass=ColoredChoiceMeta):
     TTP = "TTP", "TTP", "purple"
+    TEXTFSM = "TEXTFSM", "TEXTFSM", "blue"
     YAML = "YAML", "YAML", "info"
+    XML = "XML", "XML", "orange"
     ROUTEROS = "ROUTEROS", "ROUTEROS", "green"
 
 
@@ -110,9 +112,11 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
 
 
 class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
-    netmiko = "netmiko", "blue"
+    netmiko = "netmiko", "netmiko", "blue"
+    requests = "requests", "requests", "info"
+    scrapli_netconf = "scrapli_netconf", "scrapli_netconf", "orange"
 
-    __command_types__ = {"netmiko": "CLI"}
+    __command_types__ = {"netmiko": "CLI", "scrapli_netconf": "netconf", "requests": "json_api"}
 
     @property
     def acceptable_command_type(self) -> "CommandTypeChoices":
@@ -121,9 +125,18 @@ class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
 
 class CommandTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
     CLI = "CLI", "CLI", "blue"
+    netconf = "netconf", "orange"
+    json_api = "json_api", "JSON API", "info"
 
 
 class ExplanationVerbosityChoices(IntegerChoices):
     disabled = 0, _("0 - Disabled")
     medium = 1, _("1 - Medium")
     maximum = 2, _("2 - Maximum")
+
+
+class JSONAPIMethodChoices(TextChoices):
+    GET = "GET"
+    POST = "POST"
+    PATCH = "PATCH"
+    PUT = "PUT"

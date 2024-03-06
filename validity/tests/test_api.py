@@ -87,6 +87,29 @@ class TestDSSerializer(ApiPostGetTest):
     }
 
 
+class TestSerializerParams(ApiPostGetTest):
+    entity = "serializers"
+    parameters = {"jq_expression": ".interface"}
+    post_body = {
+        "name": "serializer-1",
+        "extraction_method": "TTP",
+        "template": "interface {{interface}}",
+        "parameters": parameters,
+    }
+
+    @pytest.mark.parametrize("params", [{"jq_expression": "(("}, {"unknown_param": 123}])
+    def test_wrong_params(self, admin_client, params):
+        body = self.post_body | {"parameters": params}
+        resp = admin_client.post(self.url(), body, content_type="application/json")
+        assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.data
+
+
+class TestSerializerWrongParams(ApiPostGetTest):
+    entity = "serializers"
+    parameters = {"jq_expression": ".interface"}
+    post_body = {"name": "serializer-1", "extraction_method": "TTP", "template": "interface {{interface}}"}
+
+
 class TestDBTest(ApiPostGetTest):
     entity = "tests"
     post_body = {

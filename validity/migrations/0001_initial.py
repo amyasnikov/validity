@@ -185,7 +185,7 @@ class Migration(migrations.Migration):
                     models.CharField(blank=True, max_length=255, validators=[]),
                 ),
                 ("name", models.CharField(max_length=255, unique=True)),
-                ("extraction_method", models.CharField(default="TTP", max_length=10)),
+                ("extraction_method", models.CharField(max_length=10)),
                 ("ttp_template", models.TextField(blank=True)),
                 (
                     "repo",

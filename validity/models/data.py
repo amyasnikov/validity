@@ -72,12 +72,12 @@ class VDataSource(DataSource):
             DataSource.objects.filter(pk=self.pk).update(status=self.status, last_synced=self.last_synced)
             post_sync.send(sender=self.__class__, instance=self)
 
-    def partial_sync(self, device_filter: Q, batch_size: int = 1000) -> None:
+    def partial_sync(self, device_filter: Q, batch_size: int = 1000) -> set[str]:
         def update_batch(batch):
             for datafile in self.datafiles.filter(path__in=batch).iterator():
                 if datafile.refresh_from_disk(local_path):
                     yield datafile
-                paths.discard(datafile.path)
+                updated_paths.add(datafile.path)
 
         def new_data_file(path):
             df = DataFile(source=self, path=path)
@@ -85,22 +85,30 @@ class VDataSource(DataSource):
             df.full_clean()
             return df
 
-        if self.type != "device_polling":
-            raise SyncError("Partial sync is available only for Data Source with type Device Polling")
         backend = self.get_backend()
-        with backend.fetch(device_filter) as local_path, self._sync_status():
-            paths = self._walk(local_path)
+        fetch = backend.fetch(device_filter) if self.type == "device_polling" else backend.fetch()
+        with fetch as local_path, self._sync_status():
+            all_new_paths = self._walk(local_path)
+            updated_paths = set()
             datafiles_to_update = chain.from_iterable(
-                update_batch(path_batch) for path_batch in batched(paths, batch_size)
+                update_batch(path_batch) for path_batch in batched(all_new_paths, batch_size)
             )
             updated = DataFile.objects.bulk_update(
                 datafiles_to_update, batch_size=batch_size, fields=("last_updated", "size", "hash", "data")
             )
-            new_datafiles = (new_data_file(path) for path in paths)
+            new_datafiles = (new_data_file(path) for path in all_new_paths - updated_paths)
             created = len(DataFile.objects.bulk_create(new_datafiles, batch_size=batch_size))
             logger.debug("%s new files were created and %s existing files were updated during sync", created, updated)
+            return all_new_paths
 
     def sync(self, device_filter: Q | None = None):
-        if device_filter is not None and self.type == "device_polling":
-            return self.partial_sync(device_filter)
-        return super().sync()
+        if device_filter is None or self.type != "device_polling":
+            return super().sync()
+        self.partial_sync(device_filter)
+
+    def sync_in_migration(self, datafile_model: type):
+        """
+        This method performs sync and avoids problems with historical models which have reference to DataFile
+        """
+        new_paths = self.partial_sync(Q())
+        datafile_model.objects.exclude(path__in=new_paths).delete()

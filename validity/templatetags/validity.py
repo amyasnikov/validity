@@ -40,12 +40,6 @@ def data_source(model) -> str:
 
 
 @register.filter
-def add_query_param(url: str, param: str) -> str:
-    delimeter = "&" if "?" in url else "?"
-    return f"{url}{delimeter}{param}"
-
-
-@register.filter
 def colorful_percentage(percent):
     return _colorful_percentage(percent)
 

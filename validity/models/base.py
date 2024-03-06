@@ -99,8 +99,22 @@ class SubformMixin:
     subform_type_field: str
     subforms: dict
 
-    def __getattr__(self, attr):
-        if attr == f"{self.subform_json_field}_form":
-            type_value = getattr(self, self.subform_type_field)
-            return self.subforms[type_value]
-        raise AttributeError(attr)
+    @property
+    def subform_type(self):
+        return getattr(self, self.subform_type_field)
+
+    @subform_type.setter
+    def subform_type(self, value):
+        setattr(self, self.subform_type_field, value)
+
+    @property
+    def subform_cls(self):
+        return self.subforms[self.subform_type]
+
+    @property
+    def subform_json(self):
+        return getattr(self, self.subform_json_field)
+
+    @subform_json.setter
+    def subform_json(self, value):
+        setattr(self, self.subform_json_field, value)

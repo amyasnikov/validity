@@ -6,19 +6,35 @@ from django.utils.translation import gettext_lazy as _
 from validity.choices import ExtractionMethodChoices
 from validity.compliance.serialization import serialize
 from validity.netbox_changes import DEVICE_ROLE_RELATION
-from .base import BaseModel, DataSourceMixin
+from validity.subforms import (
+    RouterOSSerializerForm,
+    TEXTFSMSerializerForm,
+    TTPSerializerForm,
+    XMLSerializerForm,
+    YAMLSerializerForm,
+)
+from .base import BaseModel, DataSourceMixin, SubformMixin
 
 
-class Serializer(DataSourceMixin, BaseModel):
+class Serializer(SubformMixin, DataSourceMixin, BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
-    extraction_method = models.CharField(
-        _("Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices, default="TTP"
-    )
+    extraction_method = models.CharField(_("Extraction Method"), max_length=10, choices=ExtractionMethodChoices.choices)
     template = models.TextField(_("Template"), blank=True)
+    parameters = models.JSONField(_("Parameters"), default=dict, blank=True)
 
     clone_fields = ("template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "template"
+    requires_template = {"TTP", "TEXTFSM"}
     _serialize = serialize
+    subform_json_field = "parameters"
+    subform_type_field = "extraction_method"
+    subforms = {
+        "ROUTEROS": RouterOSSerializerForm,
+        "XML": XMLSerializerForm,
+        "TTP": TTPSerializerForm,
+        "TEXTFSM": TEXTFSMSerializerForm,
+        "YAML": YAMLSerializerForm,
+    }
 
     class Meta:
         ordering = ("name",)
@@ -32,16 +48,18 @@ class Serializer(DataSourceMixin, BaseModel):
 
     @property
     def _validate_db_or_git_filled(self) -> bool:
-        return self.extraction_method == "TTP"
+        return self.extraction_method in self.requires_template
 
     def clean(self) -> None:
         super().clean()
-        if self.extraction_method != "TTP" and self.template:
-            raise ValidationError({"template": _("Template must be empty if extraction method is not TTP")})
-        if self.extraction_method != "TTP" and (self.data_source or self.data_file):
-            raise ValidationError(_("Git properties may be set only if extraction method is TTP"))
-        if self.extraction_method == "TTP" and not (self.template or self.data_source):
-            raise ValidationError(_("Template must be defined if extraction method is TTP"))
+        if self.extraction_method not in self.requires_template and self.template:
+            raise ValidationError({"template": _("Template must be empty for selected extraction method")})
+        if self.extraction_method not in self.requires_template and (self.data_source or self.data_file):
+            raise ValidationError(_("Data Source/File properties cannot be set for selected extraction method"))
+        if self.extraction_method in self.requires_template and not (
+            self.template or self.data_source and self.data_file
+        ):
+            raise ValidationError(_("Template must be defined for selected extraction method"))
 
     @property
     def bound_devices(self) -> models.QuerySet[Device]:
@@ -58,4 +76,4 @@ class Serializer(DataSourceMixin, BaseModel):
         return self.effective_text_field()
 
     def serialize(self, data: str) -> dict:
-        return self._serialize(self.extraction_method, data, self.effective_template)
+        return self._serialize(self, data)

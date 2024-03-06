@@ -11,7 +11,7 @@ from validity.choices import CommandTypeChoices, ConnectionTypeChoices
 from validity.fields import EncryptedDictField
 from validity.managers import CommandQS, PollerQS
 from validity.pollers import get_poller
-from validity.subforms import CLICommandForm
+from validity.subforms import CLICommandForm, JSONAPICommandForm, NetconfCommandForm
 from .base import BaseModel, SubformMixin
 from .serializer import Serializer
 
@@ -51,7 +51,7 @@ class Command(SubformMixin, BaseModel):
 
     subform_type_field = "type"
     subform_json_field = "parameters"
-    subforms = {"CLI": CLICommandForm}
+    subforms = {"CLI": CLICommandForm, "json_api": JSONAPICommandForm, "netconf": NetconfCommandForm}
 
     class Meta:
         ordering = ("name",)
@@ -66,8 +66,20 @@ class Command(SubformMixin, BaseModel):
 class Poller(BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
     connection_type = models.CharField(_("Connection Type"), max_length=50, choices=ConnectionTypeChoices.choices)
-    public_credentials = models.JSONField(_("Public Credentials"), default=dict, blank=True)
-    private_credentials = EncryptedDictField(_("Private Credentials"), blank=True)
+    public_credentials = models.JSONField(
+        _("Public Credentials"),
+        default=dict,
+        blank=True,
+        help_text=_("Enter non-private parameters of the connection type in JSON format."),
+    )
+    private_credentials = EncryptedDictField(
+        _("Private Credentials"),
+        blank=True,
+        help_text=_(
+            "Enter private parameters of the connection type in JSON format. "
+            "All the values are going to be encrypted."
+        ),
+    )
     commands = models.ManyToManyField(Command, verbose_name=_("Commands"), related_name="pollers")
 
     objects = PollerQS.as_manager()
@@ -79,7 +91,7 @@ class Poller(BaseModel):
         return self.name
 
     @property
-    def credentials(self):
+    def credentials(self) -> dict:
         return self.public_credentials | self.private_credentials.decrypted
 
     def get_connection_type_color(self):

@@ -1,9 +1,10 @@
 import time
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
 from validity.pollers import NetmikoPoller
+from validity.pollers.http import HttpDriver
 
 
 class TestNetmikoPoller:
@@ -58,3 +59,28 @@ class TestNetmikoPoller:
             assert all(res.error.message.startswith("OSError") for res in results)
         else:
             assert all(res.result in {"a", "b"} for res in results)
+
+
+def test_http_driver():
+    device = Mock(**{"primary_ip.address.ip": "1.1.1.1"})
+    device.name = "d1"
+    command = Mock(
+        parameters={"url_path": "/some/path/", "method": "post", "body": {"a": "b", "device_name": "{{device.name}}"}}
+    )
+    creds = {
+        "url": "https://{{device.primary_ip.address.ip}}{{command.parameters.url_path}}",
+        "verify": True,
+        "qwe": "rty",
+    }
+    driver = HttpDriver(device, **creds)
+    requests = MagicMock()
+    result = driver.request(command, requests=requests)
+    requests.request.assert_called_once_with(
+        url="https://1.1.1.1/some/path/",
+        verify=True,
+        qwe="rty",
+        method="post",
+        json={"a": "b", "device_name": "d1"},
+        auth=None,
+    )
+    assert result == requests.request.return_value.content.decode.return_value

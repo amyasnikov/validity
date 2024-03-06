@@ -18,7 +18,7 @@ from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
 
 from validity import models
-from .helpers import EncryptedDictField, FieldsMixin, ListQPMixin, nested_factory
+from .helpers import EncryptedDictField, FieldsMixin, ListQPMixin, SubformValidationMixin, nested_factory
 
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
@@ -188,7 +188,7 @@ NestedComplianceTestResultSerializer = nested_factory(
 )
 
 
-class SerializerSerializer(NetBoxModelSerializer):
+class SerializerSerializer(SubformValidationMixin, NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:serializer-detail")
     template = serializers.CharField(write_only=True, required=False)
     effective_template = serializers.ReadOnlyField()
@@ -207,6 +207,7 @@ class SerializerSerializer(NetBoxModelSerializer):
             "template",
             "data_source",
             "data_file",
+            "parameters",
             "tags",
             "custom_fields",
             "created",
@@ -275,7 +276,7 @@ class DeviceReportSerializer(NestedDeviceSerializer):
         ]
 
 
-class CommandSerializer(NetBoxModelSerializer):
+class CommandSerializer(SubformValidationMixin, NetBoxModelSerializer):
     serializer = NestedSerializerSerializer(required=False)
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:command-detail")
 

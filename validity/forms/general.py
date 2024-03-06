@@ -1,16 +1,17 @@
 from core.forms.mixins import SyncedDataMixin
 from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import CharField, Textarea, ValidationError
+from django.forms import CharField, ChoiceField, Select, Textarea, ValidationError
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
-from utilities.forms import get_field_value
+from utilities.forms import add_blank_choice, get_field_value
 from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
 from validity import models
-from .helpers import SubformMixin
+from validity.choices import ConnectionTypeChoices
+from .helpers import PrettyJSONWidget, SubformMixin
 
 
 class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
@@ -85,18 +86,33 @@ class ComplianceSelectorForm(NetBoxModelForm):
         return result
 
 
-class SerializerForm(SyncedDataMixin, NetBoxModelForm):
+class SerializerForm(SyncedDataMixin, SubformMixin, NetBoxModelForm):
     template = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
-    fieldsets = (
+    main_fieldsets = (
         (_("Serializer"), ("name", "extraction_method", "tags")),
+        "__subform__",
         (_("Template from Data Source"), ("data_source", "data_file")),
         (_("Template from DB"), ("template",)),
     )
 
+    @property
+    def fieldsets(self):
+        fs = super().fieldsets
+        if not self.subform or not self.subform.requires_template:
+            fs = fs[:-2]  # drop "Template from..." fieldsets
+        return fs
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.subform or not self.subform.requires_template:
+            for field in ["template", "data_source", "data_file"]:
+                del self.fields[field]
+
     class Meta:
         model = models.Serializer
         fields = ("name", "extraction_method", "template", "data_source", "data_file", "tags")
+        widgets = {"extraction_method": HTMXSelect()}
 
 
 class NameSetForm(NetBoxModelForm):
@@ -115,14 +131,17 @@ class NameSetForm(NetBoxModelForm):
 
 
 class PollerForm(NetBoxModelForm):
+    connection_type = ChoiceField(
+        choices=add_blank_choice(ConnectionTypeChoices.choices), widget=Select(attrs={"id": "connection_type_select"})
+    )
     commands = DynamicModelMultipleChoiceField(queryset=models.Command.objects.all())
 
     class Meta:
         model = models.Poller
         fields = ("name", "commands", "connection_type", "public_credentials", "private_credentials", "tags")
         widgets = {
-            "public_credentials": Textarea(attrs={"style": "font-family:monospace"}),
-            "private_credentials": Textarea(attrs={"style": "font-family:monospace"}),
+            "public_credentials": PrettyJSONWidget(),
+            "private_credentials": PrettyJSONWidget(),
         }
 
     def clean(self):

@@ -1,10 +1,23 @@
 import json
-from typing import Any, Sequence
+from contextlib import suppress
+from typing import Any, Literal, Sequence
 
-from django.forms import ChoiceField, JSONField, Select
+from django.forms import ChoiceField, JSONField, Select, Textarea
 from utilities.forms import get_field_value
 
 from validity.fields import EncryptedDict
+
+
+class PrettyJSONWidget(Textarea):
+    def __init__(self, attrs=None, indent=2) -> None:
+        super().__init__(attrs)
+        self.attrs.setdefault("style", "font-family:monospace")
+        self.indent = indent
+
+    def format_value(self, value: Any) -> str | None:
+        with suppress(Exception):
+            return json.dumps(json.loads(value), indent=self.indent)
+        return super().format_value(value)
 
 
 class IntegerChoiceField(ChoiceField):
@@ -49,25 +62,19 @@ class ExcludeMixin:
 
 
 class SubformMixin:
-    main_fieldsets: Sequence[tuple[str, Sequence]]
+    main_fieldsets: Sequence[tuple[str, Sequence] | Literal["__subform__"]]
 
     @property
-    def type_field_name(self):
-        return self.instance.subform_type_field
-
-    @property
-    def json_field_name(self):
+    def json_field_name(self) -> str:
         return self.instance.subform_json_field
 
     @property
-    def json_field_value(self):
-        if self.json_field_name in self.initial:
-            return json.loads(self.initial[self.json_field_name])
-        return getattr(self.instance, self.json_field_name)
-
-    @json_field_value.setter
-    def json_field_value(self, value):
-        setattr(self.instance, self.json_field_name, value)
+    def json_field_value(self) -> dict:
+        if self.data:
+            return {k: v for k, v in self.data.items() if k in self.instance.subform_cls.base_fields}
+        if value := self.initial.get(self.json_field_name):
+            return json.loads(value)
+        return self.instance.subform_json
 
     @property
     def fieldset_title(self):
@@ -75,19 +82,24 @@ class SubformMixin:
 
     @property
     def fieldsets(self):
+        if not self.subform or not self.subform.fields:
+            return [fs for fs in self.main_fieldsets if fs != "__subform__"]
         field_sets = list(self.main_fieldsets)
-        if self.subform:
-            field_sets.append((self.fieldset_title, self.subform.fields.keys()))
+        try:
+            subforms_idx = field_sets.index("__subform__")
+        except ValueError:
+            field_sets.append(None)
+            subforms_idx = -1
+        field_sets[subforms_idx] = (self.fieldset_title, self.subform.fields.keys())
         return field_sets
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.subform = None
-        type_field_value = get_field_value(self, self.type_field_name)
+        type_field_value = get_field_value(self, self.instance.subform_type_field)
         if type_field_value:
-            setattr(self.instance, self.type_field_name, type_field_value)
-            subform_cls = getattr(self.instance, self.json_field_name + "_form")
-            self.subform = subform_cls(self.json_field_value)
+            self.instance.subform_type = type_field_value
+            self.subform = self.instance.subform_cls(self.json_field_value)
             self.fields |= self.subform.fields
             self.initial |= self.subform.data
 
@@ -97,5 +109,12 @@ class SubformMixin:
             for name in self.fields:
                 if name in self.subform.fields:
                     json_field[name] = self.cleaned_data[name]
-            self.json_field_value = json_field
+            self.instance.subform_json = json_field
         return super().save(commit)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.subform:
+            for field, error in self.subform.errors.items():
+                self.add_error(field, error)
+        return cleaned_data
