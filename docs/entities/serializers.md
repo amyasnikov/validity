@@ -165,15 +165,15 @@ For `<a><b>one</b></a>` XML the result will be `{"a": {"b": "one"}}` instead of<
 
 These issues can be handled with **JQ Expression** field. Validity introduces two custom JQ functions:
 * **mkarr(path)** wraps expression at *path* into a list if it's not already a list.
-* **mknum(path)** tries to convert string at *path* to an integer or a float number.
+* **mknum** or **mknum(path)** tries to convert all number-like strings *at path or lower* to numbers. Unlike **mkarr()**, this functions works recursively. So, `. | mknum` which is equivalent of `. | mknum(.)` will be applied to the entire document and will try to convert all number-like strings to numbers.
 
-Let's suppose that you got the following result of XML to JSON coverting:
+Let's suppose that you got the following result of XML to JSON converting:
 ```json
 {"a": {"b": "one"}, "c": "10.2"}
 ```
 After applying this JQ expression
 ```plain
-. | mkarr(.a.b) | mknum(.c)
+. | mkarr(.a.b) | mknum
 ```
 you'll get
 ```json
@@ -181,7 +181,7 @@ you'll get
 ```
 
 ### YAML
-This method is used to work with already-prepared YAML or JSON data (don't forget that JSON is a subset of YAML). It suits well if you poll your devices via REST API or your vendor has its own tools for getting JSON-formatted config (e.g. `| display json` on Junos).
+This method is used to work with already-prepared YAML or JSON data (don't forget that JSON is a subset of YAML). It suits well if you poll your devices via REST API or your vendor has its own tools to get JSON-formatted config (e.g. `| display json` on Junos).
 
 
 ## Fields
