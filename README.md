@@ -25,7 +25,7 @@ Validity is the [NetBox](https://netbox.dev) plugin to write "auto tests" for yo
 3. Write compliance test as a Python expression, e.g.<br/>
 `device.config["ntp-servers"] == ["1.2.3.4", "5.6.7.8"]`<br/>
 or<br/>
-`'10.0.0.0/8' in {entry['prefix'] for entry in device.state.show_route}`
+`device.state.sh_ospf_neighbors["10.1.1.1"]["state"] == "Up"`
 
 4. Apply created test to specific devices and get the results per device (passed or failed).
 
