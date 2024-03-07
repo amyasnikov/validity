@@ -1,7 +1,8 @@
-from functools import cached_property
+import operator
+from functools import cached_property, reduce
 from typing import Generic, TypeVar, get_args
 
-from django.db.models import Model, QuerySet
+from django.db.models import Model, Q, QuerySet
 from django.utils.functional import classproperty
 from extras.models import Tag
 
@@ -116,3 +117,12 @@ class RunTestsScriptData(ScriptData):
     test_tags = DBField(Tag, EmptyQuerySetObject, default=[])
     explanation_verbosity = 2
     override_datasource = DBField(models.VDataSource, DBObject, default=None)
+
+    @cached_property
+    def device_filter(self) -> Q:
+        filtr = Q()
+        if self.selectors:
+            filtr &= reduce(operator.or_, (qs.filter for qs in self.selectors.queryset))
+        if self.devices:
+            filtr &= reduce(operator.or_, (Q(pk=pk) for pk in self.devices))
+        return filtr

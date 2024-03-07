@@ -1,13 +1,11 @@
-import operator
 import time
-from functools import reduce
 from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
 import yaml
 from core.models import DataSource
 from dcim.models import Device
-from django.db.models import Prefetch, Q, QuerySet
+from django.db.models import Prefetch, QuerySet
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
 from extras.models import Tag
@@ -167,20 +165,17 @@ class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
             selectors = selectors.filter(tests__tags__pk__in=self.script_data.test_tags).distinct()
         return selectors.prefetch_related(Prefetch("tests", test_qs.prefetch_related("namesets")))
 
-    def perform_datasource_sync(self) -> None:
-        device_filter = reduce(operator.or_, (selector.filter for selector in self.script_data.selectors.queryset))
-        if self.script_data.devices:
-            device_filter |= Q(pk__in=self.script_data.devices)
+    def perform_datasource_sync(self, sync_fn=datasource_sync) -> None:
         if self.script_data.override_datasource:
-            self.script_data.override_datasource.obj.sync(device_filter)
+            self.script_data.override_datasource.obj.sync(self.script_data.device_filter)
             return
         datasource_ids = (
-            VDevice.objects.filter(device_filter)
+            VDevice.objects.filter(self.script_data.device_filter)
             .annotate_datasource_id()
             .values_list("data_source_id", flat=True)
             .distinct()
         )
-        datasource_sync(VDataSource.objects.filter(pk__in=datasource_ids))
+        sync_fn(VDataSource.objects.filter(pk__in=datasource_ids), device_filter=self.script_data.device_filter)
 
     def run(self, data, commit):
         self.script_data = self.script_data_cls(data)

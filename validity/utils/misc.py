@@ -5,12 +5,13 @@ from itertools import islice
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 from core.exceptions import SyncError
+from django.db.models import Q
 from django.utils.html import format_html
 from netbox.context import current_request
 
 
 if TYPE_CHECKING:
-    from core.models import DataSource
+    from validity.models import VDataSource
 
 
 def colorful_percentage(percent: float) -> str:
@@ -60,9 +61,10 @@ def reraise(
 
 
 def datasource_sync(
-    datasources: Iterable["DataSource"],
+    datasources: Iterable["VDataSource"],
+    device_filter: Q | None = None,
     threads: int = 10,
-    fail_handler: Callable[["DataSource", Exception], Any] | None = None,
+    fail_handler: Callable[["VDataSource", Exception], Any] | None = None,
 ):
     """
     Parrallel sync of multiple Data Sources
@@ -70,7 +72,7 @@ def datasource_sync(
 
     def sync_func(datasource):
         try:
-            datasource.sync()
+            datasource.sync(device_filter)
         except SyncError as e:
             if fail_handler:
                 fail_handler(datasource, e)
