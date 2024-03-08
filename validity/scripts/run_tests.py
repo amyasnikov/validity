@@ -75,8 +75,9 @@ class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
         name = __("Run Compliance Tests")
         description = __("Execute compliance tests and save the results")
 
-    def __init__(self):
+    def __init__(self, datasource_sync_fn: Callable = datasource_sync):
         super().__init__()
+        self.datasource_sync_fn = datasource_sync_fn
         self._nameset_functions = {}
         self.global_namesets = NameSet.objects.filter(_global=True)
         self.results_count = 0
@@ -165,23 +166,22 @@ class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
             selectors = selectors.filter(tests__tags__pk__in=self.script_data.test_tags).distinct()
         return selectors.prefetch_related(Prefetch("tests", test_qs.prefetch_related("namesets")))
 
-    def perform_datasource_sync(self, sync_fn=datasource_sync) -> None:
+    def datasources_to_sync(self) -> Iterable[VDataSource]:
         if self.script_data.override_datasource:
-            self.script_data.override_datasource.obj.sync(self.script_data.device_filter)
-            return
+            return [self.script_data.override_datasource.obj]
         datasource_ids = (
             VDevice.objects.filter(self.script_data.device_filter)
             .annotate_datasource_id()
             .values_list("data_source_id", flat=True)
             .distinct()
         )
-        sync_fn(VDataSource.objects.filter(pk__in=datasource_ids), device_filter=self.script_data.device_filter)
+        return VDataSource.objects.filter(pk__in=datasource_ids)
 
     def run(self, data, commit):
         self.script_data = self.script_data_cls(data)
         selectors = self.get_selectors()
         if self.script_data.sync_datasources:
-            self.perform_datasource_sync()
+            self.datasource_sync_fn(self.datasources_to_sync(), device_filter=self.script_data.device_filter)
         with null_request():
             report = ComplianceReport.objects.create() if self.script_data.make_report else None
         results = chain.from_iterable(self.run_tests_for_selector(selector, report) for selector in selectors)
