@@ -3,8 +3,17 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
+from django.db.models import Q, QuerySet
 from extras.scripts import Script
-from factories import CompTestDBFactory, DeviceFactory, NameSetDBFactory, ReportFactory, SelectorFactory
+from factories import (
+    CompTestDBFactory,
+    DataSourceFactory,
+    DeviceFactory,
+    NameSetDBFactory,
+    ReportFactory,
+    SelectorFactory,
+    TenantFactory,
+)
 from simpleeval import InvalidExpression
 
 from validity.compliance.exceptions import EvalError
@@ -149,6 +158,24 @@ def test_fire_report_webhook(monkeypatch):
     report = ReportFactory()
     script.fire_report_webhook(report.pk)
     enq_obj.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_datasources_to_sync(create_custom_fields):
+    script = RunTestsScript()
+    script.script_data = Mock()
+    assert script.datasources_to_sync() == [script.script_data.override_datasource.obj]
+
+    device = DeviceFactory()
+    DeviceFactory()
+    datasource = DataSourceFactory()
+    DataSourceFactory()
+    device.tenant = TenantFactory(custom_field_data={"data_source": datasource.pk})
+    device.save()
+    script.script_data = Mock(override_datasource=None, device_filter=Q(pk=device.pk))
+    datasources_to_sync = script.datasources_to_sync()
+    assert isinstance(datasources_to_sync, QuerySet)
+    assert list(datasources_to_sync) == [datasource]
 
 
 @pytest.mark.django_db
