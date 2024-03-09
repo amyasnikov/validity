@@ -1,13 +1,11 @@
-import operator
 import time
-from functools import reduce
 from itertools import chain
 from typing import Any, Callable, Generator, Iterable
 
 import yaml
 from core.models import DataSource
 from dcim.models import Device
-from django.db.models import Prefetch, Q, QuerySet
+from django.db.models import Prefetch, QuerySet
 from django.utils.translation import gettext as __
 from extras.choices import ObjectChangeActionChoices
 from extras.models import Tag
@@ -77,8 +75,9 @@ class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
         name = __("Run Compliance Tests")
         description = __("Execute compliance tests and save the results")
 
-    def __init__(self):
+    def __init__(self, datasource_sync_fn: Callable = datasource_sync):
         super().__init__()
+        self.datasource_sync_fn = datasource_sync_fn
         self._nameset_functions = {}
         self.global_namesets = NameSet.objects.filter(_global=True)
         self.results_count = 0
@@ -167,26 +166,22 @@ class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
             selectors = selectors.filter(tests__tags__pk__in=self.script_data.test_tags).distinct()
         return selectors.prefetch_related(Prefetch("tests", test_qs.prefetch_related("namesets")))
 
-    def perform_datasource_sync(self) -> None:
-        device_filter = reduce(operator.or_, (selector.filter for selector in self.script_data.selectors.queryset))
-        if self.script_data.devices:
-            device_filter |= Q(pk__in=self.script_data.devices)
+    def datasources_to_sync(self) -> Iterable[VDataSource]:
         if self.script_data.override_datasource:
-            self.script_data.override_datasource.obj.sync(device_filter)
-            return
+            return [self.script_data.override_datasource.obj]
         datasource_ids = (
-            VDevice.objects.filter(device_filter)
+            VDevice.objects.filter(self.script_data.device_filter)
             .annotate_datasource_id()
             .values_list("data_source_id", flat=True)
             .distinct()
         )
-        datasource_sync(VDataSource.objects.filter(pk__in=datasource_ids))
+        return VDataSource.objects.filter(pk__in=datasource_ids)
 
     def run(self, data, commit):
         self.script_data = self.script_data_cls(data)
         selectors = self.get_selectors()
         if self.script_data.sync_datasources:
-            self.perform_datasource_sync()
+            self.datasource_sync_fn(self.datasources_to_sync(), device_filter=self.script_data.device_filter)
         with null_request():
             report = ComplianceReport.objects.create() if self.script_data.make_report else None
         results = chain.from_iterable(self.run_tests_for_selector(selector, report) for selector in selectors)

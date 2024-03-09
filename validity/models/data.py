@@ -102,7 +102,7 @@ class VDataSource(DataSource):
             return all_new_paths
 
     def sync(self, device_filter: Q | None = None):
-        if device_filter is None or self.type != "device_polling":
+        if not device_filter or self.type != "device_polling":
             return super().sync()
         self.partial_sync(device_filter)
 
