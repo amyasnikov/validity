@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from itertools import chain, groupby
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Generator
 
 import yaml
 from django import forms
@@ -11,7 +12,7 @@ from netbox.registry import registry
 
 from validity import config
 from validity.models import VDevice
-from .pollers.result import PollingInfo
+from .pollers.result import DescriptiveError, PollingInfo
 
 
 if config.netbox_version >= 3.7:
@@ -49,22 +50,28 @@ class PollingBackend(DataBackend):
         path = dir_name / self.metainfo_file
         path.write_text(yaml.safe_dump(polling_info.model_dump(exclude_defaults=True), sort_keys=False))
 
+    def start_polling(self, devices) -> tuple[list[Generator], set[DescriptiveError]]:
+        result_generators = []
+        no_poller_errors = set()
+        for poller, device_group in groupby(devices, key=lambda device: device.poller):
+            if poller is None:
+                no_poller_errors.update(
+                    DescriptiveError(device=str(device), error="No poller bound") for device in device_group
+                )
+            else:
+                result_generators.append(poller.get_backend().poll(device_group))
+        return result_generators, no_poller_errors
+
     @contextmanager
     def fetch(self, device_filter: Q | None = None):
         with TemporaryDirectory() as dir_name:
             devices = self.bound_devices_qs(device_filter or Q())
-            result_generators = [
-                poller.get_backend().poll(device_group)
-                for poller, device_group in groupby(devices, key=lambda device: device.poller)
-            ]
-            errors = set()
+            result_generators, errors = self.start_polling(devices)
             for cmd_result in chain.from_iterable(result_generators):
                 if cmd_result.errored:
                     errors.add(cmd_result.descriptive_error)
                 cmd_result.write_on_disk(dir_name)
-            polling_info = PollingInfo(
-                devices_polled=devices.count(), errors=errors, partial_sync=device_filter is not None
-            )
+            polling_info = PollingInfo(devices_polled=devices.count(), errors=errors, partial_sync=not device_filter)
             self.write_metainfo(dir_name, polling_info)
             yield dir_name
 
