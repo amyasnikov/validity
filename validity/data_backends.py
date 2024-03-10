@@ -56,7 +56,7 @@ class PollingBackend(DataBackend):
         for poller, device_group in groupby(devices, key=lambda device: device.poller):
             if poller is None:
                 no_poller_errors.update(
-                    DescriptiveError(device=device, error="No poller bound") for device in device_group
+                    DescriptiveError(device=str(device), error="No poller bound") for device in device_group
                 )
             else:
                 result_generators.append(poller.get_backend().poll(device_group))
@@ -71,9 +71,7 @@ class PollingBackend(DataBackend):
                 if cmd_result.errored:
                     errors.add(cmd_result.descriptive_error)
                 cmd_result.write_on_disk(dir_name)
-            polling_info = PollingInfo(
-                devices_polled=devices.count(), errors=errors, partial_sync=device_filter is not None
-            )
+            polling_info = PollingInfo(devices_polled=devices.count(), errors=errors, partial_sync=not device_filter)
             self.write_metainfo(dir_name, polling_info)
             yield dir_name
 
