@@ -30,9 +30,11 @@ All the values of private credentials will be encrypted after submitting. These 
 
 Let's consider an example to better understand how credentials are passed to selected Conenction Type.
 Let's suppose we have a Poller with:
+
 * connection type: `netmiko`
 * public credentials: `{"device_type": "cisco_ios", "username": "admin"}`
 * private credentials: `{"password": "admin123"}`
+
 When polling occurs, public and private credentials are merged (device primary IP will also be added there) and passed to **netmiko.ConnectHandler**
 So, it means that in case of public/private credentials for **netmiko** you can define any keyword arguments [ConnectHandler](https://github.com/ktbyers/netmiko#getting-started-1) is ready to accept.
 
@@ -46,6 +48,7 @@ The table below points out the entities which accept merged credentials from pol
 | requests        | requests.request                     |
 
 For **requests** case there is some extra logic here:
+
 1. `url` credential accepts Jinja2 expression, `device` and `command` are available as context variables. Default URL value:<br/>
 `https://{{device.primary_ip.address.ip}}/{{command.parameters.url_path.lstrip('/')}}`
 2. Pass something like `{"auth": ["admin_user", "admin_password"]}` to use basic auth.

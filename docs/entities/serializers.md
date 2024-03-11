@@ -164,8 +164,9 @@ Consider the example above with `<a>` and `<b>`. Let's remove the second `<b>`:<
 For `<a><b>one</b></a>` XML the result will be `{"a": {"b": "one"}}` instead of<br/>`{"a": {"b": ["one"]}}`.
 
 These issues can be handled with **JQ Expression** field. Validity introduces two custom JQ functions:
+
 * **mkarr(path)** wraps expression at *path* into a list if it's not already a list.
-* **mknum** or **mknum(path)** tries to convert all number-like strings *at path or lower* to numbers. Unlike **mkarr()**, this functions works recursively. So, `. | mknum` which is equivalent of `. | mknum(.)` will be applied to the entire document and will try to convert all number-like strings to numbers.
+* **mknum** or **mknum(path)** tries to convert all number-like strings *at path or lower* to numbers. Unlike **mkarr()**, this functions works recursively. <br/>So, `. | mknum` which is equivalent to `. | mknum(.)` will be applied to the entire document and will try to convert all number-like strings to numbers.
 
 Let's suppose that you got the following result of XML to JSON converting:
 ```json

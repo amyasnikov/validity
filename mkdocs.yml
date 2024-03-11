@@ -14,6 +14,8 @@ nav:
     - Compliance Tests: entities/tests.md
     - Name Sets: entities/namesets.md
     - Results & Reports: entities/results_and_reports.md
+    - Pollers: entities/pollers.md
+    - Commands: entities/commands.md
     - Scripts: entities/scripts.md
   - Features & Tips:
     - How to write the Tests: features/howto_write_tests.md
