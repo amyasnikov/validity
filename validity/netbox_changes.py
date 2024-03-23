@@ -2,6 +2,7 @@
 This module is going to contain all duct tape stuff which is required to support
 different versions of NetBox together
 """
+
 from validity import config
 
 

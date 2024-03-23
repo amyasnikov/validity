@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("extras", "0084_staging"),
         ("tenancy", "0009_standardize_description_comments"),
-        ("dcim", "0167_module_status"),
+        ("dcim", "0167_module_status")
     ]
 
     operations = [

@@ -1,6 +1,7 @@
 """
 Models from this module are used by js script to render default credentials for a new poller in UI
 """
+
 from typing import Any
 
 from pydantic import BaseModel
