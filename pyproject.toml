@@ -51,7 +51,7 @@ docs = {file = ["requirements/docs.txt"]}
 
 [tool.black]
 line-length = 120
-skip_glob = ["*/migrations/*"]
+extend-exclude = "validity/migrations/"
 
 
 [tool.isort]
