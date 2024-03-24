@@ -19,7 +19,7 @@ from validity.compliance.dynamic_pairs import DynamicPairNameFilter, DynamicPair
 def test_dpf_factory(dynamic_pairs, filter_cls):
     selector = Mock(dynamic_pairs=dynamic_pairs)
     obj = dpf_factory(selector=selector, device=Mock())
-    assert type(obj) == filter_cls
+    assert isinstance(obj, filter_cls)
 
 
 @pytest.mark.parametrize(

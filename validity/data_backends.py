@@ -56,7 +56,8 @@ class PollingBackend(DataBackend):
         for poller, device_group in groupby(devices, key=lambda device: device.poller):
             if poller is None:
                 no_poller_errors.update(
-                    DescriptiveError(device=str(device), error="No poller bound") for device in device_group
+                    DescriptiveError(device=str(device), error="No poller bound")
+                    for device in device_group  # noqa: B031
                 )
             else:
                 result_generators.append(poller.get_backend().poll(device_group))
