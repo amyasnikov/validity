@@ -1,0 +1,33 @@
+default_stages: [pre-push]
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0
+  hooks:
+  - id: check-toml
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: requirements-txt-fixer
+  - id: trailing-whitespace
+
+- repo: local
+  hooks:
+  - id: black
+    name: black
+    entry: black
+    language: system
+    types: [python]
+    args: [validity]
+
+  - id: isort
+    name: isort
+    entry: isort
+    language: system
+    types: [python]
+    args: [validity]
+
+  - id: flake8
+    name: flake8
+    entry: flake8
+    language: system
+    types: [python]
+    args: [validity]
