@@ -1,4 +1,3 @@
-default_stages: [pre-push]
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.5.0
@@ -11,23 +10,17 @@ repos:
 
 - repo: local
   hooks:
-  - id: black
-    name: black
-    entry: black
+  - id: ruff format
+    name: ruff format
+    entry: ruff format
     language: system
     types: [python]
     args: [validity]
 
-  - id: isort
-    name: isort
-    entry: isort
-    language: system
-    types: [python]
-    args: [validity]
 
-  - id: flake8
-    name: flake8
-    entry: flake8
+  - id: ruff check
+    name: ruff check
+    entry: ruff check
     language: system
     types: [python]
-    args: [validity]
+    args: [validity, --fix]
