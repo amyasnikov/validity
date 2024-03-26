@@ -89,3 +89,30 @@ source = ["validity"]
 [tool.coverage.report]
 show_missing = true
 fail_under = 75
+
+
+[tool.ruff]
+exclude = ["migrations", "__pycache__"]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "T"]
+ignore = ["B905"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"validity/netbox_changes.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+from-first = true
+known-first-party = ["validity"]
+no-lines-before = ["local-folder"]
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false

@@ -36,7 +36,7 @@ class StateItem(Serializable):
     @property
     def error(self) -> SerializationError | None:
         try:
-            self.serialized
+            self.serialized  # noqa: B018
             return
         except SerializationError as exc:
             return exc
@@ -68,7 +68,7 @@ class State(dict):
     def with_config(self, serializable: Serializable):
         state_item = StateItem(serializer=serializable.serializer, data_file=serializable.data_file, command=None)
         with suppress(SerializationError):
-            state_item.serialized
+            state_item.serialized  # noqa: B018
             super().__setitem__("config", state_item)
             self.config_command_label = None
         return self
