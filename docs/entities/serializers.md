@@ -220,7 +220,7 @@ This feature may be convenient when you poll devices via Netconf or REST. The an
 
 #### Drop XML Attributes
 
-This is the field specific to the XML extraction method. It allows to drop all XML attributes (they start with `@` sign after converting to JSON) from the result. It may be useful when dealing with netconf. 
+This is the field specific to the XML extraction method. It allows to drop all XML attributes (they start with `@` sign after converting to JSON) from the result. It may be useful when dealing with netconf.
 
 
 ## Bind Serializers to Devices

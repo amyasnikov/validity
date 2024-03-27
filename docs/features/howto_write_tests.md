@@ -34,7 +34,7 @@ routing-policies:
 - name: policy2
   terms: [...]
 ```
-So, we'll extract policy names list with 
+So, we'll extract policy names list with
 
 ```
 ."routing-policies"[].name
@@ -75,8 +75,8 @@ Let't create an array where policy name is the key and usage counter is the valu
         key: $pol_name,
         value: (
             [
-                del(."routing-policies") 
-                | .. 
+                del(."routing-policies")
+                | ..
                 | select(type == "string" and . == $pol_name)
             ] | length
         )
@@ -100,8 +100,8 @@ all(
                 key: $pol_name,
                 value: (
                     [
-                        del(."routing-policies") 
-                        | .. 
+                        del(."routing-policies")
+                        | ..
                         | select(type == "string" and . == $pol_name)
                     ] | length
                 )
@@ -148,7 +148,7 @@ jq.first(
     device.config
 ) == jq.first(
     '[.interfaces[] | select(.esi != null)] | map({"key": .name, "value": .esi}) | from_entries',
-    device.dynamic_pair.config 
+    device.dynamic_pair.config
 )
 ```
 

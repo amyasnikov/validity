@@ -94,8 +94,8 @@ class SerializedStateView(APIView):
     def get_object(self, pk):
         try:
             return self.queryset.get(pk=pk)
-        except models.VDevice.DoesNotExist:
-            raise NotFound
+        except models.VDevice.DoesNotExist as err:
+            raise NotFound from err
 
     @extend_schema(
         responses={200: serializers.SerializedStateSerializer()},

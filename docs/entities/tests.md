@@ -123,7 +123,7 @@ In test expressions you **CANNOT USE**:
 
 !!! Warning
     As you may notice, execution of the test with the above defaults is **RELATIVELY** safe. It means that you can't break anything with some obvious way. However:
-    
+
     * The users can bring their own functions into the tests via Name Sets. No one besides the author can guarantee that these functions are safe
     * it's still random code execution and no one can guarantee that it is safe
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "netbox-validity"
 version = "2.1.0"
-description = "NetBox plugin for vendor-agnostic configuration compliance"
+description = "NetBox plugin for network devices validation"
 authors = [
     {name = "Anton Miasnikov", email = "anton2008m@gmail.com"},
 ]
@@ -49,29 +49,6 @@ file = ["requirements/base.txt"]
 dev = {file = ["requirements/dev.txt"]}
 docs = {file = ["requirements/docs.txt"]}
 
-
-[tool.black]
-line-length = 120
-extend-exclude = "validity/migrations/"
-
-
-[tool.isort]
-profile = "black"
-line_length = 120
-no_lines_before = "LOCALFOLDER"
-lines_after_imports = 2
-skip_glob = ["*/migrations/*"]
-skip_gitignore = true
-known_first_party = ["validity"]
-
-
-[tool.flake8]
-max-line-length = 120
-exclude = ["migrations", "__pycache__"]
-per-file-ignores = ["__init__.py:F401", "validity/netbox_changes.py:F401"]
-extend-ignore = "E203"
-
-
 [tool.pytest.ini_options]
 addopts = "-p no:warnings -vv --no-migrations"
 testpaths = ["validity/tests"]
@@ -89,3 +66,31 @@ source = ["validity"]
 [tool.coverage.report]
 show_missing = true
 fail_under = 75
+
+
+[tool.ruff]
+include = ["validity/**.py"]
+exclude = ["migrations", "__pycache__", "development"]
+line-length = 120
+indent-width = 4
+force-exclude = true
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "T", "I"]
+ignore = ["B905"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"validity/netbox_changes.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["validity"]
+no-lines-before = ["local-folder"]
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false

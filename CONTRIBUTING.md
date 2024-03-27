@@ -19,13 +19,13 @@ Issues should be used to report problems with the plugin, request a new feature,
 
 PRs to Validity are welcome and can be a quick way to get your fix or improvement slated for the next release.
 
-To be sure your PR would be accepted please **create an issue before making any code changes**. Describe your proposal and get an approval from the maintainer. After that you may make a PR related to this issue.
+To be sure your PR will be accepted please **create an issue before making any code changes**. Describe your proposal and get an approval from the maintainer. After that you may make a PR related to this issue.
 
 In general, PRs should:
 
 - Close the specific issue opened **BEFORE** the PR
 - Only fix/add the functionality described in the related issue
-- Pass CI checks (black, isort, flake8, pytest)
+- Pass CI checks (linting and auto tests)
 - Contain unit tests of the code being involved
 - Contain new feature description in the `docs` folder (in the case of new functionality being added)
 
@@ -42,25 +42,40 @@ The overall Git Flow:
 
 ## Environment setup
 
-You can easily set up your dev environment using `docker compose`
+You can easily set up your dev environment using `venv` and `docker compose`
 
-1. Clone the project.
-2. Go to `development` folder.
-3. Copy `.env.example` into `.env` and change the values if you need.
-4. Run the project via `docker compose up -d --build`
-5. Connect to `netbox` container, run the migrations and issue script linking<br/>
-```
+```shell
+# clone forked project
+git clone https://github.com/<username>/validity/
+cd validity
+
+# create & activate virtual env
+python3 -m venv env
+source env/bin/activate
+
+# install dev dependencies
+pip install -r requirements/dev.txt
+
+# set up pre-commit hook to run linting on every git commit
+pre-commit install
+
+# go to development folder to run project in docker
+cd development
+
+# Copy .env.example into .env and change the values if you need to
+cp .env.example .env
+
+# run the project
+docker compose up -d --build
+
+# get inside netbox web app container
 docker compose exec -it netbox bash
+
+# create database and admin user
 ./manage.py migrate
-./manage.py linkscripts
 ./manage.py createsuperuser
-```
-6. Now dev project is ready to use, you can reach it via browser at `http://127.0.0.1:8000`
-7. To run linters and tests issue<br/>
-```
+
+# run the tests
 cd /plugin/validity
-black validity
-isort validity
-flake8 validity
 pytest
 ```

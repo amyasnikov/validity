@@ -19,7 +19,7 @@ jobs:
         run: python -m build
       - name: Twine check
         run: python -m twine check dist/*
-      
+
       - name: Twine upload
         env:
           TWINE_USERNAME: __token__

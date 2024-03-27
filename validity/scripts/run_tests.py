@@ -109,7 +109,7 @@ class RunTestsScript(ScriptDataMixin[RunTestsScriptData]):
         for test in tests_qs:
             explanation = []
             try:
-                device.state
+                device.state  # noqa: B018
                 passed, explanation = self.run_test(device, test)
             except EvalError as exc:
                 self.log_failure(f"Failed to execute test **{test}** for device **{device}**, `{exc}`")
