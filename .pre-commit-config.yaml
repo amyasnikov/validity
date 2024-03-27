@@ -1,3 +1,4 @@
+exclude: validity/static/
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.5.0
@@ -15,12 +16,10 @@ repos:
     entry: ruff format
     language: system
     types: [python]
-    args: [validity]
-
 
   - id: ruff check
     name: ruff check
     entry: ruff check
     language: system
     types: [python]
-    args: [validity, --fix]
+    args: [--fix]
