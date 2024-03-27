@@ -17,7 +17,7 @@ The script may generate a lot of DB queries. To spread the queries over time you
 | **Param**                   | **API Param** | **Description**                                                   |
 |-----------------------------|---------------|-------------------------------------------------------------------|
 | Sync Data Sources           | sync_datasources  | Sync all Data Sources which are bound to Devices<br/> participating in the script execution|
-| Make Compliance<br/>Report  | make_report   | Create Report together with Test Results                          | 
+| Make Compliance<br/>Report  | make_report   | Create Report together with Test Results                          |
 | Specific Selectors          | selectors     | Run the tests only for a limited number of selectors              |
 | Specific Devices            | devices       | Run the tests only for a limited number of devices.               |
 | Specific Test Tags          | test_tags     | Run only those tests which have at least one of<br/> the specified tags|
