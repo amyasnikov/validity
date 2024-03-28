@@ -15,6 +15,7 @@ from factories import (
     PlatformFactory,
     ReportFactory,
     SelectorFactory,
+    SerializerDBFactory,
     SiteFactory,
     TagFactory,
     TenantFactory,
@@ -153,6 +154,7 @@ class TestCommand(ApiPostGetTest):
         "name": "command-1",
         "label": "command_1",
         "type": "CLI",
+        "serializer": SerializerDBFactory,
         "parameters": {"cli_command": "show version"},
     }
 
