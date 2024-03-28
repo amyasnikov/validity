@@ -58,7 +58,7 @@ class ApiPostGetTest(PostMixin, ApiBaseTest):
     def _test_post(self, client):
         self.resolve_post_body()
         resp = client.post(self.url(), self.post_body, content_type="application/json")
-        assert resp.status_code == HTTPStatus.CREATED, resp.data
+        assert resp.status_code == HTTPStatus.CREATED, resp.content
         return resp.json()["id"]
 
     @pytest.mark.django_db

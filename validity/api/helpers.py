@@ -73,14 +73,15 @@ class SubformValidationMixin:
     """
 
     def validate(self, attrs):
-        instance = self.instance or self.Meta.model()
-        for field, field_value in attrs.items():
-            if not isinstance(instance._meta.get_field(field), ManyToManyField):
-                setattr(instance, field, field_value)
-        subform = instance.subform_cls(instance.subform_json)
-        if not subform.is_valid():
-            errors = [
-                ": ".join((field, err[0])) if field != "__all__" else err for field, err in subform.errors.items()
-            ]
-            raise ValidationError({instance.subform_json_field: errors})
+        if isinstance(attrs, dict):
+            instance = self.instance or self.Meta.model()
+            for field, field_value in attrs.items():
+                if not isinstance(instance._meta.get_field(field), ManyToManyField):
+                    setattr(instance, field, field_value)
+            subform = instance.subform_cls(instance.subform_json)
+            if not subform.is_valid():
+                errors = [
+                    ": ".join((field, err[0])) if field != "__all__" else err for field, err in subform.errors.items()
+                ]
+                raise ValidationError({instance.subform_json_field: errors})
         return attrs
