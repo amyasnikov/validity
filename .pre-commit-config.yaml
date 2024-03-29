@@ -9,17 +9,9 @@ repos:
   - id: requirements-txt-fixer
   - id: trailing-whitespace
 
-- repo: local
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.3.4
   hooks:
-  - id: ruff format
-    name: ruff format
-    entry: ruff format
-    language: system
-    types: [python]
-
-  - id: ruff check
-    name: ruff check
-    entry: ruff check
-    language: system
-    types: [python]
-    args: [--fix]
+  - id: ruff-format
+  - id: ruff
+    args: [ --fix ]
