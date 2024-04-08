@@ -1,6 +1,7 @@
 from builtins import *  # noqa
 
 from validity.models import VDevice
+from validity.utils.orm import model_to_proxy
 from validity.utils.json import jq  # noqa
 
 
@@ -57,8 +58,7 @@ __all__ = ["jq", "config", "state"] + builtins
 def state(device):
     # state() implies presence of "_data_source" and "_poller" global variables
     # which are gonna be set by RunTests script
-    vdevice = VDevice()
-    vdevice.__dict__ = device.__dict__.copy()
+    vdevice = model_to_proxy(device, VDevice)
     vdevice.data_source = _data_source  # noqa
     vdevice._poller = _poller  # noqa
     return vdevice.state

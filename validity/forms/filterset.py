@@ -31,6 +31,11 @@ class DeviceReportFilterForm(ExcludeMixin, Form):
     )
 
 
+class DataSourceDevicesFilterForm(Form):
+    q = CharField(label=_("Device Search"), required=False)
+    tenant_id = DynamicModelMultipleChoiceField(label=_("Tenant"), queryset=Tenant.objects.all(), required=False)
+
+
 class TestResultFilterForm(ExcludeMixin, Form):
     latest = PlaceholderChoiceField(required=False, placeholder=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
     passed = PlaceholderChoiceField(
