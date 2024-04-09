@@ -30,7 +30,7 @@ class PollingInfoExtension(PluginTemplateExtension):
         )
 
 
-class DSTenantExtension(PluginTemplateExtension):
+class DataSourceTenantExtension(PluginTemplateExtension):
     model = "core.datasource"
 
     def right_page(self):
@@ -47,4 +47,4 @@ class DSTenantExtension(PluginTemplateExtension):
         )
 
 
-template_extensions = [DSTenantExtension, PollingInfoExtension]
+template_extensions = [DataSourceTenantExtension, PollingInfoExtension]

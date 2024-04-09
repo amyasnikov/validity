@@ -14,7 +14,7 @@ from .base import FilterViewWithForm
 
 
 @register_model_view(DataSource, "devices")
-class DSBoundDevicesView(SingleTableMixin, FilterViewWithForm):
+class DataSourceBoundDevicesView(SingleTableMixin, FilterViewWithForm):
     template_name = "validity/aux_tab_table.html"
     tab = ViewTab("Bound Devices", badge=lambda obj: model_to_proxy(obj, VDataSource).bound_devices.count())
     model = DataSource
