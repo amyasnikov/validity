@@ -1,4 +1,5 @@
 from .command import CommandBulkDeleteView, CommandDeleteView, CommandEditView, CommandListView, CommandView
+from .data_source import DataSourceBoundDevicesView
 from .device import DeviceSerializedStateView, TestResultView
 from .nameset import NameSetBulkDeleteView, NameSetDeleteView, NameSetEditView, NameSetListView, NameSetView
 from .poller import PollerBulkDeleteView, PollerDeleteView, PollerEditView, PollerListView, PollerView

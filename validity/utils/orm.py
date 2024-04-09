@@ -185,3 +185,12 @@ class SetAttributesMixin(QuerySet):
     def set_attribute(self, name, value):
         self._aux_attributes[name] = value
         return self
+
+
+def model_to_proxy(model: Model, proxy_type: type[M]) -> M:
+    """
+    Converts model to its proxy type (e.g. Device to VDevice)
+    """
+    new_model = proxy_type()
+    new_model.__dict__ = model.__dict__.copy()
+    return new_model

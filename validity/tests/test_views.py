@@ -185,3 +185,12 @@ class TestCommand(ViewTest):
         "type": "CLI",
         "cli_command": "show run",
     }
+
+
+@pytest.mark.django_db
+def test_datasource_devices(admin_client):
+    data_source = DataSourceFactory(custom_field_data={"default": True})
+    DeviceFactory()
+    DeviceFactory()
+    resp = admin_client.get(data_source.get_absolute_url() + "devices/")
+    assert resp.status_code == HTTPStatus.OK

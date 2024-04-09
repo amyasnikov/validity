@@ -31,6 +31,12 @@ class VDataSource(DataSource):
         proxy = True
 
     @property
+    def bound_devices(self):
+        from validity.models.device import VDevice
+
+        return VDevice.objects.annotate_datasource_id().filter(data_source_id=self.pk)
+
+    @property
     def is_default(self):
         return self.cf.get("default", False)
 
