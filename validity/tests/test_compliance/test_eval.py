@@ -6,7 +6,7 @@ from contextlib import nullcontext
 import pytest
 from deepdiff.serialization import json_dumps
 
-from validity.compliance.eval import ExplanationalEval, default_nameset, eval_defaults
+from validity.compliance.eval import EvalWithCompoundTypes, ExplanationalEval, default_nameset, eval_defaults
 from validity.compliance.exceptions import EvalError
 
 
@@ -81,3 +81,35 @@ def test_load_defaults(init_kwargs, expected_names, expected_functions, expected
     assert ev.names == expected_names
     assert ev.operators == expected_operators
     assert ev.functions == expected_functions
+
+
+@pytest.mark.parametrize(
+    "expression, result",
+    [
+        ("{i: i for i in range(3)}", {0: 0, 1: 1, 2: 2}),
+        ("{2 * i: 3 * i for i in range(1, 3)}", {2: 3, 4: 6}),
+        ("{str(i): 1 for i in range(3) if i >= 2}", {"2": 1}),
+        ("{a:a for a in [1,2,3,4,5] if a <= 3 and a > 1 }", {2: 2, 3: 3}),
+        ("{a:a+b+c for a, (b, c) in ((1,(1,1)),(3,(2,2)))}", {1: 3, 3: 7}),
+        (
+            "{str(a)+str(b): a+b for a in range(2) for b in range(3)}",
+            {"00": 0, "01": 1, "02": 2, "10": 1, "11": 2, "12": 3},
+        ),
+    ],
+)
+def test_dict_comp(expression, result):
+    ev = EvalWithCompoundTypes(functions={"range": range, "str": str})
+    assert ev.eval(expression) == result
+
+
+@pytest.mark.parametrize(
+    "expression, result",
+    [
+        ("{i for i in range(3)}", {0, 1, 2}),
+        ("{i*2 for i in range(3)}", {0, 2, 4}),
+        ("{i*2 for i in range(3) if i > 1}", {4}),
+    ],
+)
+def test_set_comp(expression, result):
+    ev = EvalWithCompoundTypes(functions={"range": range})
+    assert ev.eval(expression) == result
