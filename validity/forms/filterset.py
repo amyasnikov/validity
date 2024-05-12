@@ -18,6 +18,7 @@ from validity.choices import (
     ExtractionMethodChoices,
     SeverityChoices,
 )
+from validity.netbox_changes import FieldSet
 from .helpers import ExcludeMixin, PlaceholderChoiceField
 
 
@@ -79,21 +80,19 @@ class TestResultFilterForm(ExcludeMixin, Form):
 class ComplianceTestResultFilterForm(TestResultFilterForm, NetBoxModelFilterSetForm):
     model = models.ComplianceTestResult
     fieldsets = (
-        [_("Common"), ("latest", "passed", "selector_id")],
-        [_("Test"), ("severity", "test_id", "report_id", "test_tag_id")],
-        [
-            _("Device"),
-            (
-                "device_id",
-                "device_type_id",
-                "manufacturer_id",
-                "device_role_id",
-                "tenant_id",
-                "platform_id",
-                "location_id",
-                "site_id",
-            ),
-        ],
+        FieldSet("latest", "passed", "selector_id", name=_("Common")),
+        FieldSet("severity", "test_id", "report_id", "test_tag_id", name=_("Test")),
+        FieldSet(
+            "device_id",
+            "device_type_id",
+            "manufacturer_id",
+            "device_role_id",
+            "tenant_id",
+            "platform_id",
+            "location_id",
+            "site_id",
+            name=_("Device"),
+        ),
     )
 
 

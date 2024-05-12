@@ -1,11 +1,16 @@
 import logging
 
 from django.conf import settings as django_settings
-from extras.plugins import PluginConfig
 from netbox.settings import VERSION
 from pydantic import BaseModel, Field
 
 from validity.utils.version import NetboxVersion
+
+
+if VERSION.startswith("3."):
+    from extras.plugins import PluginConfig
+else:
+    from netbox.plugins import PluginConfig
 
 
 logger = logging.getLogger(__name__)

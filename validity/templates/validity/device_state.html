@@ -6,7 +6,6 @@
 {% endblock %}
 {% block title %}{{ object }}: Serialized State{% endblock %}
 {% block subtitle %}
-<div class="object-subtitle"></div>
 {% endblock %}
 {% block content %}
 <div class="row mb-2">
@@ -71,7 +70,7 @@
     </div>
   </div>
   {% else %}
-  <div class="card bg-warning mt-3">
+  <div class="card {{bg}}-warning mt-3">
     <div class="card-body">
       <h6 class="card-title">{{ error }}</h6>
     </div>

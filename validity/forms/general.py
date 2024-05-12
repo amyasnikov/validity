@@ -11,6 +11,7 @@ from utilities.forms.widgets import HTMXSelect
 
 from validity import models
 from validity.choices import ConnectionTypeChoices
+from validity.netbox_changes import FieldSet
 from .helpers import PrettyJSONWidget, SubformMixin
 
 
@@ -19,9 +20,9 @@ class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
     expression = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
-        (_("Compliance Test"), ("name", "severity", "description", "selectors", "tags")),
-        (_("Expression from Data Source"), ("data_source", "data_file")),
-        (_("Expression from DB"), ("expression",)),
+        FieldSet("name", "severity", "description", "selectors", "tags", name=_("Compliance Test")),
+        FieldSet("data_source", "data_file", name=_("Expression from Data Source")),
+        FieldSet("expression", name=_("Expression from DB")),
     )
 
     class Meta:
@@ -41,22 +42,20 @@ class ComplianceSelectorForm(NetBoxModelForm):
     tenant_filter = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), required=False)
 
     fieldsets = (
-        (_("Common"), ("name", "tags")),
-        (_("Dynamic Pairs"), ("dynamic_pairs", "dp_tag_prefix")),
-        (
-            _("Filters"),
-            (
-                "filter_operation",
-                "name_filter",
-                "type_filter",
-                "location_filter",
-                "manufacturer_filter",
-                "platform_filter",
-                "site_filter",
-                "status_filter",
-                "tag_filter",
-                "tenant_filter",
-            ),
+        FieldSet("name", "tags", name=_("Common")),
+        FieldSet("dynamic_pairs", "dp_tag_prefix", name=_("Dynamic Pairs")),
+        FieldSet(
+            "filter_operation",
+            "name_filter",
+            "type_filter",
+            "location_filter",
+            "manufacturer_filter",
+            "platform_filter",
+            "site_filter",
+            "status_filter",
+            "tag_filter",
+            "tenant_filter",
+            name=_("Filters"),
         ),
     )
 
@@ -90,10 +89,10 @@ class SerializerForm(SyncedDataMixin, SubformMixin, NetBoxModelForm):
     template = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     main_fieldsets = (
-        (_("Serializer"), ("name", "extraction_method", "tags")),
+        FieldSet("name", "extraction_method", "tags", name=_("Serializer")),
         "__subform__",
-        (_("Template from Data Source"), ("data_source", "data_file")),
-        (_("Template from DB"), ("template",)),
+        FieldSet("data_source", "data_file", name=_("Template from Data Source")),
+        FieldSet("template", name=_("Template from DB")),
     )
 
     @property
@@ -120,9 +119,9 @@ class NameSetForm(NetBoxModelForm):
     definitions = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
-        (_("Name Set"), ("name", "description", "_global", "tests", "tags")),
-        (_("Definitions from Data Source"), ("data_source", "data_file")),
-        (_("Definitions from DB"), ("definitions",)),
+        FieldSet("name", "description", "_global", "tests", "tags", name=_("Name Set")),
+        FieldSet("data_source", "data_file", name=_("Definitions from Data Source")),
+        FieldSet("definitions", name=_("Definitions from DB")),
     )
 
     class Meta:
@@ -154,7 +153,7 @@ class CommandForm(SubformMixin, NetBoxModelForm):
     serializer = DynamicModelChoiceField(queryset=models.Serializer.objects.all(), required=False)
 
     main_fieldsets = [
-        (_("Command"), ("name", "label", "type", "retrieves_config", "serializer", "tags")),
+        FieldSet("name", "label", "type", "retrieves_config", "serializer", "tags", name=_("Command")),
     ]
 
     class Meta:

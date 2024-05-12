@@ -5,6 +5,7 @@ from validity.fields.encrypted import EncryptedString
 from django.db import migrations, models
 import django.db.models.deletion
 from validity.utils.misc import datasource_sync
+from validity.netbox_changes import CF_OBJ_TYPE
 
 
 def setup_datasource_cf(apps, schema_editor):
@@ -50,14 +51,14 @@ def setup_datasource_cf(apps, schema_editor):
         ]
     )
     for cf in datasource_cfs:
-        cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
+        cf.content_types.set([ContentType.objects.get_for_model(DataSource).pk])
     tenant_cf = CustomField.objects.using(db).create(
         name="data_source",
         label=_("Data Source"),
         description=_("Required by Validity"),
         type="object",
-        object_type=ContentType.objects.get_for_model(DataSource),
         required=False,
+        **{CF_OBJ_TYPE: ContentType.objects.get_for_model(DataSource)}
     )
     tenant_cf.content_types.set([ContentType.objects.get_for_model(Tenant)])
 

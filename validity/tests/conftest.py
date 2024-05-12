@@ -10,6 +10,7 @@ from tenancy.models import Tenant
 
 import validity
 from validity.models import Poller, Serializer
+from validity.netbox_changes import CF_CONTENT_TYPES, CF_OBJ_TYPE
 
 
 pytest.register_assert_rewrite("base")
@@ -27,14 +28,14 @@ def create_custom_fields(db):
             CustomField(
                 name="serializer",
                 type="object",
-                object_type=ContentType.objects.get_for_model(Serializer),
                 required=False,
+                **{CF_OBJ_TYPE: ContentType.objects.get_for_model(Serializer)},
             ),
             CustomField(
                 name="data_source",
                 type="object",
-                object_type=ContentType.objects.get_for_model(DataSource),
                 required=False,
+                **{CF_OBJ_TYPE: ContentType.objects.get_for_model(DataSource)},
             ),
             CustomField(
                 name="default",
@@ -60,26 +61,26 @@ def create_custom_fields(db):
             CustomField(
                 name="poller",
                 type="object",
-                object_type=ContentType.objects.get_for_model(Poller),
                 required=False,
+                **{CF_OBJ_TYPE: ContentType.objects.get_for_model(Poller)},
             ),
         ]
     )
-    cfs[0].content_types.set(
+    getattr(cfs[0], CF_CONTENT_TYPES).set(
         [
-            ContentType.objects.get_for_model(Device),
-            ContentType.objects.get_for_model(DeviceType),
-            ContentType.objects.get_for_model(Manufacturer),
+            ContentType.objects.get_for_model(Device).pk,
+            ContentType.objects.get_for_model(DeviceType).pk,
+            ContentType.objects.get_for_model(Manufacturer).pk,
         ]
     )
-    cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])
+    getattr(cfs[1], CF_CONTENT_TYPES).set([ContentType.objects.get_for_model(Tenant).pk])
     for cf in cfs[2:6]:
-        cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
-    cfs[6].content_types.set(
+        getattr(cf, CF_CONTENT_TYPES).set([ContentType.objects.get_for_model(DataSource).pk])
+    getattr(cfs[6], CF_CONTENT_TYPES).set(
         [
-            ContentType.objects.get_for_model(Device),
-            ContentType.objects.get_for_model(DeviceType),
-            ContentType.objects.get_for_model(Manufacturer),
+            ContentType.objects.get_for_model(Device).pk,
+            ContentType.objects.get_for_model(DeviceType).pk,
+            ContentType.objects.get_for_model(Manufacturer).pk,
         ]
     )
 

@@ -8,6 +8,7 @@ import validity.fields.encrypted
 from django.utils.translation import gettext_lazy as _
 import django.core.validators
 import django.db.models.deletion
+from validity.netbox_changes import CF_OBJ_TYPE
 
 
 def create_cf(apps, schema_editor):
@@ -24,14 +25,14 @@ def create_cf(apps, schema_editor):
         label=_("Poller"),
         description=_("Required by Validity. Defines properties of device polling"),
         type="object",
-        object_type=ContentType.objects.get_for_model(Poller),
         required=False,
+        **{CF_OBJ_TYPE: ContentType.objects.get_for_model(Poller)}
     )
     cf.content_types.set(
         [
-            ContentType.objects.get_for_model(Device),
-            ContentType.objects.get_for_model(DeviceType),
-            ContentType.objects.get_for_model(Manufacturer),
+            ContentType.objects.get_for_model(Device).pk,
+            ContentType.objects.get_for_model(DeviceType).pk,
+            ContentType.objects.get_for_model(Manufacturer).pk,
         ]
     )
 

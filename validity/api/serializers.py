@@ -17,7 +17,7 @@ from rest_framework.reverse import reverse
 from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
 
-from validity import models
+from validity import config, models
 from .helpers import EncryptedDictField, FieldsMixin, ListQPMixin, SubformValidationMixin, nested_factory
 
 
@@ -72,9 +72,10 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display", "name")
 
 
-NestedComplianceSelectorSerializer = nested_factory(ComplianceSelectorSerializer, ("id", "url", "display", "name"))
+NestedComplianceSelectorSerializer = nested_factory(ComplianceSelectorSerializer, nb_version=config.netbox_version)
 
 
 class ComplianceTestSerializer(NetBoxModelSerializer):
@@ -109,9 +110,10 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display", "name", "severity")
 
 
-NestedComplianceTestSerializer = nested_factory(ComplianceTestSerializer, ("id", "url", "display", "name", "severity"))
+NestedComplianceTestSerializer = nested_factory(ComplianceTestSerializer, nb_version=config.netbox_version)
 
 
 class ComplianceReportSerializer(NetBoxModelSerializer):
@@ -149,13 +151,14 @@ class ComplianceReportSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display")
 
     def get_results_url(self, obj):
         results_url = reverse("plugins-api:validity-api:compliancetestresult-list", request=self.context["request"])
         return results_url + f"?report_id={obj.pk}"
 
 
-NestedComplianceReportSerializer = nested_factory(ComplianceReportSerializer, ("id", "url", "display"))
+NestedComplianceReportSerializer = nested_factory(ComplianceReportSerializer, nb_version=config.netbox_version)
 
 
 class ComplianceTestResultSerializer(NetBoxModelSerializer):
@@ -181,11 +184,10 @@ class ComplianceTestResultSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display", "passed")
 
 
-NestedComplianceTestResultSerializer = nested_factory(
-    ComplianceTestResultSerializer, ("id", "url", "display", "passed")
-)
+NestedComplianceTestResultSerializer = nested_factory(ComplianceTestResultSerializer, nb_version=config.netbox_version)
 
 
 class SerializerSerializer(SubformValidationMixin, NetBoxModelSerializer):
@@ -213,9 +215,10 @@ class SerializerSerializer(SubformValidationMixin, NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display", "name")
 
 
-NestedSerializerSerializer = nested_factory(SerializerSerializer, ("id", "url", "display", "name"))
+NestedSerializerSerializer = nested_factory(SerializerSerializer, nb_version=config.netbox_version)
 
 
 class NameSetSerializer(NetBoxModelSerializer):
@@ -244,6 +247,7 @@ class NameSetSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display", "name")
 
     def to_representation(self, instance):
         result = super().to_representation(instance)
@@ -256,7 +260,7 @@ class NameSetSerializer(NetBoxModelSerializer):
         return super().run_validation(data)
 
 
-NestedNameSetSerializer = nested_factory(NameSetSerializer, ("id", "url", "display", "name"))
+NestedNameSetSerializer = nested_factory(NameSetSerializer, nb_version=config.netbox_version)
 
 
 class DeviceReportSerializer(NestedDeviceSerializer):
@@ -297,9 +301,10 @@ class CommandSerializer(SubformValidationMixin, NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display", "name")
 
 
-NestedCommandSerializer = nested_factory(CommandSerializer, ("id", "url", "display", "name"))
+NestedCommandSerializer = nested_factory(CommandSerializer, nb_version=config.netbox_version)
 
 
 class PollerSerializer(NetBoxModelSerializer):
@@ -328,13 +333,14 @@ class PollerSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         )
+        brief_fields = ("id", "url", "display", "name")
 
     def validate(self, data):
         models.Poller.validate_commands(data["connection_type"], data["commands"])
         return super().validate(data)
 
 
-NestedPollerSerializer = nested_factory(PollerSerializer, ("id", "url", "display", "name"))
+NestedPollerSerializer = nested_factory(PollerSerializer, nb_version=config.netbox_version)
 
 
 class SerializedStateItemSerializer(FieldsMixin, serializers.Serializer):

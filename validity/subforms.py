@@ -9,9 +9,9 @@ import xml.etree.ElementTree as ET
 
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from utilities.forms import BootstrapMixin
 
 from validity.choices import JSONAPIMethodChoices
+from validity.netbox_changes import BootstrapMixin
 from validity.utils.json import jq
 from validity.utils.misc import reraise
 
