@@ -24,8 +24,8 @@ class NetBoxValidityConfig(PluginConfig):
     author_email = "anton2008m@gmail.com"
     version = "2.2.0"
     base_url = "validity"
-    django_apps = ["bootstrap5"]
-    min_version = "3.5.0"
+    django_apps = ["django_bootstrap5"]
+    min_version = "3.6.0"
 
     # custom field
     netbox_version = NetboxVersion(VERSION)
