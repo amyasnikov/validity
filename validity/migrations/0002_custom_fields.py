@@ -1,6 +1,6 @@
 from django.db import migrations
 from django.utils.translation import gettext_lazy as _
-from validity.netbox_changes import CF_OBJ_TYPE
+from validity.netbox_changes import CF_OBJ_TYPE, content_types
 
 def forward_func(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
@@ -34,14 +34,14 @@ def forward_func(apps, schema_editor):
             ),
         ]
     )
-    cfs[0].content_types.set(
+    content_types(cfs[0]).set(
         [
             ContentType.objects.get_for_model(Device).pk,
             ContentType.objects.get_for_model(DeviceType).pk,
             ContentType.objects.get_for_model(Manufacturer).pk,
         ]
     )
-    cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant).pk])
+    content_types(cfs[1]).set([ContentType.objects.get_for_model(Tenant).pk])
 
 
 def reverse_func(apps, schema_editor):

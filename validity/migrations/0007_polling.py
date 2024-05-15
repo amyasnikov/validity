@@ -8,7 +8,7 @@ import validity.fields.encrypted
 from django.utils.translation import gettext_lazy as _
 import django.core.validators
 import django.db.models.deletion
-from validity.netbox_changes import CF_OBJ_TYPE
+from validity.netbox_changes import CF_OBJ_TYPE, content_types
 
 
 def create_cf(apps, schema_editor):
@@ -28,7 +28,7 @@ def create_cf(apps, schema_editor):
         required=False,
         **{CF_OBJ_TYPE: ContentType.objects.get_for_model(Poller)}
     )
-    cf.content_types.set(
+    content_types(cf).set(
         [
             ContentType.objects.get_for_model(Device).pk,
             ContentType.objects.get_for_model(DeviceType).pk,

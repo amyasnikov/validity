@@ -4,7 +4,7 @@ from pydoc import locate as __locate
 
 enqueue_object = __locate("extras.webhooks.enqueue_object")
 events_queue = __locate("netbox.context.webhooks_queue")
-EventsRuleMixin = __locate("netbox.models.features.WebhooksMixin")
+EventRulesMixin = __locate("netbox.models.features.WebhooksMixin")
 BootstrapMixin = __locate("utilities.forms.BootstrapMixin")
 plugins = __locate("extras.plugins")
 ButtonColorChoices = __locate("utilities.choices.ButtonColorChoices")

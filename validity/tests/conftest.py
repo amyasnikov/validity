@@ -10,7 +10,7 @@ from tenancy.models import Tenant
 
 import validity
 from validity.models import Poller, Serializer
-from validity.netbox_changes import CF_CONTENT_TYPES, CF_OBJ_TYPE
+from validity.netbox_changes import CF_OBJ_TYPE, content_types
 
 
 pytest.register_assert_rewrite("base")
@@ -66,17 +66,17 @@ def create_custom_fields(db):
             ),
         ]
     )
-    getattr(cfs[0], CF_CONTENT_TYPES).set(
+    content_types(cfs[0]).set(
         [
             ContentType.objects.get_for_model(Device).pk,
             ContentType.objects.get_for_model(DeviceType).pk,
             ContentType.objects.get_for_model(Manufacturer).pk,
         ]
     )
-    getattr(cfs[1], CF_CONTENT_TYPES).set([ContentType.objects.get_for_model(Tenant).pk])
+    content_types(cfs[1]).set([ContentType.objects.get_for_model(Tenant).pk])
     for cf in cfs[2:6]:
-        getattr(cf, CF_CONTENT_TYPES).set([ContentType.objects.get_for_model(DataSource).pk])
-    getattr(cfs[6], CF_CONTENT_TYPES).set(
+        content_types(cf).set([ContentType.objects.get_for_model(DataSource).pk])
+    content_types(cfs[6]).set(
         [
             ContentType.objects.get_for_model(Device).pk,
             ContentType.objects.get_for_model(DeviceType).pk,
