@@ -18,7 +18,9 @@
     <div class="col-auto">
     <form role="form" class="row" method="get">
       {% bootstrap_form filterset_form layout="inline" %}
-      <div class="col-auto">{% buttons submit=search_button_name|default:"Search" %}{% endbuttons %}</div>
+      <div class="col-auto">
+        {% bootstrap_button type="submit" content=search_button_name|default:"Search" %}
+      </div>
       <div class="col-auto">
         {% block extra_button %}{% endblock %}
       </div>
