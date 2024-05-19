@@ -4,7 +4,6 @@ from django.utils.translation import gettext_lazy as _
 from validity.fields.encrypted import EncryptedString
 from django.db import migrations, models
 import django.db.models.deletion
-from validity.utils.misc import datasource_sync
 
 
 def setup_datasource_cf(apps, schema_editor):
@@ -84,7 +83,7 @@ def get_fields(model, fields):
 
 
 def setup_datasources(apps, schema_editor):
-    from core.models import DataSource
+    from validity.models import VDataSource
 
     db = schema_editor.connection.alias
     GitRepo = apps.get_model("validity", "GitRepo")
@@ -95,7 +94,7 @@ def setup_datasources(apps, schema_editor):
             parameters = get_fields(repo, ["username", "branch", "encrypted_password"])
             if encrypted_password := parameters.pop("encrypted_password", None):
                 parameters["password"] = EncryptedString.deserialize(encrypted_password).decrypt()
-            datasource = DataSource.objects.using(db).create(
+            datasource = VDataSource.objects.using(db).create(
                 type="git",
                 name="validity_" + repo.name,
                 description=f"Auto-created by Validity from Git Repository {repo.name}",
@@ -110,7 +109,6 @@ def setup_datasources(apps, schema_editor):
                 f"{type(e).__name__}: {e}",
                 sep="\n",
             )  # noqa
-        datasource_sync(datasources, fail_handler=lambda ds, err: print(f"Cannot sync Data Source {ds}:", err))
 
 
 def delete_repo_cf(apps, schema_editor):

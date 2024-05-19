@@ -8,6 +8,7 @@ import yaml
 from django import forms
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from netbox.config import ConfigItem
 from netbox.registry import registry
 
 from validity import config
@@ -47,7 +48,11 @@ class PollingBackend(DataBackend):
     def bound_devices_qs(self, device_filter: Q):
         datasource_id = self.params.get("datasource_id")
         assert datasource_id, 'Data Source parameters must contain "datasource_id"'
-        return self.devices_qs.filter(data_source_id=datasource_id).filter(device_filter)
+        return (
+            self.devices_qs.filter(data_source_id=datasource_id)
+            .filter(device_filter)
+            .set_attribute("_prefer_ipv4", ConfigItem("PREFER_IPV4")())
+        )
 
     def write_metainfo(self, dir_name: str, polling_info: PollingInfo) -> None:
         # NetBox does not provide an opportunity for a backend to return any info/errors to the user

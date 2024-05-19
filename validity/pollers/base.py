@@ -33,7 +33,9 @@ class ThreadPoller(DevicePoller):
     Polls devices one by one using threads
     """
 
-    thread_workers: int = 500
+    def __init__(self, credentials: dict, commands: Collection["Command"], thread_workers: int = 500) -> None:
+        super().__init__(credentials, commands)
+        self.thread_workers = thread_workers
 
     def _poll_one_device(self, device: "VDevice") -> Collection[CommandResult]:
         """
