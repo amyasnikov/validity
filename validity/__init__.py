@@ -38,8 +38,8 @@ class ValiditySettings(BaseModel):
     store_last_results: int = Field(default=5, gt=0, lt=1001)
     store_reports: int = Field(default=5, gt=0, lt=1001)
     sleep_between_tests: float = 0
-    result_batch_size: int = 500
-    polling_threads: int = 500
+    result_batch_size: int = Field(default=500, ge=1)
+    polling_threads: int = Field(default=500, ge=1)
 
 
 settings = ValiditySettings.model_validate(django_settings.PLUGINS_CONFIG.get("validity", {}))
