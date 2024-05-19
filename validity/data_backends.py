@@ -51,7 +51,7 @@ class PollingBackend(DataBackend):
         return (
             self.devices_qs.filter(data_source_id=datasource_id)
             .filter(device_filter)
-            .set_attribute("_prefer_ipv4", ConfigItem("PREFER_IPV4")())
+            .set_attribute("prefer_ipv4", ConfigItem("PREFER_IPV4")())
         )
 
     def write_metainfo(self, dir_name: str, polling_info: PollingInfo) -> None:

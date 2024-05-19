@@ -1,6 +1,7 @@
 from operator import attrgetter
 
 import pytest
+from dcim.models import Device
 from factories import (
     DataFileFactory,
     DataSourceFactory,
@@ -9,6 +10,7 @@ from factories import (
     SerializerDBFactory,
     TenantFactory,
 )
+from ipam.models import IPAddress
 
 from validity.compliance.serialization import Serializable
 from validity.models import VDevice
@@ -76,3 +78,16 @@ def test_config_item(create_custom_fields):
     assert device._config_item() == Serializable(device.serializer, data_file)
     device.data_source = None
     assert device._config_item() == Serializable(device.serializer, None)
+
+
+@pytest.mark.django_db
+def test_primary_ip():
+    vdevice = DeviceFactory()
+    device = Device.objects.get(pk=vdevice.pk)
+    vdevice.primary_ip4 = device.primary_ip4 = IPAddress(address="1.1.1.1")
+    vdevice.primary_ip6 = device.primary_ip6 = IPAddress(address="C0CA::BEEF")
+    assert device.primary_ip == vdevice.primary_ip
+    vdevice.prefer_ipv4 = True
+    assert vdevice.primary_ip == vdevice.primary_ip4
+    vdevice.prefer_ipv4 = False
+    assert vdevice.primary_ip == vdevice.primary_ip6

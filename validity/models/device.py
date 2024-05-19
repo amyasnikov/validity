@@ -17,7 +17,7 @@ class VDevice(Device):
     objects = VDeviceQS.as_manager()
     data_source: VDataSource
     selector: Optional["ComplianceSelector"]
-    _prefer_ipv4: bool | None = None
+    prefer_ipv4: bool | None = None
 
     class Meta:
         proxy = True
@@ -72,9 +72,9 @@ class VDevice(Device):
 
     @property
     def primary_ip(self):
-        if self._prefer_ipv4 is None:
+        if self.prefer_ipv4 is None:
             return super().primary_ip
-        if self._prefer_ipv4 and self.primary_ip4:
+        if self.prefer_ipv4 and self.primary_ip4:
             return self.primary_ip4
         elif self.primary_ip6:
             return self.primary_ip6
