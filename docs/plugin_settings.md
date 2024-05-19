@@ -53,6 +53,15 @@ How many [Test Results](entities/results_and_reports.md#test-results) should the
     This setting does not influence Test Results bound to a Report. These results can be deleted only together with the Report they are bound to.
 
 
+### polling_threads
+
+*Default:* `500`
+
+*Type:* `int`
+
+Validity uses threads to perform device polling. This setting defines the upper limit of these threads number. If you have extremely large amount of devices (e.g. 100 000), you may want to increase this number to speed up the overall polling process.
+
+
 ## Settings Example
 
 Here is the full example of Validity settings:
