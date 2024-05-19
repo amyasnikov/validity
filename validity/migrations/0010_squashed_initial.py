@@ -25,13 +25,13 @@ def create_cf(apps, schema_editor):
     db = schema_editor.connection.alias
 
     serializer_cf = CustomField.objects.create(
-                name="serializer",
-                label=_("Config Serializer"),
-                description=_("Required by Validity"),
-                type="object",
-                required=False,
-                **{CF_OBJ_TYPE: ContentType.objects.get_for_model(Serializer)},
-    ),
+        name="serializer",
+        label=_("Config Serializer"),
+        description=_("Required by Validity"),
+        type="object",
+        required=False,
+        **{CF_OBJ_TYPE: ContentType.objects.get_for_model(Serializer)},
+    )
     content_types(serializer_cf).set(
         [
             ContentType.objects.get_for_model(Device).pk,
@@ -76,7 +76,7 @@ def create_cf(apps, schema_editor):
         ]
     )
     for cf in datasource_cfs:
-        cf.content_types.set([ContentType.objects.get_for_model(DataSource).pk])
+        content_types(cf).set([ContentType.objects.get_for_model(DataSource).pk])
     tenant_cf = CustomField.objects.using(db).create(
         name="data_source",
         label=_("Data Source"),
@@ -85,7 +85,7 @@ def create_cf(apps, schema_editor):
         required=False,
         **{CF_OBJ_TYPE: ContentType.objects.get_for_model(DataSource)}
     )
-    tenant_cf.content_types.set([ContentType.objects.get_for_model(Tenant)])
+    content_types(tenant_cf).set([ContentType.objects.get_for_model(Tenant)])
 
 
 def delete_cf(apps,schema_editor):

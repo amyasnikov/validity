@@ -16,3 +16,4 @@ class FieldSet:
 
 
 CF_OBJ_TYPE = "object_type"
+CF_CONTENT_TYPES = "content_types"

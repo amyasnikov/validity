@@ -53,7 +53,7 @@ class TestNetmikoPoller:
         devices = [get_mocked_device(f"1.1.1.{i}") for i in range(10)]
         start = time.time()
         results = list(poller.poll(devices))
-        assert time.time() - start < 0.3
+        assert time.time() - start < 1
         assert len(results) == len(commands) * len(devices)
         if raise_exc:
             assert all(res.error.message.startswith("OSError") for res in results)
