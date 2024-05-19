@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import pytest
 from factories import CommandFactory, CompTestDBFactory, DataSourceFactory, DeviceFactory
 
-from validity.models import Command, ComplianceReport, ComplianceTestResult
+from validity.models import Command, ComplianceReport, ComplianceTestResult, VDevice
 
 
 @pytest.mark.parametrize("store_results", [3, 2, 1])
@@ -55,3 +55,15 @@ def test_set_file_paths(create_custom_fields):
     commands = Command.objects.set_file_paths(device=device, data_source=ds)
     for cmd in commands:
         assert cmd.path == f"path/d1/{cmd.label}"
+
+
+@pytest.mark.django_db
+def test_set_attribute():
+    DeviceFactory(name="d1")
+    DeviceFactory(name="d2")
+    DeviceFactory(name="_d3")
+    device_qs = VDevice.objects.all().set_attribute("attr1", "val1").set_attribute("attr2", "val2")
+    for device in device_qs:
+        assert device.attr1 == "val1" and device.attr2 == "val2"
+    for device in device_qs.filter(name__startswith="d"):
+        assert device.attr1 == "val1" and device.attr2 == "val2"
