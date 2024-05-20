@@ -19,16 +19,16 @@ from validity.choices import (
     SeverityChoices,
 )
 from validity.netbox_changes import FieldSet
-from .helpers import ExcludeMixin, PlaceholderChoiceField
+from .helpers import AddM2MPlaceholderFormMixin, ExcludeMixin, PlaceholderChoiceField
 
 
 class DeviceReportFilterForm(ExcludeMixin, Form):
     q = CharField(label=_("Device Search"), required=False)
     compliance_passed = PlaceholderChoiceField(
-        required=False, placeholder=_("Compliance Passed"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:]
+        required=False, label=_("Compliance Passed"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:]
     )
     severity_ge = PlaceholderChoiceField(
-        required=False, placeholder=_("Minimum Severity"), choices=SeverityChoices.choices[1:]
+        required=False, label=_("Minimum Severity"), choices=SeverityChoices.choices[1:]
     )
 
 
@@ -37,14 +37,14 @@ class DataSourceDevicesFilterForm(Form):
     tenant_id = DynamicModelMultipleChoiceField(label=_("Tenant"), queryset=Tenant.objects.all(), required=False)
 
 
-class TestResultFilterForm(ExcludeMixin, Form):
-    latest = PlaceholderChoiceField(required=False, placeholder=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
+class TestResultFilterForm(ExcludeMixin, AddM2MPlaceholderFormMixin, Form):
+    latest = PlaceholderChoiceField(required=False, label=_("Latest"), choices=BOOLEAN_WITH_BLANK_CHOICES[1:])
     passed = PlaceholderChoiceField(
         required=False,
-        placeholder=_("Passed"),
+        label=_("Passed"),
         choices=BOOLEAN_WITH_BLANK_CHOICES[1:],
     )
-    severity = PlaceholderChoiceField(required=False, placeholder=_("Severity"), choices=SeverityChoices.choices)
+    severity = PlaceholderChoiceField(required=False, label=_("Severity"), choices=SeverityChoices.choices)
     device_id = DynamicModelMultipleChoiceField(
         label=_("Device"),
         queryset=Device.objects.all(),
@@ -99,7 +99,6 @@ class ComplianceTestResultFilterForm(TestResultFilterForm, NetBoxModelFilterSetF
 class ReportGroupByForm(Form):
     group_by = PlaceholderChoiceField(
         label=_("Group results by"),
-        placeholder=_("Group results by"),
         required=False,
         choices=DeviceGroupByChoices.choices,
     )
@@ -141,7 +140,7 @@ class SerializerFilterForm(NetBoxModelFilterSetForm):
     model = models.Serializer
     name = CharField(required=False)
     extraction_method = PlaceholderChoiceField(
-        required=False, placeholder=_("Extraction Method"), choices=ExtractionMethodChoices.choices
+        required=False, label=_("Extraction Method"), choices=ExtractionMethodChoices.choices
     )
     datasource_id = DynamicModelMultipleChoiceField(
         label=_("Data Source"), queryset=DataSource.objects.all(), required=False
@@ -151,7 +150,7 @@ class SerializerFilterForm(NetBoxModelFilterSetForm):
 class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
     model = models.ComplianceTest
     name = CharField(required=False)
-    severity = PlaceholderChoiceField(required=False, placeholder=_("Severity"), choices=SeverityChoices.choices)
+    severity = PlaceholderChoiceField(required=False, label=_("Severity"), choices=SeverityChoices.choices)
     selector_id = DynamicModelMultipleChoiceField(
         label=_("Selector"), queryset=models.ComplianceSelector.objects.all(), required=False
     )
@@ -164,7 +163,7 @@ class PollerFilterForm(NetBoxModelFilterSetForm):
     model = models.Poller
     name = CharField(required=False)
     connection_type = PlaceholderChoiceField(
-        required=False, placeholder=_("Connection Type"), choices=ConnectionTypeChoices.choices
+        required=False, label=_("Connection Type"), choices=ConnectionTypeChoices.choices
     )
 
 
@@ -172,7 +171,7 @@ class CommandFilterForm(NetBoxModelFilterSetForm):
     model = models.Command
     name = CharField(required=False)
     label = CharField(required=False)
-    type = PlaceholderChoiceField(required=False, placeholder=_("Type"), choices=CommandTypeChoices.choices)
+    type = PlaceholderChoiceField(required=False, label=_("Type"), choices=CommandTypeChoices.choices)
     retrieves_config = NullBooleanField(
         label=_("Global"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES)
     )

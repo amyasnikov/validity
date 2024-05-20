@@ -4,6 +4,7 @@ from typing import Any, Literal, Sequence
 
 from django.forms import ChoiceField, JSONField, Select, Textarea
 from utilities.forms import get_field_value
+from utilities.forms.fields import DynamicModelMultipleChoiceField
 
 from validity.fields import EncryptedDict
 from validity.netbox_changes import FieldSet
@@ -48,8 +49,19 @@ class SelectWithPlaceholder(Select):
         return option
 
 
+class AddM2MPlaceholderFormMixin:
+    def __init__(self, *args, add_m2m_placeholder=False, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if not add_m2m_placeholder:
+            return
+        for field in self.fields.values():
+            if isinstance(field, DynamicModelMultipleChoiceField):
+                field.widget.attrs["placeholder"] = field.label
+
+
 class PlaceholderChoiceField(ChoiceField):
-    def __init__(self, *, placeholder: str, **kwargs) -> None:
+    def __init__(self, *, placeholder: str | None = None, **kwargs) -> None:
+        placeholder = placeholder or kwargs["label"]
         kwargs["choices"] = (("", placeholder),) + tuple(kwargs["choices"])
         kwargs["widget"] = SelectWithPlaceholder()
         super().__init__(**kwargs)

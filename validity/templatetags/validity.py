@@ -83,7 +83,7 @@ def report_stats_row(obj, row_name, severity):
     return {"row_name": row_name, "passed": passed, "count": count, "percentage": percentage}
 
 
-@register.filter
+@register.simple_tag
 def bg():
     return "bg" if config.netbox_version < "4.0.0" else "text-bg"
 
