@@ -4,8 +4,10 @@ from typing import Any, Literal, Sequence
 
 from django.forms import ChoiceField, JSONField, Select, Textarea
 from utilities.forms import get_field_value
+from utilities.forms.fields import DynamicModelMultipleChoiceField
 
 from validity.fields import EncryptedDict
+from validity.netbox_changes import FieldSet
 
 
 class PrettyJSONWidget(Textarea):
@@ -47,8 +49,19 @@ class SelectWithPlaceholder(Select):
         return option
 
 
+class AddM2MPlaceholderFormMixin:
+    def __init__(self, *args, add_m2m_placeholder=False, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        if not add_m2m_placeholder:
+            return
+        for field in self.fields.values():
+            if isinstance(field, DynamicModelMultipleChoiceField):
+                field.widget.attrs["placeholder"] = field.label
+
+
 class PlaceholderChoiceField(ChoiceField):
-    def __init__(self, *, placeholder: str, **kwargs) -> None:
+    def __init__(self, *, placeholder: str | None = None, **kwargs) -> None:
+        placeholder = placeholder or kwargs["label"]
         kwargs["choices"] = (("", placeholder),) + tuple(kwargs["choices"])
         kwargs["widget"] = SelectWithPlaceholder()
         super().__init__(**kwargs)
@@ -62,7 +75,7 @@ class ExcludeMixin:
 
 
 class SubformMixin:
-    main_fieldsets: Sequence[tuple[str, Sequence] | Literal["__subform__"]]
+    main_fieldsets: Sequence[FieldSet | Literal["__subform__"]]
 
     @property
     def json_field_name(self) -> str:
@@ -90,7 +103,7 @@ class SubformMixin:
         except ValueError:
             field_sets.append(None)
             subforms_idx = -1
-        field_sets[subforms_idx] = (self.fieldset_title, self.subform.fields.keys())
+        field_sets[subforms_idx] = FieldSet(*self.subform.fields.keys(), name=self.fieldset_title)
         return field_sets
 
     def __init__(self, *args, **kwargs):

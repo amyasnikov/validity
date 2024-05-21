@@ -81,7 +81,7 @@ ignore = ["B905"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"validity/netbox_changes.py" = ["F401"]
+"validity/netbox_changes/*" = ["F403", "F405"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["validity"]

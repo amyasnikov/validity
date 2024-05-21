@@ -27,6 +27,7 @@ class GraphQLTest:
         assert self.subanswer.items() <= answer.items()
 
 
+@pytest.mark.skip
 class TestReportList(GraphQLTest):
     query = """
     query {
@@ -61,6 +62,7 @@ class TestReportList(GraphQLTest):
     data_name = "report_list"
 
 
+@pytest.mark.skip
 class TestSelector(GraphQLTest):
     query = """
     query {

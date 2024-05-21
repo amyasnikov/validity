@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from validity.fields.encrypted import EncryptedString
 from django.db import migrations, models
 import django.db.models.deletion
+from validity.netbox_changes import CF_OBJ_TYPE, content_types, CF_CONTENT_TYPES
 
 
 def setup_datasource_cf(apps, schema_editor):
@@ -49,16 +50,16 @@ def setup_datasource_cf(apps, schema_editor):
         ]
     )
     for cf in datasource_cfs:
-        cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
+        content_types(cf).set([ContentType.objects.get_for_model(DataSource).pk])
     tenant_cf = CustomField.objects.using(db).create(
         name="data_source",
         label=_("Data Source"),
         description=_("Required by Validity"),
         type="object",
-        object_type=ContentType.objects.get_for_model(DataSource),
         required=False,
+        **{CF_OBJ_TYPE: ContentType.objects.get_for_model(DataSource)}
     )
-    tenant_cf.content_types.set([ContentType.objects.get_for_model(Tenant)])
+    content_types(tenant_cf).set([ContentType.objects.get_for_model(Tenant)])
 
 
 def delete_datasource_cf(apps, schema_editor):
@@ -69,7 +70,7 @@ def delete_datasource_cf(apps, schema_editor):
             "device_config_path",
             "web_url",
         ],
-        content_types__model="datasource",
+        **{f"{CF_CONTENT_TYPES}__model": "datasource"}
     ).delete()
 
 
@@ -114,7 +115,7 @@ def setup_datasources(apps, schema_editor):
 def delete_repo_cf(apps, schema_editor):
     db = schema_editor.connection.alias
     CustomField = apps.get_model("extras", "CustomField")
-    CustomField.objects.using(db).filter(name="repo", content_types__model="tenant").delete()
+    CustomField.objects.using(db).filter(name="repo", **{f"{CF_CONTENT_TYPES}__model": "tenant"}).delete()
 
 
 def setup_repo_cf(apps, schema_editor):
@@ -129,10 +130,10 @@ def setup_repo_cf(apps, schema_editor):
         label=_("Git Repository"),
         description=_("Required by Validity"),
         type="object",
-        object_type=ContentType.objects.get_for_model(GitRepo),
         required=False,
+        **{CF_OBJ_TYPE: ContentType.objects.get_for_model(GitRepo)}
     )
-    cf.content_types.set([ContentType.objects.get_for_model(Tenant)])
+    content_types(cf).set([ContentType.objects.get_for_model(Tenant)])
 
 
 def switch_git_links(apps, schema_editor):

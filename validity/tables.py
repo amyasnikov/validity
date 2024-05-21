@@ -15,7 +15,7 @@ from netbox.tables.columns import ActionsColumn, LinkedCountColumn
 from utilities.paginator import EnhancedPaginator
 
 from validity import models
-from validity.utils.misc import colorful_percentage
+from validity.templatetags.validity import colorful_percentage
 
 
 class SelectorTable(NetBoxTable):

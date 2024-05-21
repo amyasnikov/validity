@@ -3,11 +3,12 @@ from typing import Any
 from django import template
 from django.db.models import Model
 from django.http.request import HttpRequest
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from utilities.templatetags.builtins.filters import linkify, placeholder
 
-from validity.utils.misc import colorful_percentage as _colorful_percentage
+from validity import config
 
 
 register = template.Library()
@@ -17,7 +18,7 @@ register = template.Library()
 def colored_choice(obj: Model, field: str) -> str:
     value = getattr(obj, f"get_{field}_display")
     color = getattr(obj, f"get_{field}_color")
-    return mark_safe(f'<span class="badge bg-{color()}">{value()}</span>')
+    return mark_safe(f'<span class="badge {bg()}-{color()}">{value()}</span>')
 
 
 @register.filter
@@ -40,8 +41,15 @@ def data_source(model) -> str:
 
 
 @register.filter
-def colorful_percentage(percent):
-    return _colorful_percentage(percent)
+def colorful_percentage(percent: float) -> str:
+    levels = {75: "warning", 50: "orange", 25: "danger"}
+    badge_color = "success"
+    for level, color in levels.items():
+        if level <= percent:
+            break
+        badge_color = color
+    percent = round(percent, 1)
+    return format_html('<span class="badge rounded-pill {}-{}">{}%</span>', bg(), badge_color, percent)
 
 
 @register.simple_tag
@@ -73,3 +81,13 @@ def report_stats_row(obj, row_name, severity):
     passed = getattr(obj, f"{severity}_passed")
     percentage = getattr(obj, f"{severity}_percentage")
     return {"row_name": row_name, "passed": passed, "count": count, "percentage": percentage}
+
+
+@register.simple_tag
+def bg():
+    return "bg" if config.netbox_version < "4.0.0" else "text-bg"
+
+
+@register.filter
+def nb_version():
+    return config.netbox_version

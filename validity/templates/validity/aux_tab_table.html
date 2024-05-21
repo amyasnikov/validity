@@ -1,11 +1,10 @@
 {% extends 'generic/object.html' %}
 {% load helpers %}
-{% load bootstrap5 %}
+{% load django_bootstrap5 %}
 {% load render_table from django_tables2 %}
 {% block head %}
 {% endblock %}
 {% block subtitle %}
-<div class="object-subtitle"></div>
 {% endblock %}
 {% block controls %}
 {%if read_only %}
@@ -17,9 +16,11 @@
 {% block content %}
   <div class="row mb-3">
     <div class="col-auto">
-    <form role="form" class="row" method="get">
+    <form role="form" class="row row-cols-lg-auto g-1 align-items-center" method="get">
       {% bootstrap_form filterset_form layout="inline" %}
-      <div class="col-auto">{% buttons submit=search_button_name|default:"Search" %}{% endbuttons %}</div>
+      <div class="col-auto">
+        {% bootstrap_button type="submit" content=search_button_name|default:"Search" %}
+      </div>
       <div class="col-auto">
         {% block extra_button %}{% endblock %}
       </div>

@@ -1,12 +1,11 @@
 {% extends 'generic/object.html' %}
 {% load helpers %}
 {% load validity %}
-{% load bootstrap5 %}
+{% load django_bootstrap5 %}
 {% block head %}
 {% endblock %}
 {% block title %}{{ object }}: Serialized State{% endblock %}
 {% block subtitle %}
-<div class="object-subtitle"></div>
 {% endblock %}
 {% block content %}
 <div class="row mb-2">
@@ -49,9 +48,9 @@
     <div class="card">
       <h5 class="card-header">State</h5>
       <div class="card-body">
-        <form role="form" class="row" method="get">
-          {% bootstrap_form state_form layout="inline" %}
-          <div class="col-auto">{% buttons submit="Show" %}{% endbuttons %}</div>
+        <form role="form" class="row align-items-center" method="get">
+          <div class="col-auto">{% bootstrap_form state_form layout="inline" %}</div>
+          <div class="col-auto">{% bootstrap_button button_type="submit" content="Show" %}</div>
         </form>
       </div>
     </div>
@@ -71,7 +70,7 @@
     </div>
   </div>
   {% else %}
-  <div class="card bg-warning mt-3">
+  <div class="card {%bg%}-warning mt-3">
     <div class="card-body">
       <h6 class="card-title">{{ error }}</h6>
     </div>

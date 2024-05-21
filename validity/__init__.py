@@ -1,11 +1,16 @@
 import logging
 
 from django.conf import settings as django_settings
-from extras.plugins import PluginConfig
 from netbox.settings import VERSION
 from pydantic import BaseModel, Field
 
 from validity.utils.version import NetboxVersion
+
+
+if VERSION.startswith("3."):
+    from extras.plugins import PluginConfig
+else:
+    from netbox.plugins import PluginConfig
 
 
 logger = logging.getLogger(__name__)
@@ -19,8 +24,8 @@ class NetBoxValidityConfig(PluginConfig):
     author_email = "anton2008m@gmail.com"
     version = "2.2.1"
     base_url = "validity"
-    django_apps = ["bootstrap5"]
-    min_version = "3.5.0"
+    django_apps = ["django_bootstrap5"]
+    min_version = "3.6.0"
 
     # custom field
     netbox_version = NetboxVersion(VERSION)

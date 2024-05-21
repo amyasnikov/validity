@@ -41,9 +41,9 @@
             <th scope="row">Result</th>
             <td>
               {% if object.passed %}
-              <span class="badge bg-green">PASSED</span>
+              <span class="badge {%bg%}-green">PASSED</span>
               {% else %}
-              <span class="badge bg-red">FAILED</span>
+              <span class="badge {%bg%}-red">FAILED</span>
               {% endif %}
             </td>
           </tr>

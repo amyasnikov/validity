@@ -108,7 +108,17 @@ class ReportResultView(TestResultBaseView):
     parent_model = models.ComplianceReport
     result_relation = "report"
     read_only = True
-    exclude_form_fields = ("latest", "selector_id", "platform_id", "tenant_id", "device_role_id", "manufacturer_id")
+    exclude_form_fields = (
+        "latest",
+        "selector_id",
+        "platform_id",
+        "tenant_id",
+        "device_role_id",
+        "manufacturer_id",
+        "device_type_id",
+        "site_id",
+        "location_id",
+    )
     permission_required = "view_compliancereport"
 
 

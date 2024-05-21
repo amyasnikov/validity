@@ -1,6 +1,6 @@
 {% extends 'generic/object.html' %}
 {% load validity %}
-{% load bootstrap5 %}
+{% load django_bootstrap5 %}
 {% load buttons %}
 {% load perms %}
 {% load render_table from django_tables2 %}
@@ -46,9 +46,9 @@
       <div class="card">
         <h5 class="card-header">Group Results By</h5>
         <div class="card-body">
-          <form role="form" class="row" method="get">
-            {% bootstrap_form groupby_form layout="inline" %}
-            <div class="col-auto">{% buttons submit="Apply" %}{% endbuttons %}</div>
+          <form role="form" class="row align-items-center" method="get">
+            <div class="col-auto">{% bootstrap_form groupby_form layout="inline" %}</div>
+            <div class="col-auto">{% bootstrap_button button_type="submit" content="Apply" %}</div>
           </form>
         </div>
       </div>

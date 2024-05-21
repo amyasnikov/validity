@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 
 from validity.choices import ExtractionMethodChoices
 from validity.compliance.serialization import serialize
-from validity.netbox_changes import DEVICE_ROLE_RELATION
 from validity.subforms import (
     RouterOSSerializerForm,
     TEXTFSMSerializerForm,
@@ -68,7 +67,7 @@ class Serializer(SubformMixin, DataSourceMixin, BaseModel):
         return (
             VDevice.objects.annotate_serializer_id()
             .filter(serializer_id=self.pk)
-            .select_related("site", DEVICE_ROLE_RELATION, "device_type__manufacturer")
+            .select_related("site", "role", "device_type__manufacturer")
         )
 
     @property
