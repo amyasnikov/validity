@@ -4,13 +4,6 @@ from netbox.graphql.filter_mixins import BaseFilterMixin, autotype_decorator
 from validity import filtersets
 
 
-def autotype(filterset):
-    def decorator(cls):
-        pass
-
-    return decorator
-
-
 def adapt_to_strawberry(filterset):
     strawberry_filter = type(filterset.__name__.removesuffix("Set"), (BaseFilterMixin,), {})
     strawberry_filter = autotype_decorator(filterset)(strawberry_filter)
