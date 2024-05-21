@@ -16,7 +16,17 @@ logger = logging.getLogger(__name__)
 class TestResultView(TestResultBaseView):
     parent_model = Device
     result_relation = "device"
-    exclude_form_fields = ("platform_id", "tenant_id", "device_role_id", "manufacturer_id", "report_id", "selector_id")
+    exclude_form_fields = (
+        "platform_id",
+        "tenant_id",
+        "device_role_id",
+        "manufacturer_id",
+        "report_id",
+        "selector_id",
+        "device_type_id",
+        "location_id",
+        "site_id",
+    )
 
 
 @register_model_view(Device, "serialized_state")

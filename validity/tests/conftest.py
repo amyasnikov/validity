@@ -10,6 +10,7 @@ from tenancy.models import Tenant
 
 import validity
 from validity.models import Poller, Serializer
+from validity.utils.orm import CustomFieldBuilder
 
 
 pytest.register_assert_rewrite("base")
@@ -22,65 +23,56 @@ def tests_root():
 
 @pytest.fixture
 def create_custom_fields(db):
-    cfs = CustomField.objects.bulk_create(
-        [
-            CustomField(
-                name="serializer",
-                type="object",
-                object_type=ContentType.objects.get_for_model(Serializer),
-                required=False,
-            ),
-            CustomField(
-                name="data_source",
-                type="object",
-                object_type=ContentType.objects.get_for_model(DataSource),
-                required=False,
-            ),
-            CustomField(
-                name="default",
-                type="boolean",
-                required=False,
-                default=False,
-            ),
-            CustomField(
-                name="device_config_path",
-                type="text",
-                required=False,
-            ),
-            CustomField(
-                name="web_url",
-                type="text",
-                required=False,
-            ),
-            CustomField(
-                name="device_command_path",
-                type="text",
-                required=False,
-            ),
-            CustomField(
-                name="poller",
-                type="object",
-                object_type=ContentType.objects.get_for_model(Poller),
-                required=False,
-            ),
-        ]
+    cf_builder = CustomFieldBuilder(cf_model=CustomField, content_type_model=ContentType)
+
+    cf_builder.create(
+        name="serializer",
+        type="object",
+        required=False,
+        object_type=ContentType.objects.get_for_model(Serializer),
+        bind_to=[Device, DeviceType, Manufacturer],
     )
-    cfs[0].content_types.set(
-        [
-            ContentType.objects.get_for_model(Device),
-            ContentType.objects.get_for_model(DeviceType),
-            ContentType.objects.get_for_model(Manufacturer),
-        ]
+    cf_builder.create(
+        name="default",
+        type="boolean",
+        required=False,
+        default=False,
+        bind_to=[DataSource],
     )
-    cfs[1].content_types.set([ContentType.objects.get_for_model(Tenant)])
-    for cf in cfs[2:6]:
-        cf.content_types.set([ContentType.objects.get_for_model(DataSource)])
-    cfs[6].content_types.set(
-        [
-            ContentType.objects.get_for_model(Device),
-            ContentType.objects.get_for_model(DeviceType),
-            ContentType.objects.get_for_model(Manufacturer),
-        ]
+    cf_builder.create(
+        name="device_config_path",
+        type="text",
+        required=False,
+        validation_regex=r"^[^/].*$",
+        bind_to=[DataSource],
+    )
+    cf_builder.create(
+        name="device_command_path",
+        type="text",
+        required=False,
+        validation_regex=r"^[^/].*$",
+        weight=105,
+        bind_to=[DataSource],
+    )
+    cf_builder.create(
+        name="web_url",
+        type="text",
+        required=False,
+        bind_to=[DataSource],
+    )
+    cf_builder.create(
+        name="data_source",
+        type="object",
+        required=False,
+        object_type=ContentType.objects.get_for_model(DataSource),
+        bind_to=[Tenant],
+    )
+    cf_builder.create(
+        name="poller",
+        type="object",
+        required=False,
+        object_type=ContentType.objects.get_for_model(Poller),
+        bind_to=[Device, DeviceType, Manufacturer],
     )
 
 

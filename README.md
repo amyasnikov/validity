@@ -48,6 +48,13 @@ Validity completely separates compliance test code from all the other things lik
 * **Test extensibility**. You can define your own python functions or classes to reuse the code between multiple compliance tests.
 * Possibility to store all heavy text-based entities (like compliance tests or TTP Templates) in a **Git repository**
 
+
+## NetBox Support Policy
+Unlike many other plugins, Validity supports multiple NetBox versions inside one single release.
+
+Validity aims to support **latest THREE major or minor releases** of NetBox. For example, if latest NetBox version is 4.1, then Validity is going to support NetBox 4.1, 4.0 and 3.7 releases.
+
+
 ## Download and Install
 
 You can download Validity via **pip**

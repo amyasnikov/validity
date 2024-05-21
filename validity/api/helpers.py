@@ -1,3 +1,4 @@
+from functools import partial
 from itertools import chain
 from typing import Sequence
 
@@ -6,25 +7,30 @@ from django.db.models import ManyToManyField
 from netbox.api.serializers import WritableNestedSerializer
 from rest_framework.serializers import JSONField, ModelSerializer
 
+from validity import NetboxVersion
 from validity.fields.encrypted import EncryptedDict
 
 
+def meta_factory(parent=None, **fields):
+    bases = () if parent is None else (parent,)
+    return type("Meta", bases, fields)
+
+
 def nested_factory(
-    serializer: type[ModelSerializer], meta_fields: Sequence[str], attributes: Sequence[str] = ("url",)
+    serializer: type[ModelSerializer], nb_version: NetboxVersion, attributes: Sequence[str] = ("url",)
 ) -> type[ModelSerializer]:
     """
     Creates nested Serializer from regular one
     """
-
-    class Meta:
-        model = serializer.Meta.model
-        fields = meta_fields
+    if nb_version >= "4.0.0":
+        Serializer = type(serializer.__name__, (serializer,), {"Meta": meta_factory(parent=serializer.Meta)})
+        return partial(Serializer, nested=True)
 
     name = "Nested" + serializer.__name__
     mixins = (cls for cls in serializer.__bases__ if not issubclass(cls, ModelSerializer))
     bases = tuple(chain(mixins, (WritableNestedSerializer,)))
     s_attribs = {a: serializer._declared_fields[a] for a in attributes}
-    s_attribs["Meta"] = Meta
+    s_attribs["Meta"] = meta_factory(parent=serializer.Meta, fields=serializer.Meta.brief_fields)
     return type(name, bases, s_attribs)
 
 

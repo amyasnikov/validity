@@ -1,9 +1,8 @@
-from extras.plugins import PluginMenu, PluginMenuButton, PluginMenuItem
-from utilities.choices import ButtonColorChoices
+from validity.netbox_changes import ButtonColorChoices, plugins
 
 
 def model_add_button(entity):
-    return PluginMenuButton(
+    return plugins.PluginMenuButton(
         link=f"plugins:validity:{entity}_add",
         title="Add",
         icon_class="mdi mdi-plus-thick",
@@ -14,7 +13,7 @@ def model_add_button(entity):
 
 def model_menu_item(entity, title, buttons=()):
     buttons = [btn(entity) if callable(btn) else btn for btn in buttons]
-    return PluginMenuItem(
+    return plugins.PluginMenuItem(
         link=f"plugins:validity:{entity}_list",
         link_text=title,
         buttons=buttons or [],
@@ -22,7 +21,7 @@ def model_menu_item(entity, title, buttons=()):
     )
 
 
-run_tests_button = PluginMenuButton(
+run_tests_button = plugins.PluginMenuButton(
     link="plugins:validity:compliancetest_run",
     title="Run",
     icon_class="mdi mdi-rocket-launch",
@@ -43,7 +42,7 @@ polling_menu_items = (
     model_menu_item("poller", "Pollers", [model_add_button]),
 )
 
-menu = PluginMenu(
+menu = plugins.PluginMenu(
     label="Validity",
     groups=(("main", validity_menu_items), ("polling", polling_menu_items)),
     icon_class="mdi mdi-checkbox-marked-circle-outline",

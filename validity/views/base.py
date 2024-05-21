@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, Dict
 
 from django.db.models import Model
@@ -70,7 +71,7 @@ class TestResultBaseView(SingleTableMixin, FilterViewWithForm):
     tab = ViewTab("Test Results", badge=lambda obj: obj.results.count())
     model = models.ComplianceTestResult
     filterset_class = filtersets.ComplianceTestResultFilterSet
-    filterform_class = forms.TestResultFilterForm
+    filterform_class = partial(forms.TestResultFilterForm, add_m2m_placeholder=True)
     table_class = tables.ComplianceResultTable
     permission_required = "validity.view_compliancetestresult"
 
