@@ -1,6 +1,6 @@
 from extras.scripts import ChoiceVar
 
-from validity.forms.helpers import IntegerChoiceField
+from validity.forms.fields import IntegerChoiceField
 
 
 class NoNullChoiceVar(ChoiceVar):

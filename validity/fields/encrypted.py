@@ -122,7 +122,7 @@ class EncryptedDictField(JSONField):
         return EncryptedDict(value)
 
     def formfield(self, **kwargs):
-        from validity.forms.helpers import EncryptedDictField as EncryptedDictFormField
+        from validity.forms.fields import EncryptedDictField as EncryptedDictFormField
 
         return Field.formfield(
             self,
