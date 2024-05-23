@@ -19,7 +19,8 @@ from validity.choices import (
     SeverityChoices,
 )
 from validity.netbox_changes import FieldSet
-from .helpers import AddM2MPlaceholderFormMixin, ExcludeMixin, PlaceholderChoiceField
+from .fields import PlaceholderChoiceField
+from .mixins import AddM2MPlaceholderFormMixin, ExcludeMixin
 
 
 class DeviceReportFilterForm(ExcludeMixin, Form):

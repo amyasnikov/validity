@@ -1,52 +1,10 @@
 import json
-from contextlib import suppress
-from typing import Any, Literal, Sequence
+from typing import Literal, Sequence
 
-from django.forms import ChoiceField, JSONField, Select, Textarea
 from utilities.forms import get_field_value
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
-from validity.fields import EncryptedDict
 from validity.netbox_changes import FieldSet
-
-
-class PrettyJSONWidget(Textarea):
-    def __init__(self, attrs=None, indent=2) -> None:
-        super().__init__(attrs)
-        self.attrs.setdefault("style", "font-family:monospace")
-        self.indent = indent
-
-    def format_value(self, value: Any) -> str | None:
-        with suppress(Exception):
-            return json.dumps(json.loads(value), indent=self.indent)
-        return super().format_value(value)
-
-
-class IntegerChoiceField(ChoiceField):
-    def to_python(self, value: Any | None) -> Any | None:
-        if value is not None:
-            value = int(value)
-        return value
-
-
-class EncryptedDictField(JSONField):
-    def to_python(self, value: Any) -> Any:
-        value = super().to_python(value)
-        if isinstance(value, dict):
-            value = EncryptedDict(value)
-        return value
-
-
-class SelectWithPlaceholder(Select):
-    def __init__(self, attrs=None, choices=()) -> None:
-        super().__init__(attrs, choices)
-        self.attrs["class"] = "netbox-static-select"
-
-    def create_option(self, name, value, label, selected, index: int, subindex=..., attrs=...):
-        option = super().create_option(name, value, label, selected, index, subindex, attrs)
-        if index == 0:
-            option["attrs"]["data-placeholder"] = "true"
-        return option
 
 
 class AddM2MPlaceholderFormMixin:
@@ -57,14 +15,6 @@ class AddM2MPlaceholderFormMixin:
         for field in self.fields.values():
             if isinstance(field, DynamicModelMultipleChoiceField):
                 field.widget.attrs["placeholder"] = field.label
-
-
-class PlaceholderChoiceField(ChoiceField):
-    def __init__(self, *, placeholder: str | None = None, **kwargs) -> None:
-        placeholder = placeholder or kwargs["label"]
-        kwargs["choices"] = (("", placeholder),) + tuple(kwargs["choices"])
-        kwargs["widget"] = SelectWithPlaceholder()
-        super().__init__(**kwargs)
 
 
 class ExcludeMixin:

@@ -12,7 +12,8 @@ from utilities.forms.widgets import HTMXSelect
 from validity import models
 from validity.choices import ConnectionTypeChoices
 from validity.netbox_changes import FieldSet
-from .helpers import PrettyJSONWidget, SubformMixin
+from .mixins import SubformMixin
+from .widgets import PrettyJSONWidget
 
 
 class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
