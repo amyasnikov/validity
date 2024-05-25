@@ -24,5 +24,6 @@ from .test import (
     ComplianceTestEditView,
     ComplianceTestListView,
     ComplianceTestView,
+    run_tests,
 )
 from .test_result import ComplianceResultListView, ComplianceResultView

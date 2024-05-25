@@ -1,4 +1,3 @@
-from django.shortcuts import redirect
 from django.urls import include, path
 from utilities.urls import get_model_urls
 
@@ -11,11 +10,7 @@ urlpatterns = [
     path("selectors/delete/", views.ComplianceSelectorBulkDeleteView.as_view(), name="complianceselector_bulk_delete"),
     path("selectors/<int:pk>/", include(get_model_urls("validity", "complianceselector"))),
     path("tests/", views.ComplianceTestListView.as_view(), name="compliancetest_list"),
-    path(
-        "tests/run/",
-        lambda _: redirect("extras:script", module="validity_scripts", name="RunTests"),
-        name="compliancetest_run",
-    ),
+    path("tests/run/", views.run_tests, name="compliancetest_run"),
     path("tests/add/", views.ComplianceTestEditView.as_view(), name="compliancetest_add"),
     path("tests/delete/", views.ComplianceTestBulkDeleteView.as_view(), name="compliancetest_bulk_delete"),
     path("tests/<int:pk>/", include(get_model_urls("validity", "compliancetest"))),

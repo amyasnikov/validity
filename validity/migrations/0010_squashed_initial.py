@@ -8,8 +8,44 @@ import validity.fields.encrypted
 import validity.models.base
 import validity.models.test_result
 from django.db import migrations, models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as __
 from validity.utils.orm import CustomFieldBuilder
+from pathlib import Path
+from validity import scripts
+
+
+SCRIPTS_INSTALL_FOLDER = Path(scripts.__file__).parent.resolve() / "install"
+DATASOURCE_NAME = "validity_scripts"
+SCRIPT_NAME = "validity_scripts.py"
+
+
+def setup_scripts(apps, schema_editor):
+    from validity.models import VDataSource
+    from extras.models import ScriptModule
+
+    DataFile = apps.get_model("core", "DataFile")
+    datasource = VDataSource.objects.create(
+        name=DATASOURCE_NAME,
+        type="local",
+        source_url=f"file://{SCRIPTS_INSTALL_FOLDER}",
+    )
+    datasource.sync_in_migration(DataFile)
+    module = ScriptModule(
+        data_source=datasource,
+        data_file=datasource.datafiles.get(path=SCRIPT_NAME),
+        file_root="scripts",
+        auto_sync_enabled=True,
+    )
+    module.clean()
+    module.save()
+
+
+def delete_scripts(apps, schema_editor):
+    DataSource = apps.get_model("core", "DataSource")
+    ScriptModule = apps.get_model("extras", "ScriptModule")
+    db_alias = schema_editor.connection.alias
+    ScriptModule.objects.using(db_alias).filter(data_source__name=DATASOURCE_NAME).delete()
+    DataSource.objects.using(db_alias).filter(name=DATASOURCE_NAME).delete()
 
 
 def create_cf(apps, schema_editor):
@@ -29,8 +65,8 @@ def create_cf(apps, schema_editor):
 
     cf_builder.create(
         name="serializer",
-        label=_("Config Serializer"),
-        description=_("Required by Validity"),
+        label=__("Config Serializer"),
+        description=__("Required by Validity"),
         type="object",
         required=False,
         object_type=ContentType.objects.get_for_model(Serializer),
@@ -38,8 +74,8 @@ def create_cf(apps, schema_editor):
     )
     cf_builder.create(
         name="default",
-        label=_("Default DataSource"),
-        description=_("Required by Validity"),
+        label=__("Default DataSource"),
+        description=__("Required by Validity"),
         type="boolean",
         required=False,
         default=False,
@@ -47,8 +83,8 @@ def create_cf(apps, schema_editor):
     )
     cf_builder.create(
         name="device_config_path",
-        label=_("Device Config Path"),
-        description=_("Required by Validity. J2 syntax allowed, e.g. devices/{{device.name}}.txt"),
+        label=__("Device Config Path"),
+        description=__("Required by Validity. J2 syntax allowed, e.g. devices/{{device.name}}.txt"),
         type="text",
         required=False,
         validation_regex=r"^[^/].*$",
@@ -56,8 +92,8 @@ def create_cf(apps, schema_editor):
     )
     cf_builder.create(
         name="device_command_path",
-        label=_("Device Command Path"),
-        description=_("Required by Validity. J2 syntax allowed, e.g. {{device.name}}/{{command.label}}.txt"),
+        label=__("Device Command Path"),
+        description=__("Required by Validity. J2 syntax allowed, e.g. {{device.name}}/{{command.label}}.txt"),
         type="text",
         required=False,
         validation_regex=r"^[^/].*$",
@@ -66,16 +102,16 @@ def create_cf(apps, schema_editor):
     )
     cf_builder.create(
         name="web_url",
-        label=_("Web URL"),
-        description=_("Required by Validity. You may use {{branch}} substitution"),
+        label=__("Web URL"),
+        description=__("Required by Validity. You may use {{branch}} substitution"),
         type="text",
         required=False,
         bind_to=[DataSource],
     )
     cf_builder.create(
         name="data_source",
-        label=_("Data Source"),
-        description=_("Required by Validity"),
+        label=__("Data Source"),
+        description=__("Required by Validity"),
         type="object",
         required=False,
         object_type=ContentType.objects.get_for_model(DataSource),
@@ -84,8 +120,8 @@ def create_cf(apps, schema_editor):
     cf_builder.create(
         name="poller",
         type="object",
-        label=_("Poller"),
-        description=_("Required by Validity. Defines properties of device polling"),
+        label=__("Poller"),
+        description=__("Required by Validity. Defines properties of device polling"),
         required=False,
         object_type=ContentType.objects.get_for_model(Poller),
         bind_to=[Device, DeviceType, Manufacturer]
@@ -107,7 +143,7 @@ def create_polling_datasource(apps, schema_editor):
         name="Validity Polling",
         type="device_polling",
         source_url="/",
-        description=_("Required by Validity. Polls bound devices and stores the results"),
+        description=__("Required by Validity. Polls bound devices and stores the results"),
         custom_field_data={
             "device_command_path": "{{device | slugify}}/{{ command.label }}.txt",
             "default": False,
@@ -476,4 +512,5 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(create_cf, delete_cf),
         migrations.RunPython(create_polling_datasource, delete_polling_datasource),
+        migrations.RunPython(setup_scripts, delete_scripts),
     ]

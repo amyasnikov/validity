@@ -50,9 +50,11 @@ Validity completely separates compliance test code from all the other things lik
 
 
 ## NetBox Support Policy
-Unlike many other plugins, Validity supports multiple NetBox versions inside one single release.
+Unlike many other plugins, Validity supports **multiple** NetBox versions inside one single release.
 
-Validity aims to support **latest THREE major or minor releases** of NetBox. For example, if latest NetBox version is 4.1, then Validity is going to support NetBox 4.1, 4.0 and 3.7 releases.
+Validity aims to support **the latest 3 major/minor releases of NetBox**.
+
+For example, if latest NetBox version is 4.1, then latest Validity is going to support NetBox 4.1, 4.0 and 3.7.
 
 
 ## Download and Install
