@@ -194,3 +194,9 @@ def test_datasource_devices(admin_client):
     DeviceFactory()
     resp = admin_client.get(data_source.get_absolute_url() + "devices/")
     assert resp.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db
+def test_run_tests(admin_client, setup_runtests_script):
+    resp = admin_client.get("/plugins/validity/tests/run/", follow=True)
+    assert resp.status_code == HTTPStatus.OK

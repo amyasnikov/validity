@@ -1,8 +1,9 @@
 from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, redirect
 from netbox.views import generic
 from utilities.views import register_model_view
 
-from validity import filtersets, forms, models, tables
+from validity import config, filtersets, forms, models, tables
 from .base import TableMixin, TestResultBaseView
 
 
@@ -48,3 +49,12 @@ class ComplianceTestBulkDeleteView(generic.BulkDeleteView):
 class ComplianceTestEditView(generic.ObjectEditView):
     queryset = models.ComplianceTest.objects.all()
     form = forms.ComplianceTestForm
+
+
+def run_tests(request):
+    if config.netbox_version < "4.0.0":
+        return redirect("extras:script", module="validity_scripts", name="RunTests")
+    from extras.models import Script
+
+    script = get_object_or_404(Script, name="RunTests", module__data_file__path="validity_scripts.py")
+    return redirect("extras:script", pk=script.pk)

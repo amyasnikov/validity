@@ -4,12 +4,13 @@ import pytest
 from core.models import DataSource
 from dcim.models import Device, DeviceType, Manufacturer
 from django.contrib.contenttypes.models import ContentType
-from extras.models import CustomField
+from extras.models import CustomField, ScriptModule
 from graphene_django.utils.testing import graphql_query
 from tenancy.models import Tenant
 
 import validity
-from validity.models import Poller, Serializer
+import validity.scripts
+from validity.models import Poller, Serializer, VDataSource
 from validity.utils.orm import CustomFieldBuilder
 
 
@@ -74,6 +75,25 @@ def create_custom_fields(db):
         object_type=ContentType.objects.get_for_model(Poller),
         bind_to=[Device, DeviceType, Manufacturer],
     )
+
+
+@pytest.fixture
+def setup_runtests_script():
+    ds_path = Path(validity.scripts.__file__).parent.resolve() / "install"
+    datasource = VDataSource.objects.create(
+        name="validity_scripts",
+        type="local",
+        source_url=f"file://{ds_path}",
+    )
+    datasource.sync()
+    module = ScriptModule(
+        data_source=datasource,
+        data_file=datasource.datafiles.get(path="validity_scripts.py"),
+        file_root="scripts",
+        auto_sync_enabled=True,
+    )
+    module.clean()
+    module.save()
 
 
 @pytest.fixture
