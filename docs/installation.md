@@ -7,7 +7,7 @@ Validity is the [NetBox](https://netbox.dev/) plugin. So, before installing vali
 
 | **Python** | **NetBox**      |
 |------------|-----------------|
-| >=3.10     | 3.5 &#124; 3.6 &#124; 3.7 |
+| >=3.10     | 3.6 &#124; 3.7 &#124; 4.0 |
 
 ## Installation steps
 Once you have installed NetBox, you should follow these steps
