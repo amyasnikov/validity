@@ -14,10 +14,10 @@
 {% endif %}
 {% endblock %}
 {% block content %}
-  <div class="row mb-3">
-    <div class="col-auto">
-    <form role="form" class="row row-cols-lg-auto g-1 align-items-center" method="get">
-      {% bootstrap_form filterset_form layout="inline" %}
+<div class="row mb-3">
+  <div class="col-auto">
+    <form role="form" class="row row-cols-auto g-3 align-items-center" method="get">
+      {% bootstrap_form filterset_form layout="inline" inline_field_class="col-auto" %}
       <div class="col-auto">
         {% bootstrap_button type="submit" content=search_button_name|default:"Search" %}
       </div>
