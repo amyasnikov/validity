@@ -8,6 +8,7 @@ EventRulesMixin = __locate("netbox.models.features.WebhooksMixin")
 BootstrapMixin = __locate("utilities.forms.BootstrapMixin")
 plugins = __locate("extras.plugins")
 ButtonColorChoices = __locate("utilities.choices.ButtonColorChoices")
+PluginTemplateExtension = __locate("extras.plugins.PluginTemplateExtension")
 
 
 class FieldSet:

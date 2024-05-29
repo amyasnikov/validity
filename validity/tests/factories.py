@@ -18,6 +18,7 @@ class DataSourceFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"datasource-{n}")
     type = "local"
     source_url = "file:///some_path"
+    parameters = {}
 
     class Meta:
         model = models.VDataSource
