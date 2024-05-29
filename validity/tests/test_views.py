@@ -187,6 +187,14 @@ class TestCommand(ViewTest):
     }
 
 
+def test_datasource_with_extensions(admin_client, create_custom_fields):
+    data_source = DataSourceFactory(type="device_polling")
+    resp = admin_client.get(data_source.get_absolute_url())
+    assert resp.status_code == HTTPStatus.OK
+    assert b"Polling info" in resp.content
+    assert b"Related Objects" in resp.content
+
+
 @pytest.mark.django_db
 def test_datasource_devices(admin_client):
     data_source = DataSourceFactory(custom_field_data={"default": True})

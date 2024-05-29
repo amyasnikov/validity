@@ -1,8 +1,8 @@
 import yaml
 from django.utils.translation import gettext_lazy as _
-from extras.plugins import PluginTemplateExtension
 from tenancy.models import Tenant
 
+from validity.netbox_changes import PluginTemplateExtension
 from validity.pollers.result import PollingInfo
 
 
