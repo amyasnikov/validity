@@ -59,7 +59,7 @@ def setup_datasource_cf(apps, schema_editor):
         required=False,
         **{CF_OBJ_TYPE: ContentType.objects.get_for_model(DataSource)}
     )
-    content_types(tenant_cf).set([ContentType.objects.get_for_model(Tenant)])
+    content_types(tenant_cf).set([ContentType.objects.get_for_model(Tenant).pk])
 
 
 def delete_datasource_cf(apps, schema_editor):
