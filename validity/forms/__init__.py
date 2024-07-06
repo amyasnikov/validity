@@ -18,5 +18,6 @@ from .general import (
     ComplianceTestForm,
     NameSetForm,
     PollerForm,
+    RunTestsForm,
     SerializerForm,
 )

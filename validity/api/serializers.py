@@ -7,7 +7,8 @@ from dcim.api.nested_serializers import (
     NestedPlatformSerializer,
     NestedSiteSerializer,
 )
-from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Site
+from django.utils.translation import gettext_lazy as _
 from extras.api.nested_serializers import NestedTagSerializer
 from extras.models import Tag
 from netbox.api.fields import SerializedPKRelatedField
@@ -16,8 +17,10 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
+from utilities.datetime import local_now
 
 from validity import config, models
+from validity.choices import ExplanationVerbosityChoices
 from .helpers import EncryptedDictField, FieldsMixin, ListQPMixin, SubformValidationMixin, nested_factory
 
 
@@ -370,3 +373,36 @@ class SerializedStateSerializer(ListQPMixin, serializers.Serializer):
         if name_filter := self.get_list_param("name"):
             instance = [item for item in instance if item.name in set(name_filter)]
         return super().to_representation(instance)
+
+
+class RunTestsSerializer(serializers.Serializer):
+    sync_datasources = serializers.BooleanField(required=False)
+    selectors = SerializedPKRelatedField(
+        serializer=NestedComplianceSelectorSerializer,
+        many=True,
+        required=False,
+        queryset=models.ComplianceSelector.objects.all(),
+    )
+    devices = SerializedPKRelatedField(
+        serializer=NestedDeviceSerializer, many=True, required=False, queryset=Device.objects.all()
+    )
+    test_tags = SerializedPKRelatedField(
+        serializer=NestedTagSerializer, many=True, required=False, queryset=Tag.objects.all()
+    )
+    explanation_verbosity = serializers.ChoiceField(
+        choices=ExplanationVerbosityChoices.choices, required=False, default=ExplanationVerbosityChoices.maximum
+    )
+    override_datasource = NestedDataSourceSerializer(required=False)
+    workers_num = serializers.IntegerField(min_value=1, default=1)
+    schedule_at = serializers.DateTimeField(required=False, allow_null=True)
+    interval = serializers.IntegerField(required=False, allow_null=True)
+
+    def validate_schedule_at(self, value):
+        if value and value < local_now():
+            raise serializers.ValidationError(_("Scheduled time must be in the future."))
+        return value
+
+    def validate(self, attrs):
+        if not attrs.get("schedule_at") and attrs.get("interval"):
+            attrs["schedule_at"] = local_now()
+        return super().validate(attrs)

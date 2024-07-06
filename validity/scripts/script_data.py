@@ -111,7 +111,6 @@ class ScriptDataMixin(Generic[_ScriptData]):
 
 class RunTestsScriptData(ScriptData):
     sync_datasources = False
-    make_report = True
     selectors = DBField(models.ComplianceSelector, AllQuerySetObject, default=[])
     devices = DBField(models.VDevice, AllQuerySetObject, default=[])
     test_tags = DBField(Tag, EmptyQuerySetObject, default=[])
