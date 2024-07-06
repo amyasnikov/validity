@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Setup build and twine
-        run: pip install twine==4.0.2 build==0.10.0
+        run: pip install twine==5.1.1 build==1.2.1
       - name: Build
         run: python -m build
       - name: Twine check
