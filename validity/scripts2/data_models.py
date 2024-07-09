@@ -1,8 +1,9 @@
 import datetime
 import operator
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from functools import cached_property, reduce
 
+import yaml
 from django.db.models import Q, QuerySet
 from django.utils import timezone
 from extras.choices import LogLevelChoices
@@ -28,23 +29,45 @@ class Message:
 
 @dataclass(slots=True)
 class SplitResult:
-    logs: list[Message]
+    log: list[Message]
     slices: list[dict[int, list[int]]]
 
 
 @dataclass(slots=True, frozen=True)
 class TestResultRatio:
     passed: int
-    overall: int
+    total: int
 
     def __add__(self, other):
-        return type(self)(self.passed + other.passed, self.overall + other.overall)
+        return type(self)(self.passed + other.passed, self.total + other.overall)
+
+
+@dataclass(slots=True, frozen=True)
+class ScriptOutput:
+    statistics: TestResultRatio
+
+    @property
+    def serialized(self):
+        return asdict(self)
+
+    def __str__(self):
+        return yaml.safe_dump(self.serialized)
+
+
+@dataclass(slots=True)
+class CombineResult:
+    output: ScriptOutput
+    log: list[Message]
+
+    @property
+    def serialized(self):
+        return {"output": self.output.serialized, "log": [msg.serialized for msg in self.log]}
 
 
 @dataclass(slots=True)
 class ExecutionResult:
     test_stat: TestResultRatio
-    logs: list[Message]
+    log: list[Message]
 
 
 class ScriptParams(BaseModel):

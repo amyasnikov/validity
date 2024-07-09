@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
+from functools import cached_property
 from itertools import chain
-from typing import Generic, Iterable, Iterator, TypeVar
+from typing import Callable, Generic, Iterable, Iterator, TypeVar
 
+from django.db import DefaultConnectionProxy, transaction
 from django.db.models import Model, QuerySet
 
 from validity.netbox_changes import CF_OBJ_TYPE, content_types
@@ -215,3 +218,37 @@ class CustomFieldBuilder:
         custom_field = self.cf_model.objects.using(db).create(**cf_params)
         content_types(custom_field).set(self.content_type_model.objects.get_for_model(model).pk for model in bind_to)
         return custom_field
+
+
+@dataclass
+class TwoPhaseTransaction:
+    """
+    Two-phase commit ORM-like implementation
+    """
+
+    transaction_id: str
+    connection_factory: Callable[[str | None], DefaultConnectionProxy] = transaction.get_connection
+    db_alias: str | None = None
+
+    @cached_property
+    def connection(self):
+        return self.connection_factory(self.db_alias)
+
+    @contextmanager
+    def prepare(self):
+        with self.connection.cursor() as cursor:
+            cursor.execute("BEGIN;")
+            try:
+                yield
+            except Exception:
+                cursor.execute("ROLLBACK;")
+            else:
+                cursor.execute("PREPARE TRANSACTION '%s';", [self.transaction_id])
+
+    def commit(self):
+        with self.connection.cursor() as cursor:
+            cursor.execute("COMMIT PREPARED %s;", [self.transaction_id])
+
+    def rollback(self):
+        with self.connection.cursor() as cursor:
+            cursor.execute("ROLLBACK PREPARED %s;", [self.transaction_id])

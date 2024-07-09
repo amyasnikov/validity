@@ -76,7 +76,7 @@ class SplitWorker:
         script_params = ScriptParams.model_validate(kwargs)
         self.sync_datasources(script_params)
         slices = self.distribute_work(script_params)
-        return SplitResult(logs=self.log.messages, slices=slices)
+        return SplitResult(log=self.log.messages, slices=slices)
 
 
 split_work = SplitWorker(log=Logger(), datasource_sync_fn=datasource_sync, device_batch_size=2000)
