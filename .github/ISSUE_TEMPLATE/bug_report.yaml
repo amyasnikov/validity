@@ -1,0 +1,33 @@
+---
+name: Bug Report
+description: Report a reproducible bug
+labels: ["type: bug"]
+body:
+  - type: input
+    attributes:
+      label: Validity Version
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: NetBox Version
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Python Version
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Provide step-by-step instructions to reproduce the bug
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Traceback
+      description: >
+        If Python exception occured, paste the traceback here.
+        Traceback can be found inside application logs.
+      render: shell
