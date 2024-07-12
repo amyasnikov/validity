@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partialmethod
 from itertools import chain
 from typing import Sequence
 
@@ -23,8 +23,11 @@ def nested_factory(
     Creates nested Serializer from regular one
     """
     if nb_version >= "4.0.0":
-        Serializer = type(serializer.__name__, (serializer,), {"Meta": meta_factory(parent=serializer.Meta)})
-        return partial(Serializer, nested=True)
+        class_attributes = {
+            "Meta": meta_factory(parent=serializer.Meta),
+            "__init__": partialmethod(serializer.__init__, nested=True),
+        }
+        return type(serializer.__name__, (serializer,), class_attributes)
 
     name = "Nested" + serializer.__name__
     mixins = (cls for cls in serializer.__bases__ if not issubclass(cls, ModelSerializer))
