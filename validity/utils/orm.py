@@ -6,8 +6,9 @@ from functools import cached_property
 from itertools import chain
 from typing import Callable, Generic, Iterable, Iterator, TypeVar
 
-from django.db import DefaultConnectionProxy, transaction
+from django.db import transaction
 from django.db.models import Model, QuerySet
+from django.utils.connection import ConnectionProxy
 
 from validity.netbox_changes import CF_OBJ_TYPE, content_types
 
@@ -227,7 +228,7 @@ class TwoPhaseTransaction:
     """
 
     transaction_id: str
-    connection_factory: Callable[[str | None], DefaultConnectionProxy] = transaction.get_connection
+    connection_factory: Callable[[str | None], ConnectionProxy] = transaction.get_connection
     db_alias: str | None = None
 
     @cached_property

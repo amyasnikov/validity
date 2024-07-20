@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import chain
-from typing import Any, Callable, ClassVar, ContextManager, Iterable, Iterator
+from typing import Any, Callable, ContextManager, Iterable, Iterator
 
 from django.db.models import Prefetch, QuerySet
 
 from validity import settings
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet, VDataSource, VDevice
-from validity.utils.orm import QuerySetMap, TwoPhaseTransaction
-from .data_models import ExecutionResult, TestResultRatio
-from .logger import Logger
-from .parent_jobs import JobExtractor
+from validity.utils.orm import TwoPhaseTransaction
+from ..data_models import ExecutionResult, FullScriptParams, TestResultRatio
+from ..logger import Logger
+from ..parent_jobs import JobExtractor
 
 
 class TestExecutor:
@@ -91,7 +91,7 @@ class DeviceTestIterator:
         self.selector_devices = selector_devices
         self.test_tags = test_tags
         self.override_datasource_id = override_datasource_id
-        self.all_selectors = QuerySetMap(self._get_selectors())
+        self.all_selectors = self._get_selectors().in_bulk()
 
     def __iter__(self):
         return self
@@ -135,35 +135,27 @@ class ApplyWorker:
     test_executor_cls: type[TestExecutor]
     device_test_gen: type[DeviceTestIterator]
     result_batch_size: int
-    job_extractor: JobExtractor
+    job_extractor_factory: Callable[[], JobExtractor]
     prepare_transaction: Callable[[str], ContextManager]
+    transaction_template: str
 
-    transaction_id: ClassVar[str] = "ApplyWorker_{job}_{worker}"
-
-    def __call__(
-        self,
-        worker_id: int,
-        test_tags: list[int],
-        explanation_verbosity: int,
-        override_datasource_id: int | None,
-        report_id: int,
-        job_id: int,
-    ) -> ExecutionResult:
+    def __call__(self, params: FullScriptParams, worker_id: int) -> ExecutionResult:
         selector_devices = self.get_selector_devices(worker_id)
-        executor = self.test_executor_cls(worker_id, explanation_verbosity, report_id)
+        executor = self.test_executor_cls(worker_id, params.explanation_verbosity, params.report_id)
         test_results = (
             executor(devices, tests)
-            for devices, tests in self.device_test_gen(selector_devices, test_tags, override_datasource_id)
+            for devices, tests in self.device_test_gen(selector_devices, params.test_tags, params.override_datasource)
         )
         chained_results = chain.from_iterable(test_results)
-        self.save_results_to_db(chained_results, job_id, worker_id)
+        self.save_results_to_db(chained_results, params.job_id, worker_id)
         return ExecutionResult(TestResultRatio(executor.results_passed, executor.results_count), executor.log.messages)
 
     def get_selector_devices(self, worker_id: int) -> dict[int, list[int]]:
-        return self.job_extractor.parent.job.result[worker_id]
+        job_extractor = self.job_extractor_factory()
+        return job_extractor.parent.job.result[worker_id]
 
     def save_results_to_db(self, results: Iterable[ComplianceTestResult], job_id: int, worker_id: int) -> None:
-        transaction_id = self.transaction_id.format(job=job_id, worker=worker_id)
+        transaction_id = self.transaction_template.format(job=job_id, worker=worker_id)
         with self.prepare_transaction(transaction_id):
             ComplianceTestResult.objects.bulk_create(results, batch_size=self.result_batch_size)
 
@@ -172,6 +164,7 @@ execute_tests = ApplyWorker(
     test_executor_cls=TestExecutor,
     device_test_gen=DeviceTestIterator,
     result_batch_size=settings.result_batch_size,
-    job_extractor=JobExtractor(),
+    job_extractor_factory=JobExtractor,
     prepare_transaction=lambda transaction_id: TwoPhaseTransaction(transaction_id).prepare(),
+    transaction_template="ApplyWorker_{job}_{worker}",
 )
