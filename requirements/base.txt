@@ -1,4 +1,5 @@
 deepdiff>=6.2.0,<7
+dimi < 2
 django-bootstrap5 >=24.2,<25
 dulwich # Core NetBox "optional" requirement
 jq>=1.4.0,<2

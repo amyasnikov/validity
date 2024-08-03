@@ -1,5 +1,6 @@
 from functools import partialmethod
 from itertools import chain
+from typing import Annotated
 
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import (
@@ -19,12 +20,21 @@ from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from netbox.models import RestrictedQuerySet
 
-from validity import settings
+from validity import di
 from validity.choices import DeviceGroupByChoices, SeverityChoices
+from validity.dependencies import validity_settings
+from validity.settings import ValiditySettings
 from validity.utils.orm import CustomPrefetchMixin, SetAttributesMixin
 
 
-class ComplianceTestQS(RestrictedQuerySet):
+class BaseQuerySet(RestrictedQuerySet):
+    @di.inject
+    def __init__(self, *args, settings: Annotated[ValiditySettings, validity_settings], **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.settings = settings
+
+
+class ComplianceTestQS(BaseQuerySet):
     def pf_latest_results(self) -> "ComplianceTestQS":
         from validity.models import ComplianceTestResult
 
@@ -47,7 +57,7 @@ class ComplianceTestQS(RestrictedQuerySet):
         )
 
 
-class ComplianceTestResultQS(RestrictedQuerySet):
+class ComplianceTestResultQS(BaseQuerySet):
     def only_latest(self, exclude: bool = False) -> "ComplianceTestResultQS":
         qs = self.order_by("test__pk", "device__pk", "-created").distinct("test__pk", "device__pk")
         if exclude:
@@ -62,8 +72,8 @@ class ComplianceTestResultQS(RestrictedQuerySet):
     def count_devices_and_tests(self):
         return self.aggregate(device_count=Count("devices", distinct=True), test_count=Count("tests", distinct=True))
 
-    def delete_old(self, _settings=settings):
-        del_count = self.filter(report=None).last_more_than(_settings.store_last_results)._raw_delete(self.db)
+    def delete_old(self):
+        del_count = self.filter(report=None).last_more_than(self.settings.store_last_results)._raw_delete(self.db)
         return (del_count, {"validity.ComplianceTestResult": del_count})
 
 
@@ -75,11 +85,11 @@ def percentage(field1: str, field2: str) -> Case:
     )
 
 
-class VDataFileQS(RestrictedQuerySet):
+class VDataFileQS(BaseQuerySet):
     pass
 
 
-class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
+class VDataSourceQS(CustomPrefetchMixin, BaseQuerySet):
     def annotate_config_path(self):
         return self.annotate(device_config_path=KeyTextTransform("device_config_path", "custom_field_data"))
 
@@ -90,7 +100,7 @@ class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
         return self.annotate_config_path().annotate_command_path()
 
 
-class ComplianceReportQS(RestrictedQuerySet):
+class ComplianceReportQS(BaseQuerySet):
     def annotate_result_stats(self, groupby_field: DeviceGroupByChoices | None = None):
         qs = self
         if groupby_field:
@@ -118,10 +128,10 @@ class ComplianceReportQS(RestrictedQuerySet):
             device_count=Count("results__device", distinct=True), test_count=Count("results__test", distinct=True)
         )
 
-    def delete_old(self, _settings=settings):
+    def delete_old(self):
         from validity.models import ComplianceTestResult
 
-        old_reports = list(self.order_by("-created").values_list("pk", flat=True)[_settings.store_reports :])
+        old_reports = list(self.order_by("-created").values_list("pk", flat=True)[self.settings.store_reports :])
         deleted_results = ComplianceTestResult.objects.filter(report__pk__in=old_reports)._raw_delete(self.db)
         deleted_reports, _ = self.filter(pk__in=old_reports).delete()
         return (
@@ -130,7 +140,7 @@ class ComplianceReportQS(RestrictedQuerySet):
         )
 
 
-class VDeviceQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
+class VDeviceQS(CustomPrefetchMixin, SetAttributesMixin, BaseQuerySet):
     def set_selector(self, selector):
         return self.set_attribute("selector", selector)
 
@@ -243,13 +253,13 @@ class VDeviceQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
         )
 
 
-class PollerQS(RestrictedQuerySet):
+class PollerQS(BaseQuerySet):
     def prefetch_commands(self):
         Command = self.model._meta.get_field("commands").remote_field.model
         return self.prefetch_related(Prefetch("commands", Command.objects.order_by("-retrieves_config")))
 
 
-class CommandQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
+class CommandQS(CustomPrefetchMixin, SetAttributesMixin, BaseQuerySet):
     def set_file_paths(self, device, data_source):
         """
         Sets up 'path' attribute to each command

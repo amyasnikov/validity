@@ -1,2 +1,4 @@
 from .cli import NetmikoPoller
-from .factory import get_poller
+from .factory import PollerFactory
+from .http import RequestsPoller
+from .netconf import ScrapliNetconfPoller

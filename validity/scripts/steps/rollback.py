@@ -1,20 +1,26 @@
-import inspect
 from contextlib import nullcontext, suppress
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Annotated, Any, Callable
 
+from dimi import Singleton
+
+from validity import di
 from validity.utils.orm import TwoPhaseTransaction
 from ..data_models import FullScriptParams
 from ..logger import Logger
-from .apply import execute_tests
 from .base import TracebackMixin
 
 
-@dataclass
+def rollback(transaction_id):
+    TwoPhaseTransaction(transaction_id).rollback()
+
+
+@di.dependency(scope=Singleton)
+@dataclass(repr=False)
 class RollbackWorker(TracebackMixin):
-    transaction_template: str
-    rollback_func: Callable[[str], None]
-    log_factory: Callable[[], Logger]
+    transaction_template: Annotated[str, "runtests_transaction_template"]
+    rollback_func: Callable[[str], None] = rollback
+    log_factory: Callable[[], Logger] = Logger
 
     def rollback(self, params: FullScriptParams, failed_worker_id: int) -> None:
         for worker_id in range(params.workers_num):
@@ -24,16 +30,7 @@ class RollbackWorker(TracebackMixin):
                 self.rollback_func(transaction_id)
 
     def __call__(self, job, connection, type, value, traceback) -> Any:
-        apply_arguments = inspect.signature(execute_tests).bind(*job.args, **job.kwargs).arguments
-        script_params = apply_arguments["params"]
-        failed_worker_id = apply_arguments["worker_id"]
+        script_params = job.kwargs["params"]
+        failed_worker_id = job.kwargs["worker_id"]
         self.rollback(script_params, failed_worker_id)
-        job = apply_arguments["params"].get_job()
-        self.terminate_job(job, type, value, traceback)
-
-
-rollback_test_results = RollbackWorker(
-    transaction_template=execute_tests.transaction_template,
-    rollback_func=lambda transaction_id: TwoPhaseTransaction(transaction_id).rollback(),
-    log_factory=Logger,
-)
+        self.terminate_job(script_params.get_job(), type, value, traceback)

@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import chain
-from typing import Any, Callable, ContextManager, Iterable, Iterator
+from typing import Annotated, Any, Callable, ContextManager, Iterable, Iterator
 
+from dimi import Singleton
 from django.db.models import Prefetch, QuerySet
 
-from validity import settings
+from validity import di
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet, VDataSource, VDevice
 from validity.utils.orm import TwoPhaseTransaction
@@ -22,7 +23,6 @@ class TestExecutor:
     def __init__(self, worker_id: int, explanation_verbosity: int, report_id: int) -> None:
         self.explanation_verbosity = explanation_verbosity
         self.report_id = report_id
-        self.settings = settings
         self.log = Logger(script_id=f"Worker {worker_id}")
         self.results_count = 0
         self.results_passed = 0
@@ -126,20 +126,21 @@ class DeviceTestIterator:
         return device_qs
 
 
-@dataclass
+@di.dependency(scope=Singleton)
+@dataclass(repr=False, kw_only=True)
 class ApplyWorker:
     """
     Provides a function to execute specified tests, save the results to DB and return ExecutionResult
     """
 
-    test_executor_cls: type[TestExecutor]
-    device_test_gen: type[DeviceTestIterator]
-    result_batch_size: int
-    job_extractor_factory: Callable[[], JobExtractor]
-    prepare_transaction: Callable[[str], ContextManager]
-    transaction_template: str
+    test_executor_cls: type[TestExecutor] = TestExecutor
+    device_test_gen: type[DeviceTestIterator] = DeviceTestIterator
+    result_batch_size: Annotated[int, "validity_settings.result_batch_size"]
+    job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
+    prepare_transaction: Callable[[str], ContextManager] = lambda trans: TwoPhaseTransaction(trans).prepare()  # noqa
+    transaction_template: Annotated[str, "runtests_transaction_template"]
 
-    def __call__(self, params: FullScriptParams, worker_id: int) -> ExecutionResult:
+    def __call__(self, *, params: FullScriptParams, worker_id: int) -> ExecutionResult:
         selector_devices = self.get_selector_devices(worker_id)
         executor = self.test_executor_cls(worker_id, params.explanation_verbosity, params.report_id)
         test_results = (
@@ -158,13 +159,3 @@ class ApplyWorker:
         transaction_id = self.transaction_template.format(job=job_id, worker=worker_id)
         with self.prepare_transaction(transaction_id):
             ComplianceTestResult.objects.bulk_create(results, batch_size=self.result_batch_size)
-
-
-execute_tests = ApplyWorker(
-    test_executor_cls=TestExecutor,
-    device_test_gen=DeviceTestIterator,
-    result_batch_size=settings.result_batch_size,
-    job_extractor_factory=JobExtractor,
-    prepare_transaction=lambda transaction_id: TwoPhaseTransaction(transaction_id).prepare(),
-    transaction_template="ApplyWorker_{job}_{worker}",
-)

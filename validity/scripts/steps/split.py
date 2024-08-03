@@ -2,8 +2,10 @@ from dataclasses import dataclass
 from itertools import chain, cycle, groupby, repeat
 from typing import Callable, Iterable
 
+from dimi import Singleton
 from django.db.models import Q, QuerySet
 
+from validity import di
 from validity.models import ComplianceSelector, VDataSource, VDevice
 from validity.utils.misc import batched, datasource_sync
 from ..data_models import FullScriptParams, SplitResult
@@ -11,13 +13,14 @@ from ..logger import Logger
 from .base import TracebackMixin
 
 
-@dataclass
+@di.dependency(scope=Singleton)
+@dataclass(repr=False)
 class SplitWorker(TracebackMixin):
-    log_factory: Callable[[], Logger]
-    datasource_sync_fn: Callable[[Iterable[VDataSource], Q]]
-    device_batch_size: int
-    datasource_queryset: QuerySet[VDataSource]
-    device_queryset: QuerySet[VDevice]
+    log_factory: Callable[[], Logger] = Logger
+    datasource_sync_fn: Callable[[Iterable[VDataSource], Q]] = datasource_sync
+    device_batch_size: int = 2000
+    datasource_queryset: QuerySet[VDataSource] = VDataSource.objects.all()
+    device_queryset: QuerySet[VDevice] = VDevice.objects.all()
 
     def datasources_to_sync(self, override_datasource: int | None, device_filter: Q) -> Iterable[VDataSource]:
         if override_datasource:
@@ -84,12 +87,3 @@ class SplitWorker(TracebackMixin):
                 self.sync_datasources(params.override_datasource, device_filter)
             slices = self.distribute_work(params.workers_num, device_filter, params.selector_qs, logger)
             return SplitResult(log=logger.messages, slices=slices)
-
-
-split_work = SplitWorker(
-    log_factory=Logger,
-    datasource_sync_fn=datasource_sync,
-    device_batch_size=2000,
-    datasource_queryset=VDataSource.objects.all(),
-    device_queryset=VDevice.objects.all(),
-)

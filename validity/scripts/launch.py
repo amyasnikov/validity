@@ -4,18 +4,13 @@ from dataclasses import dataclass
 from functools import partial
 from typing import Callable
 
-import django_rq
 from core.choices import JobStatusChoices
 from core.models import Job
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model
-from rq import Callback, Queue
-from utilities.rqworker import get_queue_for_model
+from rq import Queue
 
-from validity import settings
-from validity.models import ComplianceReport
-from . import steps
 from .data_models import FullScriptParams, ScriptParams, Task
 
 
@@ -66,20 +61,3 @@ class Launcher:
         nb_job = self.create_netbox_job(params.schedule_at, params.schedule_interval, params.request.user)
         full_params = params.with_job_info(nb_job)
         self.enqueue(full_params, nb_job.job_id)
-
-
-launch_tests = Launcher(
-    job_name="RunTests",
-    job_object_model=ComplianceReport,
-    get_queue_fn=lambda model: django_rq.get_queue(get_queue_for_model(model)),
-    tasks=[
-        Task(steps.split_work, job_timeout=settings.worker_timeouts.split),
-        Task(
-            steps.execute_tests,
-            job_timeout=settings.worker_timeouts.apply,
-            on_failure=Callback(steps.rollback_test_results, timeout=settings.worker_timeouts.rollback),
-            multi_workers=True,
-        ),
-        Task(steps.combine_work, job_timeout=settings.worker_timeouts.combine),
-    ],
-)

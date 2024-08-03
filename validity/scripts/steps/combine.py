@@ -2,32 +2,44 @@ import operator
 from dataclasses import dataclass
 from functools import reduce
 from itertools import chain
-from typing import Any, Callable
+from typing import Annotated, Any, Callable
 
 from core.models import Job
+from dimi import Singleton
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
 from extras.choices import ObjectChangeActionChoices
 
+from validity import di
 from validity.models import ComplianceReport
 from validity.netbox_changes import enqueue_object, events_queue
 from validity.utils.orm import TwoPhaseTransaction
 from ..data_models import FullScriptParams, Message, TestResultRatio
 from ..logger import Logger
 from ..parent_jobs import JobExtractor
-from .apply import execute_tests
 from .base import TracebackMixin
 
 
-@dataclass
+def enqueue(report, request, action):
+    return enqueue_object(events_queue.get(), report, request.user, request.id, action)
+
+
+def commit(transaction_id):
+    TwoPhaseTransaction(transaction_id).commit()
+
+
+@di.dependency(scope=Singleton)
+@dataclass(repr=False, kw_only=True)
 class CombineWorker(TracebackMixin):
-    log_factory: Callable[[], Logger]
-    job_extractor_factory: Callable[[], JobExtractor]
-    enqueue_func: Callable[[ComplianceReport, HttpRequest, str], None]
-    report_queryset: QuerySet[ComplianceReport]
-    commit_func: Callable[[str], None]
-    transaction_template: str
+    log_factory: Callable[[], Logger] = Logger
+    job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
+    enqueue_func: Callable[[ComplianceReport, HttpRequest, str], None] = enqueue
+    report_queryset: QuerySet[ComplianceReport] = (
+        ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
+    )
+    commit_func: Callable[[str], None] = commit
+    transaction_template: Annotated[str, "runtests_transaction_template"]
 
     def commit_transactions(self, workers_num: int, job_id: int) -> None:
         for worker_id in range(workers_num):
@@ -69,21 +81,3 @@ class CombineWorker(TracebackMixin):
             self.terminate_job(netbox_job, test_stats, logs)
             if params.schedule_interval:
                 self.schedule_next_job(params.schedule_interval)
-
-
-def enqueue(report, request, action):
-    return enqueue_object(events_queue.get(), report, request.user, request.id, action)
-
-
-def two_phase_commit(transaction_id):
-    TwoPhaseTransaction(transaction_id).commit()
-
-
-combine_work = CombineWorker(
-    log_factory=Logger,
-    job_extractor_factory=JobExtractor,
-    enqueue_func=enqueue,
-    transaction_template=execute_tests.transaction_template,
-    commit_func=two_phase_commit,
-    report_queryset=ComplianceReport.objects.annotate_result_stats().count_devices_and_tests(),
-)
