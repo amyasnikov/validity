@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Annotated, Collection
+from typing import TYPE_CHECKING, Annotated, Collection
 
 from dcim.models import Device
 from django.core.exceptions import ValidationError
@@ -11,10 +11,13 @@ from validity import di
 from validity.choices import CommandTypeChoices, ConnectionTypeChoices
 from validity.fields import EncryptedDictField
 from validity.managers import CommandQS, PollerQS
-from validity.pollers import PollerFactory
 from validity.subforms import CLICommandForm, JSONAPICommandForm, NetconfCommandForm
 from .base import BaseModel, SubformMixin
 from .serializer import Serializer
+
+
+if TYPE_CHECKING:
+    from validity.pollers.factory import PollerFactory
 
 
 class Command(SubformMixin, BaseModel):
@@ -112,7 +115,7 @@ class Poller(BaseModel):
         return next((cmd for cmd in self.commands.all() if cmd.retrieves_config), None)
 
     @di.inject
-    def get_backend(self, poller_factory: Annotated[PollerFactory, ...]):
+    def get_backend(self, poller_factory: Annotated["PollerFactory", ...]):
         return poller_factory(self.connection_type, self.credentials, self.commands.all())
 
     @staticmethod

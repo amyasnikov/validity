@@ -22,14 +22,13 @@ from netbox.models import RestrictedQuerySet
 
 from validity import di
 from validity.choices import DeviceGroupByChoices, SeverityChoices
-from validity.dependencies import validity_settings
 from validity.settings import ValiditySettings
 from validity.utils.orm import CustomPrefetchMixin, SetAttributesMixin
 
 
 class BaseQuerySet(RestrictedQuerySet):
     @di.inject
-    def __init__(self, *args, settings: Annotated[ValiditySettings, validity_settings], **kwargs) -> None:
+    def __init__(self, *args, settings: Annotated[ValiditySettings, "validity_settings"], **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.settings = settings
 

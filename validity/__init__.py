@@ -32,7 +32,7 @@ class NetBoxValidityConfig(PluginConfig):
     netbox_version = NetboxVersion(VERSION)
 
     def ready(self):
-        import validity.data_backends
+        from validity import data_backends, dependencies
 
         return super().ready()
 

@@ -8,9 +8,7 @@ from utilities.rqworker import get_queue_for_model
 
 from validity import di
 from validity.choices import ConnectionTypeChoices
-from validity.models import ComplianceReport
 from validity.pollers import NetmikoPoller, RequestsPoller, ScrapliNetconfPoller
-from validity.scripts import ApplyWorker, CombineWorker, Launcher, RollbackWorker, SplitWorker, Task
 from validity.settings import ValiditySettings
 
 
@@ -38,6 +36,9 @@ def runtests_transaction_template():
     return "ApplyWorker_{job}_{worker}"
 
 
+from validity.scripts import ApplyWorker, CombineWorker, Launcher, RollbackWorker, SplitWorker, Task  # noqa
+
+
 @di.dependency(scope=Singleton)
 def runtests_launcher(
     vsettings: Annotated[ValiditySettings, validity_settings],
@@ -46,6 +47,8 @@ def runtests_launcher(
     combine_worker: Annotated[CombineWorker, ...],
     rollback_worker: Annotated[RollbackWorker, ...],
 ):
+    from validity.models import ComplianceReport
+
     return Launcher(
         job_name="RunTests",
         job_object_model=ComplianceReport,
