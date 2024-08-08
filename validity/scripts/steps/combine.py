@@ -1,5 +1,5 @@
 import operator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import reduce
 from itertools import chain
 from typing import Annotated, Any, Callable
@@ -35,8 +35,8 @@ class CombineWorker(TracebackMixin):
     log_factory: Callable[[], Logger] = Logger
     job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
     enqueue_func: Callable[[ComplianceReport, HttpRequest, str], None] = enqueue
-    report_queryset: QuerySet[ComplianceReport] = (
-        ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
+    report_queryset: QuerySet[ComplianceReport] = field(
+        default_factory=ComplianceReport.objects.annotate_result_stats().count_devices_and_tests
     )
     commit_func: Callable[[str], None] = commit
     transaction_template: Annotated[str, "runtests_transaction_template"]

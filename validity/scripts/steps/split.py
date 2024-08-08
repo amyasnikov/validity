@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import chain, cycle, groupby, repeat
 from typing import Callable, Iterable
 
@@ -17,10 +17,10 @@ from .base import TracebackMixin
 @dataclass(repr=False)
 class SplitWorker(TracebackMixin):
     log_factory: Callable[[], Logger] = Logger
-    datasource_sync_fn: Callable[[Iterable[VDataSource], Q]] = datasource_sync
+    datasource_sync_fn: Callable[[Iterable[VDataSource], Q], None] = datasource_sync
     device_batch_size: int = 2000
-    datasource_queryset: QuerySet[VDataSource] = VDataSource.objects.all()
-    device_queryset: QuerySet[VDevice] = VDevice.objects.all()
+    datasource_queryset: QuerySet[VDataSource] = field(default_factory=VDataSource.objects.all)
+    device_queryset: QuerySet[VDevice] = field(default_factory=VDevice.objects.all)
 
     def datasources_to_sync(self, override_datasource: int | None, device_filter: Q) -> Iterable[VDataSource]:
         if override_datasource:

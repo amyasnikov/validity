@@ -9,7 +9,6 @@ from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.utils import timezone
 from extras.choices import LogLevelChoices
-from pydantic import BaseModel
 from rq import Callback
 
 from validity.models import ComplianceSelector
@@ -55,11 +54,12 @@ class ExecutionResult:
     log: list[Message]
 
 
-class ScriptParams(BaseModel):
+@dataclass(kw_only=True)
+class ScriptParams:
     sync_datasources: bool = False
-    selectors: list[int] = []
-    devices: list[int] = []
-    test_tags: list[int] = []
+    selectors: list[int] = field(default_factory=list)
+    devices: list[int] = field(default_factory=list)
+    test_tags: list[int] = field(default_factory=list)
     explanation_verbosity: int = 2
     override_datasource: int | None = None
     workers_num: int = 1
@@ -89,9 +89,10 @@ class ScriptParams(BaseModel):
         return filtr
 
     def with_job_info(self, job: Job) -> "FullScriptParams":
-        return FullScriptParams(**self.model_dump(), job_id=job.pk, report_id=job.object_id)
+        return FullScriptParams(**asdict(self), job_id=job.pk, report_id=job.object_id)
 
 
+@dataclass(kw_only=True)
 class FullScriptParams(ScriptParams):
     job_id: int
     report_id: int
