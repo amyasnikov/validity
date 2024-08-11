@@ -6,9 +6,9 @@ from dimi import Singleton
 
 from validity import di
 from validity.utils.orm import TwoPhaseTransaction
-from ..data_models import FullScriptParams
+from ..data_models import FullRunTestsParams
 from ..logger import Logger
-from .base import TracebackMixin
+from .base import AsFuncMixin, TracebackMixin
 
 
 def rollback(transaction_id):
@@ -17,12 +17,12 @@ def rollback(transaction_id):
 
 @di.dependency(scope=Singleton)
 @dataclass(repr=False)
-class RollbackWorker(TracebackMixin):
+class RollbackWorker(AsFuncMixin, TracebackMixin):
     transaction_template: Annotated[str, "runtests_transaction_template"]
     rollback_func: Callable[[str], None] = rollback
     log_factory: Callable[[], Logger] = Logger
 
-    def rollback(self, params: FullScriptParams, failed_worker_id: int) -> None:
+    def rollback(self, params: FullRunTestsParams, failed_worker_id: int) -> None:
         for worker_id in range(params.workers_num):
             transaction_id = self.transaction_template.format(job=params.job_id, worker=worker_id)
             suppressor = suppress(Exception) if worker_id == failed_worker_id else nullcontext()

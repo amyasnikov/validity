@@ -31,3 +31,11 @@ class TracebackMixin:
             self.terminate_job(job, type(err), err, err.__traceback__)
             self.remove_report(job)
             raise
+
+
+class AsFuncMixin:
+    def as_func(self):
+        def func(*args, **kwargs):
+            return self(*args, **kwargs)
+
+        return func

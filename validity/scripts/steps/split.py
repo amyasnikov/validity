@@ -8,7 +8,7 @@ from django.db.models import Q, QuerySet
 from validity import di
 from validity.models import ComplianceSelector, VDataSource, VDevice
 from validity.utils.misc import batched, datasource_sync
-from ..data_models import FullScriptParams, SplitResult
+from ..data_models import FullRunTestsParams, SplitResult
 from ..logger import Logger
 from .base import TracebackMixin
 
@@ -79,8 +79,10 @@ class SplitWorker(TracebackMixin):
             self._eliminate_leftover(slices)
         return slices
 
-    def __call__(self, params: FullScriptParams) -> SplitResult:
-        with self.terminate_job_on_error(params.get_job()):
+    def __call__(self, params: FullRunTestsParams) -> SplitResult:
+        job = params.get_job()
+        with self.terminate_job_on_error(job):
+            job.start()
             logger = self.log_factory()
             device_filter = params.get_device_filter()
             if params.sync_datasources:

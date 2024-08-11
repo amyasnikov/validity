@@ -4,7 +4,6 @@ import django_rq
 from dimi.scopes import Singleton
 from django.conf import LazySettings, settings
 from rq import Callback
-from utilities.rqworker import get_queue_for_model
 
 from validity import di
 from validity.choices import ConnectionTypeChoices
@@ -52,15 +51,15 @@ def runtests_launcher(
     return Launcher(
         job_name="RunTests",
         job_object_model=ComplianceReport,
-        get_queue_fn=lambda model: django_rq.get_queue(get_queue_for_model(model)),
+        rq_queue=django_rq.get_queue(vsettings.runtests_queue),
         tasks=[
-            Task(split_worker, job_timeout=settings.worker_timeouts.split),
+            Task(split_worker, job_timeout=vsettings.script_timeouts.runtests_split),
             Task(
                 apply_worker,
-                job_timeout=settings.worker_timeouts.apply,
-                on_failure=Callback(rollback_worker, timeout=settings.worker_timeouts.rollback),
+                job_timeout=vsettings.script_timeouts.runtests_apply,
+                on_failure=Callback(rollback_worker.as_func(), timeout=vsettings.script_timeouts.runtests_rollback),
                 multi_workers=True,
             ),
-            Task(combine_worker, job_timeout=vsettings.worker_timeouts.combine),
+            Task(combine_worker, job_timeout=vsettings.script_timeouts.runtests_combine),
         ],
     )

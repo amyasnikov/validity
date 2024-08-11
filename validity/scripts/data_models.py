@@ -1,5 +1,6 @@
 import datetime
 import operator
+from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from functools import reduce
 from typing import Callable, ClassVar
@@ -9,6 +10,8 @@ from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.utils import timezone
 from extras.choices import LogLevelChoices
+from pydantic import ConfigDict, Field
+from pydantic.dataclasses import dataclass as py_dataclass
 from rq import Callback
 
 from validity.models import ComplianceSelector
@@ -54,19 +57,36 @@ class ExecutionResult:
     log: list[Message]
 
 
-@dataclass(kw_only=True)
-class ScriptParams:
+@py_dataclass(kw_only=True, config=ConfigDict(arbitrary_types_allowed=True))
+class ScriptParams(ABC):
+    request: HttpRequest = Field()
+    schedule_at: datetime.datetime | None = None
+    schedule_interval: int | None = None
+    workers_num: int = 1
+
+    @abstractmethod
+    def with_job_info(self, job: Job) -> "FullScriptParams": ...
+
+
+@py_dataclass(kw_only=True)
+class FullScriptParams(ScriptParams):
+    job_id: int
+    report_id: int
+
+    job_queryset: ClassVar[QuerySet[Job]] = Job.objects.all()
+
+    def get_job(self):
+        return self.job_queryset.get(pk=self.job_id)
+
+
+@py_dataclass(kw_only=True)
+class RunTestsParams(ScriptParams):
     sync_datasources: bool = False
     selectors: list[int] = field(default_factory=list)
     devices: list[int] = field(default_factory=list)
     test_tags: list[int] = field(default_factory=list)
     explanation_verbosity: int = 2
     override_datasource: int | None = None
-    workers_num: int = 1
-
-    schedule_at: datetime.datetime | None = None
-    schedule_interval: int | None = None
-    request: HttpRequest
 
     @property
     def selector_qs(self) -> QuerySet[ComplianceSelector]:
@@ -88,19 +108,13 @@ class ScriptParams:
             filtr &= Q(pk__in=self.devices)
         return filtr
 
-    def with_job_info(self, job: Job) -> "FullScriptParams":
-        return FullScriptParams(**asdict(self), job_id=job.pk, report_id=job.object_id)
+    def with_job_info(self, job: Job) -> "FullRunTestsParams":
+        return FullRunTestsParams(**asdict(self), job_id=job.pk, report_id=job.object_id)
 
 
-@dataclass(kw_only=True)
-class FullScriptParams(ScriptParams):
-    job_id: int
-    report_id: int
-
-    job_queryset: ClassVar[QuerySet[Job]] = Job.objects.all()
-
-    def get_job(self):
-        return self.job_queryset.get(pk=self.job_id)
+@py_dataclass(kw_only=True)
+class FullRunTestsParams(FullScriptParams, RunTestsParams):
+    pass
 
 
 @dataclass

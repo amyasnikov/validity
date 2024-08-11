@@ -10,7 +10,7 @@ from validity import di
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet, VDataSource, VDevice
 from validity.utils.orm import TwoPhaseTransaction
-from ..data_models import ExecutionResult, FullScriptParams, TestResultRatio
+from ..data_models import ExecutionResult, FullRunTestsParams, TestResultRatio
 from ..logger import Logger
 from ..parent_jobs import JobExtractor
 
@@ -140,7 +140,7 @@ class ApplyWorker:
     prepare_transaction: Callable[[str], ContextManager] = lambda trans: TwoPhaseTransaction(trans).prepare()  # noqa
     transaction_template: Annotated[str, "runtests_transaction_template"]
 
-    def __call__(self, *, params: FullScriptParams, worker_id: int) -> ExecutionResult:
+    def __call__(self, *, params: FullRunTestsParams, worker_id: int) -> ExecutionResult:
         selector_devices = self.get_selector_devices(worker_id)
         executor = self.test_executor_cls(worker_id, params.explanation_verbosity, params.report_id)
         test_results = (

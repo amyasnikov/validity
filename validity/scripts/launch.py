@@ -2,7 +2,6 @@ import datetime
 import uuid
 from dataclasses import dataclass
 from functools import partial
-from typing import Callable
 
 from core.choices import JobStatusChoices
 from core.models import Job
@@ -18,12 +17,8 @@ from .data_models import FullScriptParams, ScriptParams, Task
 class Launcher:
     job_name: str
     job_object_model: type[Model]
-    get_queue_fn: Callable[[str], Queue]
+    rq_queue: Queue
     tasks: list[Task]
-
-    @property
-    def rq_queue(self) -> Queue:
-        return self.get_queue_fn(self.job_object_model._meta.model_name)
 
     def create_netbox_job(
         self, schedule_at: datetime.datetime | None, interval: int | None, user: AbstractBaseUser
@@ -57,7 +52,8 @@ class Launcher:
                 else enqueue_fn(**task_kwargs)
             )
 
-    def __call__(self, params: ScriptParams):
+    def __call__(self, params: ScriptParams) -> Job:
         nb_job = self.create_netbox_job(params.schedule_at, params.schedule_interval, params.request.user)
         full_params = params.with_job_info(nb_job)
         self.enqueue(full_params, nb_job.job_id)
+        return nb_job

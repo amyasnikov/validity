@@ -1,3 +1,4 @@
+import datetime
 import operator
 from dataclasses import dataclass, field
 from functools import reduce
@@ -15,7 +16,8 @@ from validity import di
 from validity.models import ComplianceReport
 from validity.netbox_changes import enqueue_object, events_queue
 from validity.utils.orm import TwoPhaseTransaction
-from ..data_models import FullScriptParams, Message, TestResultRatio
+from ..data_models import FullRunTestsParams, Message, TestResultRatio
+from ..launch import Launcher
 from ..logger import Logger
 from ..parent_jobs import JobExtractor
 from .base import TracebackMixin
@@ -64,10 +66,15 @@ class CombineWorker(TracebackMixin):
         job.data = {"log": [log.serialized for log in logs], "output": {"statistics": test_stats.serialized}}
         job.terminate()
 
-    def schedule_next_job(self, interval: int) -> None:
-        pass
+    @di.inject
+    def schedule_next_job(
+        self, params: FullRunTestsParams, job: Job, launcher: Annotated[Launcher, "runtests_launcher"]
+    ) -> None:
+        if params.schedule_interval:
+            params.schedule_at = job.started + datetime.timedelta(params.schedule_interval)
+            launcher(params)
 
-    def __call__(self, params: FullScriptParams) -> Any:
+    def __call__(self, params: FullRunTestsParams) -> Any:
         netbox_job = params.get_job()
         with self.terminate_job_on_error(netbox_job):
             logger = self.log_factory()
@@ -79,5 +86,4 @@ class CombineWorker(TracebackMixin):
             logger.success(f"Job succeeded. See [Compliance Report]({report_url}) for detailed statistics")
             logs = self.collect_logs(logger, job_extractor)
             self.terminate_job(netbox_job, test_stats, logs)
-            if params.schedule_interval:
-                self.schedule_next_job(params.schedule_interval)
+            self.schedule_next_job(params, netbox_job)

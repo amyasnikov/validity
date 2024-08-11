@@ -4,6 +4,7 @@ from .device import DeviceSerializedStateView, TestResultView
 from .nameset import NameSetBulkDeleteView, NameSetDeleteView, NameSetEditView, NameSetListView, NameSetView
 from .poller import PollerBulkDeleteView, PollerDeleteView, PollerEditView, PollerListView, PollerView
 from .report import ComplianceReportListView, ComplianceReportView
+from .script import RunTestsView
 from .selector import (
     ComplianceSelectorBulkDeleteView,
     ComplianceSelectorDeleteView,
@@ -24,6 +25,5 @@ from .test import (
     ComplianceTestEditView,
     ComplianceTestListView,
     ComplianceTestView,
-    run_tests,
 )
 from .test_result import ComplianceResultListView, ComplianceResultView
