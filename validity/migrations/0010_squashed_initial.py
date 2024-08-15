@@ -289,6 +289,7 @@ class Migration(migrations.Migration):
             options={
                 "abstract": False,
                 "ordering": ("name",),
+                "permissions": [("run", "Can run compliance test")],
             },
             bases=(validity.models.base.URLMixin, models.Model),
         ),

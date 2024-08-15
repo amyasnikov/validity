@@ -27,7 +27,7 @@ class Launcher:
         obj = self.job_object_model.objects.create()
         content_type = ContentType.objects.get_for_model(self.job_object_model)
         return Job.objects.create(
-            object_type=content_type.pk,
+            object_type=content_type,
             object_id=obj.pk,
             name=self.job_name,
             status=status,
@@ -45,7 +45,7 @@ class Launcher:
         for task_idx, task in enumerate(self.tasks):
             task_kwargs = task.as_kwargs | {"depends_on": prev_job, "params": params}
             if task_idx == len(self.tasks) - 1:
-                task_kwargs["job_id"] = rq_job_id
+                task_kwargs["job_id"] = str(rq_job_id)
             prev_job = (
                 [enqueue_fn(**task_kwargs, worker_id=worker_id) for worker_id in range(params.workers_num)]
                 if task.multi_workers
@@ -53,7 +53,7 @@ class Launcher:
             )
 
     def __call__(self, params: ScriptParams) -> Job:
-        nb_job = self.create_netbox_job(params.schedule_at, params.schedule_interval, params.request.user)
+        nb_job = self.create_netbox_job(params.schedule_at, params.schedule_interval, params.request.get_user())
         full_params = params.with_job_info(nb_job)
         self.enqueue(full_params, nb_job.job_id)
         return nb_job

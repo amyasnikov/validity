@@ -29,6 +29,9 @@ class ComplianceTest(DataSourceMixin, BaseModel):
 
     class Meta:
         ordering = ("name",)
+        permissions = [
+            ("run", "Can run compliance test"),
+        ]
 
     def clean(self):
         super().clean()

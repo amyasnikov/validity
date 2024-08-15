@@ -4,13 +4,15 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from functools import reduce
 from typing import Callable, ClassVar
+from uuid import UUID
 
 from core.models import Job
+from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.utils import timezone
 from extras.choices import LogLevelChoices
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, field_validator
 from pydantic.dataclasses import dataclass as py_dataclass
 from rq import Callback
 
@@ -57,12 +59,38 @@ class ExecutionResult:
     log: list[Message]
 
 
+@dataclass
+class RequestInfo:
+    """
+    Pickleable substitution for Django's HttpRequest
+    """
+
+    id: UUID
+    user_id: int
+
+    user_queryset: ClassVar[QuerySet] = get_user_model().objects.all()
+
+    @classmethod
+    def from_http_request(cls, request: HttpRequest):
+        return cls(id=request.id, user_id=request.user.pk)
+
+    def get_user(self):
+        return self.user_queryset.get(pk=self.user_id)
+
+
 @py_dataclass(kw_only=True, config=ConfigDict(arbitrary_types_allowed=True))
 class ScriptParams(ABC):
-    request: HttpRequest = Field()
+    request: RequestInfo
     schedule_at: datetime.datetime | None = None
     schedule_interval: int | None = None
     workers_num: int = 1
+
+    @field_validator("request", mode="before")
+    @classmethod
+    def coerce_request_info(cls, value):
+        if isinstance(value, HttpRequest):
+            value = RequestInfo.from_http_request(value)
+        return value
 
     @abstractmethod
     def with_job_info(self, job: Job) -> "FullScriptParams": ...

@@ -21,7 +21,8 @@ class RunScriptView(FormView):
     launcher: Launcher
 
     def get_params(self, form: Form):
-        return self.params_class(**form.data)
+        params = {key: value for key in form.data if (value := form.data[key]) != ""}
+        return self.params_class(request=self.request, **params)
 
     def get_success_url(self, job_id: int) -> str:
         return reverse(self.redirect_viewname, kwargs={"job_pk": job_id})

@@ -126,6 +126,10 @@ class DeviceTestIterator:
         return device_qs
 
 
+def prepare_transaction(transaction):
+    return TwoPhaseTransaction(transaction).prepare()
+
+
 @di.dependency(scope=Singleton)
 @dataclass(repr=False, kw_only=True)
 class ApplyWorker:
@@ -137,7 +141,7 @@ class ApplyWorker:
     device_test_gen: type[DeviceTestIterator] = DeviceTestIterator
     result_batch_size: Annotated[int, "validity_settings.result_batch_size"]
     job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
-    prepare_transaction: Callable[[str], ContextManager] = lambda trans: TwoPhaseTransaction(trans).prepare()  # noqa
+    prepare_transaction: Callable[[str], ContextManager] = prepare_transaction
     transaction_template: Annotated[str, "runtests_transaction_template"]
 
     def __call__(self, *, params: FullRunTestsParams, worker_id: int) -> ExecutionResult:

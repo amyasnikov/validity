@@ -24,7 +24,7 @@ from .base import TracebackMixin
 
 
 def enqueue(report, request, action):
-    return enqueue_object(events_queue.get(), report, request.user, request.id, action)
+    return enqueue_object(events_queue.get(), report, request.get_user(), request.id, action)
 
 
 def commit(transaction_id):
