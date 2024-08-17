@@ -1,4 +1,5 @@
 import logging
+import traceback as tb
 from functools import partialmethod
 
 from extras.choices import LogLevelChoices
@@ -28,3 +29,9 @@ class Logger:
     info = partialmethod(_log, level=LogLevelChoices.LOG_INFO)
     warning = partialmethod(_log, level=LogLevelChoices.LOG_WARNING)
     failure = partialmethod(_log, level=LogLevelChoices.LOG_FAILURE)
+
+    def log_exception(self, exc_value, exc_type=None, exc_traceback=None):
+        exc_traceback = exc_traceback or exc_value.__traceback__
+        exc_type = exc_type or type(exc_value)
+        stacktrace = "".join(tb.format_tb(exc_traceback))
+        self.failure(f"Unhandled error occured: `{exc_type}: {exc_value}`\n```\n{stacktrace}\n```")

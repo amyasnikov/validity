@@ -1,6 +1,8 @@
 from functools import partialmethod
 from itertools import chain
 
+from core.models import Job
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import (
     BigIntegerField,
@@ -62,9 +64,8 @@ class ComplianceTestResultQS(ValiditySettingsMixin, RestrictedQuerySet):
     def count_devices_and_tests(self):
         return self.aggregate(device_count=Count("devices", distinct=True), test_count=Count("tests", distinct=True))
 
-    def delete_old(self):
-        del_count = self.filter(report=None).last_more_than(self.v_settings.store_last_results)._raw_delete(self.db)
-        return (del_count, {"validity.ComplianceTestResult": del_count})
+    def raw_delete(self):
+        return self._raw_delete(self.db)
 
 
 def percentage(field1: str, field2: str) -> Case:
@@ -119,14 +120,20 @@ class ComplianceReportQS(ValiditySettingsMixin, RestrictedQuerySet):
         )
 
     def delete_old(self):
-        from validity.models import ComplianceTestResult
+        from validity.models import ComplianceReport, ComplianceTestResult
 
         old_reports = list(self.order_by("-created").values_list("pk", flat=True)[self.v_settings.store_reports :])
-        deleted_results = ComplianceTestResult.objects.filter(report__pk__in=old_reports)._raw_delete(self.db)
+        deleted_results = ComplianceTestResult.objects.filter(report__pk__in=old_reports).raw_delete()
+        report_content_type = ContentType.objects.get_for_model(ComplianceReport)
+        deleted_jobs = Job.objects.filter(object_id__in=old_reports, object_type=report_content_type).delete()
         deleted_reports, _ = self.filter(pk__in=old_reports).delete()
         return (
-            deleted_results + deleted_reports,
-            {"validity.ComplianceTestResult": deleted_results, "validity.ComplianceReport": deleted_reports},
+            deleted_results + deleted_reports + deleted_reports,
+            {
+                "validity.ComplianceTestResult": deleted_results,
+                "validity.ComplianceReport": deleted_reports,
+                "core.Job": deleted_jobs,
+            },
         )
 
 

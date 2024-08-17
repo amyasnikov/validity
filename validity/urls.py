@@ -26,6 +26,8 @@ urlpatterns = [
     path("namesets/<int:pk>/", include(get_model_urls("validity", "nameset"))),
     path("reports/", views.ComplianceReportListView.as_view(), name="compliancereport_list"),
     path("reports/<int:pk>/", include(get_model_urls("validity", "compliancereport"))),
+    # hack to display NetBox Job view without an error
+    path("reports/<int:pk>/", views.ComplianceReportView.as_view(), name="compliancereport_jobs"),
     path("pollers/", views.PollerListView.as_view(), name="poller_list"),
     path("pollers/add/", views.PollerEditView.as_view(), name="poller_add"),
     path("pollers/delete/", views.PollerBulkDeleteView.as_view(), name="poller_bulk_delete"),

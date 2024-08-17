@@ -57,6 +57,7 @@ class TestResultRatio:
 class ExecutionResult:
     test_stat: TestResultRatio
     log: list[Message]
+    errored: bool = False
 
 
 @dataclass

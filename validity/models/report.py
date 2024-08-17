@@ -1,3 +1,5 @@
+from core.models import Job
+from django.contrib.contenttypes.fields import GenericRelation
 from netbox.models import ChangeLoggingMixin
 
 from validity.managers import ComplianceReportQS
@@ -5,6 +7,8 @@ from .base import BaseReadOnlyModel
 
 
 class ComplianceReport(ChangeLoggingMixin, BaseReadOnlyModel):
+    jobs = GenericRelation(Job, content_type_field="object_type")
+
     objects = ComplianceReportQS.as_manager()
 
     class Meta:

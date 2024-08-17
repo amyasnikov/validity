@@ -3,7 +3,6 @@ from typing import Annotated
 import django_rq
 from dimi.scopes import Singleton
 from django.conf import LazySettings, settings
-from rq import Callback
 
 from validity import di
 from validity.choices import ConnectionTypeChoices
@@ -30,12 +29,7 @@ def poller_map():
     }
 
 
-@di.dependency(scope=Singleton)
-def runtests_transaction_template():
-    return "ApplyWorker_{job}_{worker}"
-
-
-from validity.scripts import ApplyWorker, CombineWorker, Launcher, RollbackWorker, SplitWorker, Task  # noqa
+from validity.scripts import ApplyWorker, CombineWorker, Launcher, SplitWorker, Task  # noqa
 
 
 @di.dependency(scope=Singleton)
@@ -44,7 +38,6 @@ def runtests_launcher(
     split_worker: Annotated[SplitWorker, ...],
     apply_worker: Annotated[ApplyWorker, ...],
     combine_worker: Annotated[CombineWorker, ...],
-    rollback_worker: Annotated[RollbackWorker, ...],
 ):
     from validity.models import ComplianceReport
 
@@ -57,7 +50,6 @@ def runtests_launcher(
             Task(
                 apply_worker,
                 job_timeout=vsettings.script_timeouts.runtests_apply,
-                on_failure=Callback(rollback_worker.as_func(), timeout=vsettings.script_timeouts.runtests_rollback),
                 multi_workers=True,
             ),
             Task(combine_worker, job_timeout=vsettings.script_timeouts.runtests_combine),

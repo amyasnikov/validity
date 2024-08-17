@@ -1,9 +1,7 @@
 import logging
 
 from dimi import Container
-from django.conf import settings as django_settings
 from netbox.settings import VERSION
-from pydantic import BaseModel, Field
 
 from validity.utils.version import NetboxVersion
 
@@ -32,7 +30,7 @@ class NetBoxValidityConfig(PluginConfig):
     netbox_version = NetboxVersion(VERSION)
 
     def ready(self):
-        from validity import data_backends, dependencies
+        from validity import data_backends, dependencies, signals
 
         return super().ready()
 

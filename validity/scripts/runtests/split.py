@@ -10,12 +10,12 @@ from validity.models import ComplianceSelector, VDataSource, VDevice
 from validity.utils.misc import batched, datasource_sync
 from ..data_models import FullRunTestsParams, SplitResult
 from ..logger import Logger
-from .base import TracebackMixin
+from .base import TerminateMixin
 
 
 @di.dependency(scope=Singleton)
 @dataclass(repr=False)
-class SplitWorker(TracebackMixin):
+class SplitWorker(TerminateMixin):
     log_factory: Callable[[], Logger] = Logger
     datasource_sync_fn: Callable[[Iterable[VDataSource], Q], None] = datasource_sync
     device_batch_size: int = 2000
@@ -40,7 +40,7 @@ class SplitWorker(TracebackMixin):
     def _work_slices(self, selector_qs: QuerySet[ComplianceSelector], devices_per_worker: int):
         def device_ids(selector):
             return (
-                selector.devices.iterator(chunk_size=self.device_batch_size).order_by("pk").values_list("pk", flat=True)
+                selector.devices.order_by("pk").values_list("pk", flat=True).iterator(chunk_size=self.device_batch_size)
             )
 
         selector_device = chain.from_iterable(
@@ -83,6 +83,7 @@ class SplitWorker(TracebackMixin):
         job = params.get_job()
         with self.terminate_job_on_error(job):
             job.start()
+            job.object_type.model_class().objects.delete_old()
             logger = self.log_factory()
             device_filter = params.get_device_filter()
             if params.sync_datasources:

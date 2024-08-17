@@ -26,6 +26,18 @@
               <th scope="row">Created</th>
               <td>{{ object.created | date:"Y-m-d G:i:s" }}</td>
             </tr>
+            {% with job=object.jobs.first %}
+            <tr>
+              <th scope="row">Job</th>
+              <td>{% if job %}{{ job | linkify }} | {{ job | colored_choice:"status" }}{% else %}—{% endif %}</td>
+            </tr>
+            {% if job.error %}
+            <tr>
+              <th scope="row">Job Error</th>
+              <td>{{ job.error }}</td>
+            </tr>
+            {% endif %}
+            {% endwith %}
             <tr>
               <th scope="row">Devices involved</th>
               <td>{{ object.device_count }}</td>
