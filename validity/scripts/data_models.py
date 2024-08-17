@@ -30,7 +30,7 @@ class Message:
     def serialized(self) -> dict:
         msg = self.message
         if self.script_id:
-            msg = f"{self.script_id}: {msg}"
+            msg = f"{self.script_id}, {msg}"
         return {"status": self.status, "message": msg, "time": self.time.isoformat()}
 
 

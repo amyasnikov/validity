@@ -66,7 +66,7 @@ class TestExecutor:
                 device=device,
                 passed=passed,
                 explanation=explanation,
-                report=self.report_id,
+                report_id=self.report_id,
                 dynamic_pair=device.dynamic_pair,
             )
 

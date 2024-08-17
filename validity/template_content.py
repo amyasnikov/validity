@@ -1,4 +1,5 @@
 import yaml
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from tenancy.models import Tenant
 
@@ -47,4 +48,13 @@ class DataSourceTenantExtension(PluginTemplateExtension):
         )
 
 
-template_extensions = [DataSourceTenantExtension, PollingInfoExtension]
+class ComplianceTestExtension(PluginTemplateExtension):
+    model = "validity.compliancetest"
+
+    def list_buttons(self):
+        run_tests_url = reverse("plugins:validity:compliancetest_run")
+        icon = '<i class="mdi mdi-rocket-launch"></i>'
+        return f'<a class="btn btn-cyan" href="{run_tests_url}">{icon} Run Tests</a>'
+
+
+template_extensions = [DataSourceTenantExtension, PollingInfoExtension, ComplianceTestExtension]
