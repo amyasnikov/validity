@@ -9,9 +9,8 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import Column, RequestConfig, Table, TemplateColumn
-from netbox.tables import BooleanColumn as BooleanColumn
-from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
-from netbox.tables.columns import ActionsColumn, LinkedCountColumn
+from netbox.tables import BaseTable, BooleanColumn, ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
+from netbox.tables.columns import ActionsColumn, LinkedCountColumn, MarkdownColumn
 from utilities.paginator import EnhancedPaginator
 
 from validity import models
@@ -279,3 +278,16 @@ class DynamicPairsTable(DeviceTable):
             paginate_by = self.get_paginate_by(request, max_paginate_by)
             paginate = {"paginator_class": paginator_class, "per_page": paginate_by}
             RequestConfig(request, paginate).configure(self)
+
+
+class ScriptResultTable(BaseTable):
+    index = Column(verbose_name=_("Line"), empty_values=())
+    time = Column(verbose_name=_("Time"))
+    status = TemplateColumn(
+        template_code="""{% load log_levels %}{% log_level record.status %}""", verbose_name=_("Level")
+    )
+    message = MarkdownColumn(verbose_name=_("Message"))
+
+    class Meta(BaseTable.Meta):
+        empty_text = _("No results found")
+        fields = ("index", "time", "status", "message")

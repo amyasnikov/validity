@@ -10,6 +10,7 @@ class ComplianceReport(ChangeLoggingMixin, BaseReadOnlyModel):
     jobs = GenericRelation(Job, content_type_field="object_type")
 
     objects = ComplianceReportQS.as_manager()
+    run_view = "plugins:validity:compliancetest_run"
 
     class Meta:
         ordering = ("-created",)

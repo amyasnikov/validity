@@ -4,6 +4,7 @@ from typing import Callable, Iterable
 
 from dimi import Singleton
 from django.db.models import Q, QuerySet
+from extras.scripts import AbortScript
 
 from validity import di
 from validity.models import ComplianceSelector, VDataSource, VDevice
@@ -65,11 +66,15 @@ class SplitWorker(TerminateMixin):
         self, workers_num: int, device_filter: Q, selectors: QuerySet[ComplianceSelector], logger: Logger
     ) -> list[dict[int, list[int]]]:
         device_count = self.device_queryset.filter(device_filter).count()
-        devices_per_worker = device_count // workers_num
+        if not (devices_per_worker := device_count // workers_num):
+            raise AbortScript(
+                f"The number of workers ({workers_num}) cannot be larger than the number of devices ({device_count})"
+            )
         logger.info(f"Running the tests for *{device_count} devices*")
         if workers_num > 1:
             logger.info(
-                f"Distributing the work among {workers_num} workers. {devices_per_worker} devices handles each worker in average"
+                f"Distributing the work among {workers_num} workers. "
+                f"Each worker handlers {devices_per_worker} device(s) in average"
             )
 
         slices = [*self._work_slices(selectors, devices_per_worker)]

@@ -14,6 +14,7 @@ from utilities.forms.widgets import HTMXSelect
 from validity import models
 from validity.choices import ConnectionTypeChoices, ExplanationVerbosityChoices
 from validity.netbox_changes import FieldSet
+from .fields import DynamicModelChoicePropertyField, DynamicModelMultipleChoicePropertyField
 from .mixins import SubformMixin
 from .widgets import PrettyJSONWidget
 
@@ -171,19 +172,19 @@ class RunTestsForm(ScriptForm):
         label=_("Sync Data Sources"),
         help_text=_("Sync all referenced Data Sources"),
     )
-    selectors = DynamicModelMultipleChoiceField(
+    selectors = DynamicModelMultipleChoicePropertyField(
         queryset=models.ComplianceSelector.objects.all(),
         required=False,
         label=_("Specific Selectors"),
         help_text=_("Run the tests only for specific selectors"),
     )
-    devices = DynamicModelMultipleChoiceField(
+    devices = DynamicModelMultipleChoicePropertyField(
         queryset=Device.objects.all(),
         required=False,
         label=_("Specific Devices"),
         help_text=_("Run the tests only for specific devices"),
     )
-    test_tags = DynamicModelMultipleChoiceField(
+    test_tags = DynamicModelMultipleChoicePropertyField(
         queryset=Tag.objects.all(),
         required=False,
         label=_("Specific Test Tags"),
@@ -195,7 +196,7 @@ class RunTestsForm(ScriptForm):
         help_text=_("Explanation Verbosity Level"),
         required=False,
     )
-    override_datasource = DynamicModelChoiceField(
+    override_datasource = DynamicModelChoicePropertyField(
         queryset=DataSource.objects.all(),
         required=False,
         label=_("Override DataSource"),

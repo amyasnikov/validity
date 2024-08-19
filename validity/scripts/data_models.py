@@ -12,7 +12,7 @@ from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.utils import timezone
 from extras.choices import LogLevelChoices
-from pydantic import ConfigDict, field_validator
+from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass as py_dataclass
 from rq import Callback
 
@@ -46,7 +46,7 @@ class TestResultRatio:
     total: int
 
     def __add__(self, other):
-        return type(self)(self.passed + other.passed, self.total + other.overall)
+        return type(self)(self.passed + other.passed, self.total + other.total)
 
     @property
     def serialized(self):
@@ -82,8 +82,8 @@ class RequestInfo:
 @py_dataclass(kw_only=True, config=ConfigDict(arbitrary_types_allowed=True))
 class ScriptParams(ABC):
     request: RequestInfo
-    schedule_at: datetime.datetime | None = None
-    schedule_interval: int | None = None
+    schedule_at: datetime.datetime | None = Field(default=None, validation_alias="_schedule_at")
+    schedule_interval: int | None = Field(default=None, validation_alias="_interval")
     workers_num: int = 1
 
     @field_validator("request", mode="before")

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from itertools import chain
 from typing import Annotated, Any, Callable, Iterable, Iterator
@@ -137,6 +137,7 @@ class ApplyWorker:
     device_test_gen: type[DeviceTestIterator] = DeviceTestIterator
     result_batch_size: Annotated[int, "validity_settings.result_batch_size"]
     job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
+    testresult_queryset: QuerySet[ComplianceTestResult] = field(default_factory=ComplianceTestResult.objects.all)
 
     def __call__(self, *, params: FullRunTestsParams, worker_id: int) -> ExecutionResult:
         try:
@@ -166,4 +167,4 @@ class ApplyWorker:
         return job_extractor.parent.job.result.slices[worker_id]
 
     def save_results_to_db(self, results: Iterable[ComplianceTestResult]) -> None:
-        ComplianceTestResult.objects.bulk_create(results, batch_size=self.result_batch_size)
+        self.testresult_queryset.bulk_create(results, batch_size=self.result_batch_size)

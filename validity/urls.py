@@ -36,4 +36,5 @@ urlpatterns = [
     path("commands/add/", views.CommandEditView.as_view(), name="command_add"),
     path("commands/delete/", views.CommandBulkDeleteView.as_view(), name="command_bulk_delete"),
     path("commands/<int:pk>/", include(get_model_urls("validity", "command"))),
+    path("scripts/results/<int:pk>/", views.ScriptResultView.as_view(), name="script_result"),
 ]

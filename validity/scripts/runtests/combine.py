@@ -14,7 +14,7 @@ from django.urls import reverse
 from extras.choices import ObjectChangeActionChoices
 
 from validity import di
-from validity.models import ComplianceReport, ComplianceTestResult
+from validity.models import ComplianceReport
 from validity.netbox_changes import enqueue_object, events_queue
 from ..data_models import FullRunTestsParams, Message, TestResultRatio
 from ..launch import Launcher
@@ -36,7 +36,6 @@ class CombineWorker(TerminateMixin):
     report_queryset: QuerySet[ComplianceReport] = field(
         default_factory=ComplianceReport.objects.annotate_result_stats().count_devices_and_tests
     )
-    testresult_queryset: QuerySet = field(default_factory=ComplianceTestResult.objects.all)
 
     def fire_report_webhook(self, report_id: int, request: HttpRequest) -> None:
         report = self.report_queryset.get(pk=report_id)
@@ -75,7 +74,6 @@ class CombineWorker(TerminateMixin):
             job_extractor = self.job_extractor_factory()
             if err_logs := self.get_previous_errors(job_extractor):
                 self.terminate_job(netbox_job, JobStatusChoices.STATUS_ERRORED, error="ApplyWorkerError", logs=err_logs)
-                self.testresult_queryset.filter(report=params.report_id).raw_delete()
                 return
             logger = self.log_factory()
             self.fire_report_webhook(params.report_id, params.request)

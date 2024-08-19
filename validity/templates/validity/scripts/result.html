@@ -1,0 +1,51 @@
+{% extends 'extras/script_result.html' %}
+
+{% block title %}Script Execution Result{% endblock title %}
+{% block subtitle %}{% endblock %}
+
+{% block page-header %}
+  <div class="container-fluid mt-2">
+    <nav class="breadcrumb-container" aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url job.object.run_view %}">Run</a></li>
+        <li class="breadcrumb-item">{{ job.created|isodatetime }}</li>
+      </ol>
+    </nav>
+  </div>
+{% endblock page-header %}
+
+{% block content %}
+    <div class="tab-pane show active" id="results" role="tabpanel" aria-labelledby="results-tab">
+
+      <form method="post" class="form form-horizontal">
+        {% csrf_token %}
+        {# "Select all" form #}
+        {% if table.paginator.num_pages > 1 %}
+          <div id="select-all-box" class="d-none card d-print-none">
+            <div class="form col-md-12">
+              <div class="card-body">
+                <div class="form-check">
+                  <input type="checkbox" id="select-all" name="_all" class="form-check-input" />
+                  <label for="select-all" class="form-check-label">
+                      Select <strong>all {{ table.rows|length }} {{ table.data.verbose_name_plural }}</strong> matching query
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="form form-horizontal">
+          {% csrf_token %}
+          <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
+
+            <div class="col col-md-12"{% if not job.completed %} hx-get="." hx-trigger="load delay:0.5s, every 5s"{% endif %}>
+              {% block htmx-template %}
+              {% include 'validity/scripts/result_htmx.html' %}
+              {% endblock htmx-template %}
+            </div>
+
+        </div>
+      </form>
+    </div>
+{% endblock content %}
