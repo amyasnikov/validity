@@ -56,4 +56,4 @@ class DynamicModelChoicePropertyField(ModelPropertyMixin, DynamicModelChoiceFiel
 
 class DynamicModelMultipleChoicePropertyField(ModelPropertyMixin, DynamicModelMultipleChoiceField):
     def extract_property(self, value):
-        return [operator.attrgetter(item) for item in value]
+        return [operator.attrgetter(self.property_name)(item) for item in value]

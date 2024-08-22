@@ -79,7 +79,7 @@ class RequestInfo:
         return self.user_queryset.get(pk=self.user_id)
 
 
-@py_dataclass(kw_only=True, config=ConfigDict(arbitrary_types_allowed=True))
+@py_dataclass(kw_only=True, config=ConfigDict(arbitrary_types_allowed=True, populate_by_name=True))
 class ScriptParams(ABC):
     request: RequestInfo
     schedule_at: datetime.datetime | None = Field(default=None, validation_alias="_schedule_at")
