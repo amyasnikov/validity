@@ -224,3 +224,7 @@ class RunTestsForm(ScriptForm):
         ),
         FieldSet("_schedule_at", "_interval", name=_("Postponed Execution")),
     )
+
+    def clean(self):
+        schedule_at = self.cleaned_data.get("_schedule_at")
+        return super().clean() | {"_schedule_at": schedule_at}

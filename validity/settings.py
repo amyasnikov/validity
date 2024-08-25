@@ -13,7 +13,6 @@ class ScriptTimeouts(BaseModel):
     runtests_split: int | str = "15m"
     runtests_apply: int | str = "30m"
     runtests_combine: int | str = "15m"
-    runtests_rollback: int | str = "5m"
 
 
 class ValiditySettings(BaseModel):

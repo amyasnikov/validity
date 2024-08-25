@@ -43,7 +43,7 @@ def runtests_launcher(
 
     return Launcher(
         job_name="RunTests",
-        job_object_model=ComplianceReport,
+        job_object_factory=ComplianceReport.objects.create,
         rq_queue=django_rq.get_queue(vsettings.runtests_queue),
         tasks=[
             Task(split_worker, job_timeout=vsettings.script_timeouts.runtests_split),

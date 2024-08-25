@@ -27,7 +27,7 @@ class SplitWorker(TerminateMixin):
         if override_datasource:
             return [self.datasource_queryset.get(pk=override_datasource)]
         datasource_ids = (
-            self.datasource_queryset.filter(device_filter)
+            self.device_queryset.filter(device_filter)
             .annotate_datasource_id()
             .values_list("data_source_id", flat=True)
             .distinct()
@@ -64,12 +64,14 @@ class SplitWorker(TerminateMixin):
             slice.setdefault(selector, [])
             slice[selector].extend(devices)
 
-    def distribute_work(self, params: FullRunTestsParams, logger: Logger) -> list[dict[int, list[int]]]:
+    def distribute_work(
+        self, params: FullRunTestsParams, logger: Logger, device_filter: Q
+    ) -> list[dict[int, list[int]]]:
         """
         Split all the devices under test into N slices where N is the number of workers
         Returns list of {selector_id: [device_id_1, device_id_2, ...]}
         """
-        device_count = self.device_queryset.filter(params.get_device_filter()).count()
+        device_count = self.device_queryset.filter(device_filter).count()
         if not (devices_per_worker := device_count // params.workers_num):
             raise AbortScript(
                 f"The number of workers ({params.workers_num}) "
@@ -98,5 +100,5 @@ class SplitWorker(TerminateMixin):
             device_filter = params.get_device_filter()
             if params.sync_datasources:
                 self.sync_datasources(params.override_datasource, device_filter)
-            slices = self.distribute_work(params, logger)
+            slices = self.distribute_work(params, logger, device_filter)
             return SplitResult(log=logger.messages, slices=slices)

@@ -138,7 +138,7 @@ class RunTestsParams(ScriptParams):
         return filtr
 
     def with_job_info(self, job: Job) -> "FullRunTestsParams":
-        return FullRunTestsParams(**asdict(self), job_id=job.pk, report_id=job.object_id)
+        return FullRunTestsParams(**asdict(self) | {"job_id": job.pk, "report_id": job.object_id})
 
 
 @py_dataclass(kw_only=True)

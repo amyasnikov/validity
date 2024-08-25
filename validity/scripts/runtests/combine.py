@@ -59,7 +59,7 @@ class CombineWorker(TerminateMixin):
         self, params: FullRunTestsParams, job: Job, launcher: Annotated[Launcher, "runtests_launcher"]
     ) -> None:
         if params.schedule_interval:
-            params.schedule_at = job.started + datetime.timedelta(params.schedule_interval)
+            params.schedule_at = job.started + datetime.timedelta(minutes=params.schedule_interval)
             launcher(params)
 
     def get_previous_errors(self, job_extractor: JobExtractor) -> list[Message]:
