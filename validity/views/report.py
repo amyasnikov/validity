@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Dict, Iterable, Iterator
+from typing import Any, Iterable, Iterator
 
 from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404
@@ -101,7 +101,7 @@ class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
         table.configure(self.request)
         return table
 
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(**kwargs) | {
             "object": self.object,
             "tab": self.tab,

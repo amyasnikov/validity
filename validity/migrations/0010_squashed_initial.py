@@ -513,5 +513,4 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(create_cf, delete_cf),
         migrations.RunPython(create_polling_datasource, delete_polling_datasource),
-        migrations.RunPython(setup_scripts, delete_scripts),
     ]
