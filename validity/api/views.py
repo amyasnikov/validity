@@ -1,5 +1,5 @@
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from netbox.api.viewsets import NetBoxModelViewSet
+from netbox.api.viewsets import NetBoxModelViewSet, NetBoxReadOnlyModelViewSet
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
@@ -8,10 +8,6 @@ from rest_framework.views import APIView
 from validity import filtersets, models
 from validity.choices import SeverityChoices
 from . import serializers
-
-
-class ReadOnlyNetboxViewSet(NetBoxModelViewSet):
-    http_method_names = ["get", "head", "options", "trace"]
 
 
 class ComplianceSelectorViewSet(NetBoxModelViewSet):
@@ -37,7 +33,7 @@ class ComplianceTestViewSet(NetBoxModelViewSet):
     filterset_class = filtersets.ComplianceTestFilterSet
 
 
-class ComplianceTestResultViewSet(ReadOnlyNetboxViewSet):
+class ComplianceTestResultViewSet(NetBoxReadOnlyModelViewSet):
     queryset = models.ComplianceTestResult.objects.select_related("device", "test", "report")
     serializer_class = serializers.ComplianceTestResultSerializer
     filterset_class = filtersets.ComplianceTestResultFilterSet
@@ -55,10 +51,10 @@ class NameSetViewSet(NetBoxModelViewSet):
     filterset_class = filtersets.NameSetFilterSet
 
 
-class ComplianceReportViewSet(NetBoxModelViewSet):
+class ComplianceReportViewSet(NetBoxReadOnlyModelViewSet):
     queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
     serializer_class = serializers.ComplianceReportSerializer
-    http_method_names = ["get", "head", "options", "trace", "delete"]
+    filterset_class = filtersets.ComplianceReportFilterSet
 
 
 class PollerViewSet(NetBoxModelViewSet):

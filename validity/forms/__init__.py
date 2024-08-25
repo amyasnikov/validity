@@ -1,5 +1,6 @@
 from .filterset import (
     CommandFilterForm,
+    ComplianceReportFilerForm,
     ComplianceSelectorFilterForm,
     ComplianceTestFilterForm,
     ComplianceTestResultFilterForm,

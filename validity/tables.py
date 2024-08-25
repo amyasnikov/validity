@@ -172,6 +172,7 @@ class StatsColumn(Column):
 
 class ComplianceReportTable(NetBoxTable):
     id = Column(linkify=True)
+    job_status = ChoiceFieldColumn(verbose_name=_("Job Status"), accessor="jobs__first__status")
     groupby_value = Column(
         verbose_name=_("GroupBy Value"),
         linkify=lambda record: reverse(record["viewname"], kwargs={"pk": record["groupby_pk"]}),
@@ -189,6 +190,7 @@ class ComplianceReportTable(NetBoxTable):
         model = models.ComplianceReport
         fields = (
             "id",
+            "job_status",
             "groupby_value",
             "device_count",
             "test_count",
@@ -199,6 +201,11 @@ class ComplianceReportTable(NetBoxTable):
             "created",
         )
         default_columns = fields
+
+    def render_job_status(self, column, bound_column, record, value):
+        record = record.jobs.first()
+        bound_column.name = "status"
+        return column.render(record, bound_column, value)
 
 
 class DeviceReportM2MColumn(ManyToManyColumn):

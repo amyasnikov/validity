@@ -2,12 +2,14 @@ import operator
 from functools import reduce
 from typing import Sequence
 
+from core.choices import JobStatusChoices
+from core.models import Job
 from dcim.filtersets import DeviceFilterSet
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.db.models import Q
 from django_filters import BooleanFilter, ChoiceFilter, ModelMultipleChoiceFilter
 from extras.models import Tag
-from netbox.filtersets import NetBoxModelFilterSet
+from netbox.filtersets import ChangeLoggedModelFilterSet, NetBoxModelFilterSet
 from tenancy.models import Tenant
 
 from validity import models
@@ -110,6 +112,15 @@ class NameSetFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 class DeviceReportFilterSet(DeviceFilterSet):
     compliance_passed = BooleanFilter()
+
+
+class ComplianceReportFilterSet(ChangeLoggedModelFilterSet):
+    job_status = ChoiceFilter(field_name="jobs__status", choices=JobStatusChoices)
+    job_id = ModelMultipleChoiceFilter(field_name="jobs", queryset=Job.objects.all())
+
+    class Meta:
+        model = models.ComplianceReport
+        fields = ("id", "job_id", "job_status", "created")
 
 
 class PollerFilterSet(SearchMixin, NetBoxModelFilterSet):
