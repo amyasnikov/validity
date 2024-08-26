@@ -10,11 +10,11 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
 from netbox.views.generic import ObjectView
 from netbox.views.generic.mixins import TableMixin
-from utilities.htmx import htmx_partial
 from utilities.rqworker import get_workers_for_queue
 
 from validity import di
 from validity.forms import RunTestsForm
+from validity.netbox_changes import htmx_partial
 from validity.scripts.data_models import RunTestsParams, ScriptParams
 from validity.scripts.launch import Launcher
 from validity.tables import ScriptResultTable

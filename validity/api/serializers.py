@@ -10,6 +10,7 @@ from dcim.api.nested_serializers import (
     NestedSiteSerializer,
 )
 from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Site
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from extras.api.nested_serializers import NestedTagSerializer
 from extras.models import Tag
@@ -19,7 +20,6 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
-from utilities.datetime import local_now
 
 from validity import config, models
 from validity.choices import ExplanationVerbosityChoices
@@ -402,7 +402,7 @@ class RunTestsSerializer(serializers.Serializer):
     schedule_interval = serializers.IntegerField(required=False, allow_null=True)
 
     def validate_schedule_at(self, value):
-        if value and value < local_now():
+        if value and value < timezone.now():
             raise serializers.ValidationError(_("Scheduled time must be in the future."))
         return value
 

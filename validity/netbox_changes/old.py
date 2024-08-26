@@ -7,3 +7,4 @@ from .oldest import *
 enqueue_object = __locate("extras.events.enqueue_object")
 events_queue = __locate("netbox.context.events_queue")
 EventRulesMixin = __locate("netbox.models.features.EventRulesMixin")
+SavedFiltersMixin = __locate("netbox.forms.mixins.SavedFiltersMixin")

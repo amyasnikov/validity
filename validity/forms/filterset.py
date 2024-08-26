@@ -5,7 +5,6 @@ from django.forms import CharField, DateTimeField, Form, NullBooleanField, Selec
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelFilterSetForm
-from netbox.forms.mixins import SavedFiltersMixin
 from tenancy.models import Tenant
 from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES, FilterForm
 from utilities.forms.fields import DynamicModelMultipleChoiceField
@@ -21,7 +20,7 @@ from validity.choices import (
     ExtractionMethodChoices,
     SeverityChoices,
 )
-from validity.netbox_changes import FieldSet
+from validity.netbox_changes import FieldSet, SavedFiltersMixin
 from .fields import PlaceholderChoiceField
 from .mixins import AddM2MPlaceholderFormMixin, ExcludeMixin
 
