@@ -5,6 +5,7 @@ from typing import Sequence
 from django.core.exceptions import ValidationError
 from django.db.models import ManyToManyField
 from netbox.api.serializers import WritableNestedSerializer
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import JSONField, ModelSerializer
 
 from validity import NetboxVersion
@@ -94,3 +95,13 @@ class SubformValidationMixin:
                 ]
                 raise ValidationError({instance.subform_json_field: errors})
         return attrs
+
+
+class PrimaryKeyField(PrimaryKeyRelatedField):
+    """
+    Returns primary key only instead of the whole model instance
+    """
+
+    def to_internal_value(self, data):
+        obj = super().to_internal_value(data)
+        return obj.pk

@@ -9,7 +9,6 @@ from uuid import UUID
 from core.models import Job
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
-from django.http import HttpRequest
 from django.utils import timezone
 from extras.choices import LogLevelChoices
 from pydantic import ConfigDict, Field, field_validator
@@ -72,7 +71,7 @@ class RequestInfo:
     user_queryset: ClassVar[QuerySet] = get_user_model().objects.all()
 
     @classmethod
-    def from_http_request(cls, request: HttpRequest):
+    def from_http_request(cls, request):
         return cls(id=request.id, user_id=request.user.pk)
 
     def get_user(self):
@@ -89,7 +88,7 @@ class ScriptParams(ABC):
     @field_validator("request", mode="before")
     @classmethod
     def coerce_request_info(cls, value):
-        if isinstance(value, HttpRequest):
+        if not isinstance(value, (RequestInfo, dict)):
             value = RequestInfo.from_http_request(value)
         return value
 

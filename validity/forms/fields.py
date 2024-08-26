@@ -43,7 +43,7 @@ class ModelPropertyMixin(ABC):
 
     def clean(self, value):
         val = super().clean(value)
-        return self.extract_property(val) if val else val
+        return self.extract_property(val) if val is not None else None
 
     @abstractmethod
     def extract_property(self, value): ...

@@ -1,13 +1,39 @@
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from http import HTTPStatus
+from typing import Annotated, Any
+
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from netbox.api.viewsets import NetBoxModelViewSet, NetBoxReadOnlyModelViewSet
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
 from rest_framework.views import APIView
 
-from validity import filtersets, models
+from validity import di, filtersets, models
 from validity.choices import SeverityChoices
+from validity.scripts import Launcher, RunTestsParams, ScriptParams
 from . import serializers
+
+
+class RunMixin:
+    run_serializer_class: type[Serializer]
+    params_class: type[ScriptParams]
+    launcher: Launcher
+
+    def get_params(self, serializer, request):
+        return self.params_class(**serializer.validated_data, request=request)
+
+    def get_result_data(self, job, request):
+        serializer = serializers.ScriptResultSerializer({"result": job}, context={"request": request})
+        return serializer.data
+
+    def run(self, request):
+        serializer = self.run_serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=HTTPStatus.BAD_REQUEST, data=serializer.errors)
+        job = self.launcher(self.get_params(serializer, request))
+        return Response(self.get_result_data(job, request))
 
 
 class ComplianceSelectorViewSet(NetBoxModelViewSet):
@@ -25,12 +51,24 @@ class ComplianceSelectorViewSet(NetBoxModelViewSet):
     filterset_class = filtersets.ComplianceSelectorFilterSet
 
 
-class ComplianceTestViewSet(NetBoxModelViewSet):
+@extend_schema_view(run=extend_schema(request=serializers.RunTestsSerializer))
+class ComplianceTestViewSet(RunMixin, NetBoxModelViewSet):
     queryset = models.ComplianceTest.objects.select_related("data_source", "data_file").prefetch_related(
         "selectors", "tags"
     )
     serializer_class = serializers.ComplianceTestSerializer
     filterset_class = filtersets.ComplianceTestFilterSet
+    run_serializer_class = serializers.RunTestsSerializer
+    params_class = RunTestsParams
+
+    @di.inject
+    def __init__(self, launcher: Annotated[Launcher, "runtests_launcher"], **kwargs: Any) -> None:
+        self.launcher = launcher
+        super().__init__(**kwargs)
+
+    @action(detail=False, methods=["post"], url_path="run")
+    def run(self, request):
+        return super().run(request)
 
 
 class ComplianceTestResultViewSet(NetBoxReadOnlyModelViewSet):

@@ -1,4 +1,6 @@
 from core.api.nested_serializers import NestedDataFileSerializer, NestedDataSourceSerializer
+from core.api.serializers import JobSerializer
+from core.models import DataSource
 from dcim.api.nested_serializers import (
     NestedDeviceSerializer,
     NestedDeviceTypeSerializer,
@@ -21,7 +23,14 @@ from utilities.datetime import local_now
 
 from validity import config, models
 from validity.choices import ExplanationVerbosityChoices
-from .helpers import EncryptedDictField, FieldsMixin, ListQPMixin, SubformValidationMixin, nested_factory
+from .helpers import (
+    EncryptedDictField,
+    FieldsMixin,
+    ListQPMixin,
+    PrimaryKeyField,
+    SubformValidationMixin,
+    nested_factory,
+)
 
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
@@ -377,32 +386,26 @@ class SerializedStateSerializer(ListQPMixin, serializers.Serializer):
 
 class RunTestsSerializer(serializers.Serializer):
     sync_datasources = serializers.BooleanField(required=False)
-    selectors = SerializedPKRelatedField(
-        serializer=NestedComplianceSelectorSerializer,
+    selectors = PrimaryKeyField(
         many=True,
         required=False,
         queryset=models.ComplianceSelector.objects.all(),
     )
-    devices = SerializedPKRelatedField(
-        serializer=NestedDeviceSerializer, many=True, required=False, queryset=Device.objects.all()
-    )
-    test_tags = SerializedPKRelatedField(
-        serializer=NestedTagSerializer, many=True, required=False, queryset=Tag.objects.all()
-    )
+    devices = PrimaryKeyField(many=True, required=False, queryset=Device.objects.all())
+    test_tags = PrimaryKeyField(many=True, required=False, queryset=Tag.objects.all())
     explanation_verbosity = serializers.ChoiceField(
         choices=ExplanationVerbosityChoices.choices, required=False, default=ExplanationVerbosityChoices.maximum
     )
-    override_datasource = NestedDataSourceSerializer(required=False)
+    override_datasource = PrimaryKeyField(required=False, queryset=DataSource.objects.all())
     workers_num = serializers.IntegerField(min_value=1, default=1)
     schedule_at = serializers.DateTimeField(required=False, allow_null=True)
-    interval = serializers.IntegerField(required=False, allow_null=True)
+    schedule_interval = serializers.IntegerField(required=False, allow_null=True)
 
     def validate_schedule_at(self, value):
         if value and value < local_now():
             raise serializers.ValidationError(_("Scheduled time must be in the future."))
         return value
 
-    def validate(self, attrs):
-        if not attrs.get("schedule_at") and attrs.get("interval"):
-            attrs["schedule_at"] = local_now()
-        return super().validate(attrs)
+
+class ScriptResultSerializer(serializers.Serializer):
+    result = JobSerializer(read_only=True)
