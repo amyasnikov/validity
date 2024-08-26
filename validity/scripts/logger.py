@@ -24,7 +24,7 @@ class Logger:
         self.messages.append(msg)
         logger.log(LogLevelChoices.SYSTEM_LEVELS[level], message)
 
-    debug = partialmethod(_log, level=LogLevelChoices.LOG_DEBUG)
+    debug = partialmethod(_log, level="debug")
     success = partialmethod(_log, level=LogLevelChoices.LOG_SUCCESS)
     info = partialmethod(_log, level=LogLevelChoices.LOG_INFO)
     warning = partialmethod(_log, level=LogLevelChoices.LOG_WARNING)
