@@ -3,6 +3,7 @@ from typing import Annotated
 import django_rq
 from dimi.scopes import Singleton
 from django.conf import LazySettings, settings
+from utilities.rqworker import get_workers_for_queue
 
 from validity import di
 from validity.choices import ConnectionTypeChoices
@@ -30,6 +31,11 @@ def poller_map():
 
 
 from validity.scripts import ApplyWorker, CombineWorker, Launcher, SplitWorker, Task  # noqa
+
+
+@di.dependency
+def runtests_worker_count(vsettings: Annotated[ValiditySettings, validity_settings]) -> int:
+    return get_workers_for_queue(vsettings.runtests_queue)
 
 
 @di.dependency(scope=Singleton)

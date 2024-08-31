@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
 from netbox.views.generic import ObjectView
 from netbox.views.generic.mixins import TableMixin
-from utilities.rqworker import get_workers_for_queue
 
 from validity import di
 from validity.forms import RunTestsForm
@@ -24,19 +23,26 @@ class RunScriptView(FormView):
     template_name = "validity/scripts/run.html"
     redirect_viewname = "plugins:validity:script_result"
     params_class: type[ScriptParams]
+    empty_form_values = ("", None)
+
+    # these params must be injected into __init__
     launcher: Launcher
+    worker_count: int
 
     def get_params(self, form: Form):
-        return self.params_class(request=self.request, **form.cleaned_data)
+        form_data = {field: value for field, value in form.cleaned_data.items() if value not in self.empty_form_values}
+        return self.params_class(request=self.request, **form_data)
 
     def get_success_url(self, job_id: int) -> str:
         return reverse(self.redirect_viewname, kwargs={"pk": job_id})
 
     def form_valid(self, form: Form) -> HttpResponse:
-        if not get_workers_for_queue(queue_name := self.launcher.rq_queue.name):
+        if self.worker_count == 0:
             messages.error(
                 self.request,
-                _('Unable to run script: no running RQ worker found for the queue "{}"').format(queue_name),
+                _('Unable to run script: no running RQ worker found for the queue "{}"').format(
+                    self.launcher.rq_queue.name
+                ),
             )
             return self.render_to_response(self.get_context_data())
         job = self.launcher(self.get_params(form))
@@ -48,9 +54,15 @@ class RunTestsView(RunScriptView):
     form_class = RunTestsForm
 
     @di.inject
-    def __init__(self, launcher: Annotated[Launcher, "runtests_launcher"], **kwargs: Any) -> None:
+    def __init__(
+        self,
+        launcher: Annotated[Launcher, "runtests_launcher"],
+        worker_count: Annotated[int, "runtests_worker_count"],
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         self.launcher = launcher
+        self.worker_count = worker_count
 
 
 class ScriptResultView(TableMixin, ObjectView):

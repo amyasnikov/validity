@@ -3,14 +3,13 @@ import operator
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from functools import reduce
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, Literal
 from uuid import UUID
 
 from core.models import Job
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
 from django.utils import timezone
-from extras.choices import LogLevelChoices
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass as py_dataclass
 from rq import Callback
@@ -20,7 +19,7 @@ from validity.models import ComplianceSelector
 
 @dataclass(slots=True, frozen=True)
 class Message:
-    status: LogLevelChoices
+    status: Literal["debug", "info", "failure", "warning", "success", "default"]
     message: str
     time: datetime.datetime = field(default_factory=timezone.now)
     script_id: str | None = None
@@ -131,7 +130,7 @@ class RunTestsParams(ScriptParams):
         selectors = self.selector_qs
         if not selectors.exists():
             return Q(pk__in=[])
-        filtr = reduce(operator.or_, (selector.filter for selector in selectors))
+        filtr = reduce(operator.or_, (selector.filter for selector in selectors.prefetch_filters()))
         if self.devices:
             filtr &= Q(pk__in=self.devices)
         return filtr

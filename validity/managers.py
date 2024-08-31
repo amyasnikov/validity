@@ -12,6 +12,7 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     FloatField,
+    ManyToManyField,
     Prefetch,
     Q,
     Value,
@@ -274,3 +275,13 @@ class CommandQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
             instance.path = path
         super().bind_attributes(instance)
         self._aux_attributes = initial_attrs
+
+
+class ComplianceSelectorQS(RestrictedQuerySet):
+    def prefetch_filters(self):
+        filter_fields = (
+            field.name
+            for field in self.model._meta.get_fields()
+            if isinstance(field, ManyToManyField) and field.name.endswith("_filter")
+        )
+        return self.prefetch_related(*filter_fields)

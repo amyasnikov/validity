@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from unittest.mock import Mock
 
 import pytest
 from base import ApiGetTest, ApiPostGetTest
@@ -14,6 +15,7 @@ from factories import (
     ManufacturerFactory,
     PlatformFactory,
     ReportFactory,
+    RunTestsJobFactory,
     SelectorFactory,
     SerializerDBFactory,
     SiteFactory,
@@ -22,6 +24,7 @@ from factories import (
     state_item,
 )
 
+from validity import dependencies
 from validity.models import VDevice
 
 
@@ -202,3 +205,20 @@ def test_report_devices(admin_client):
     for device in results:
         assert len(device["results"]) == 1
         assert device["results_count"] == 1
+
+
+@pytest.mark.parametrize(
+    "post_body, status_code",
+    [
+        ({}, HTTPStatus.OK),
+        ({"devices": [1, 2]}, HTTPStatus.BAD_REQUEST),  # devices do not exist
+        ({"schedule_interval": 1, "sync_datasources": True, "explanation_verbosity": 2}, HTTPStatus.OK),
+    ],
+)
+def test_run_tests(admin_client, di, post_body, status_code):
+    launcher = Mock(return_value=RunTestsJobFactory())
+    with di.override({dependencies.runtests_launcher: lambda: launcher}):
+        resp = admin_client.post("/api/plugins/validity/tests/run/", post_body, content_type="application/json")
+        assert resp.status_code == status_code
+        if resp.status_code == HTTPStatus.OK:
+            launcher.assert_called_once()
