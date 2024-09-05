@@ -51,14 +51,13 @@ class TestExecutor:
         device: VDevice,
     ) -> Iterator[ComplianceTestResult]:
         for test in tests_qs:
-            explanation = []
             try:
                 device.state  # noqa: B018
                 passed, explanation = self.run_test(device, test)
             except EvalError as exc:
                 self.log.failure(f"Failed to execute test **{test}** for device **{device}**, `{exc}`")
                 passed = False
-                explanation.append((str(exc), None))
+                explanation = [(str(exc), None)]
             self.results_count += 1
             self.results_passed += int(passed)
             yield ComplianceTestResult(
@@ -85,17 +84,17 @@ class DeviceTestIterator:
     """
 
     def __init__(
-        self, selector_devices: dict[int, list[int]], test_tags: list[int], override_datasource_id: int | None
+        self, selector_devices: dict[int, list[int]], test_tags: list[int], overriding_datasource_id: int | None
     ):
         self.selector_devices = selector_devices
         self.test_tags = test_tags
-        self.override_datasource_id = override_datasource_id
+        self.overriding_datasource_id = overriding_datasource_id
         self.all_selectors = self._get_selectors().in_bulk()
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> tuple[QuerySet[VDevice], QuerySet[ComplianceTest]]:
         if not self.selector_devices:
             raise StopIteration
         selector_id, device_ids = self.selector_devices.popitem()
@@ -104,9 +103,9 @@ class DeviceTestIterator:
         return devices, selector.tests.all()
 
     @cached_property
-    def override_datasource(self) -> VDataSource | None:
-        if self.override_datasource_id:
-            return VDataSource.objects.get(pk=self.override_datasource_id)
+    def overriding_datasource(self) -> VDataSource | None:
+        if self.overriding_datasource_id:
+            return VDataSource.objects.get(pk=self.overriding_datasource_id)
 
     def _get_selectors(self):
         selectors = ComplianceSelector.objects.all()
@@ -117,8 +116,8 @@ class DeviceTestIterator:
 
     def _get_device_qs(self, selector: ComplianceSelector, device_ids: list[int]) -> QuerySet[VDevice]:
         device_qs = selector.devices.select_related().prefetch_serializer().prefetch_poller()
-        if self.override_datasource:
-            device_qs = device_qs.set_datasource(self.override_datasource)
+        if self.overriding_datasource:
+            device_qs = device_qs.set_datasource(self.overriding_datasource)
         else:
             device_qs = device_qs.prefetch_datasource()
         device_qs = device_qs.filter(pk__in=device_ids)
@@ -158,7 +157,7 @@ class ApplyWorker:
         selector_devices = self.get_selector_devices(worker_id)
         test_results = (
             executor(devices, tests)
-            for devices, tests in self.device_test_gen(selector_devices, params.test_tags, params.override_datasource)
+            for devices, tests in self.device_test_gen(selector_devices, params.test_tags, params.overriding_datasource)
         )
         return chain.from_iterable(test_results)
 

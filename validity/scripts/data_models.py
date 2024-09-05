@@ -21,7 +21,7 @@ from validity.models import ComplianceSelector
 class Message:
     status: Literal["debug", "info", "failure", "warning", "success", "default"]
     message: str
-    time: datetime.datetime = field(default_factory=timezone.now)
+    time: datetime.datetime = field(default_factory=lambda: timezone.now())
     script_id: str | None = None
 
     @property
@@ -113,7 +113,7 @@ class RunTestsParams(ScriptParams):
     devices: list[int] = field(default_factory=list)
     test_tags: list[int] = field(default_factory=list)
     explanation_verbosity: int = 2
-    override_datasource: int | None = None
+    overriding_datasource: int | None = None
 
     @property
     def selector_qs(self) -> QuerySet[ComplianceSelector]:

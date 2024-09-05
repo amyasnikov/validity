@@ -196,7 +196,7 @@ class RunTestsForm(ScriptForm):
         help_text=_("Explanation Verbosity Level"),
         required=False,
     )
-    override_datasource = DynamicModelChoicePropertyField(
+    overriding_datasource = DynamicModelChoicePropertyField(
         queryset=DataSource.objects.all(),
         required=False,
         label=_("Override DataSource"),
@@ -219,7 +219,7 @@ class RunTestsForm(ScriptForm):
             "test_tags",
             "explanation_verbosity",
             "workers_num",
-            "override_datasource",
+            "overriding_datasource",
             name=_("Main Parameters"),
         ),
         FieldSet("_schedule_at", "_interval", name=_("Postponed Execution")),

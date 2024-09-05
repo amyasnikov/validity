@@ -1,5 +1,4 @@
 import datetime
-import uuid
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -30,20 +29,16 @@ def test_resultratio_sum():
 
 class TestRunTestsParams:
     @pytest.fixture
-    def params(self):
-        return data_models.RunTestsParams(request=data_models.RequestInfo(id=uuid.uuid4(), user_id=1))
-
-    @pytest.fixture
     def selectors(self, db):
         return [SelectorFactory() for _ in range(10)]
 
-    def test_selector_qs(self, params: data_models.RunTestsParams, selectors):
-        assert list(params.selector_qs) == selectors
+    def test_selector_qs(self, runtests_params, selectors):
+        assert list(runtests_params.selector_qs) == selectors
 
-        params.selectors = [selectors[0].id, selectors[2].id]
-        assert list(params.selector_qs) == [selectors[0], selectors[2]]
+        runtests_params.selectors = [selectors[0].id, selectors[2].id]
+        assert list(runtests_params.selector_qs) == [selectors[0], selectors[2]]
 
-    def test_selector_qs_with_tags(self, params, selectors):
+    def test_selector_qs_with_tags(self, runtests_params, selectors):
         tag1 = TagFactory()
         tag2 = TagFactory()
         test1 = CompTestDBFactory()
@@ -53,19 +48,19 @@ class TestRunTestsParams:
 
         test1.selectors.set([selectors[0], selectors[1]])
         test2.selectors.set([selectors[1], selectors[2], selectors[3]])
-        params.test_tags = [test1.pk, test2.pk]
-        assert list(params.selector_qs) == selectors[:4]
+        runtests_params.test_tags = [test1.pk, test2.pk]
+        assert list(runtests_params.selector_qs) == selectors[:4]
 
-        params.selectors = [selectors[0].pk, selectors[6].pk]
+        runtests_params.selectors = [selectors[0].pk, selectors[6].pk]
 
-        assert list(params.selector_qs) == [selectors[0]]
+        assert list(runtests_params.selector_qs) == [selectors[0]]
 
     @pytest.mark.django_db
     def test_get_device_filter_empty_selectors(self, params):
         assert params.get_device_filter() == Q(pk__in=[])
 
     @pytest.mark.django_db
-    def test_get_device_filter_with_selectors(self, params, selectors):
+    def test_get_device_filter_with_selectors(self, runtests_params, selectors):
         selectors[0].name_filter = "g1-.*"
         selectors[0].save()
         selectors[1].name_filter = "g2-.*"
@@ -74,14 +69,14 @@ class TestRunTestsParams:
         DeviceFactory(name="g1-dev2")
         DeviceFactory(name="g2-dev1")
         d2 = DeviceFactory(name="some_device")
-        params.selectors = [selectors[0].pk, selectors[1].pk]
-        device_filter = params.get_device_filter()
+        runtests_params.selectors = [selectors[0].pk, selectors[1].pk]
+        device_filter = runtests_params.get_device_filter()
         assert {*Device.objects.filter(device_filter).values_list("name", flat=True)} == {
             "g1-dev1",
             "g1-dev2",
             "g2-dev1",
         }
 
-        params.devices = [d1.pk, d2.pk]
-        device_filter = params.get_device_filter()
+        runtests_params.devices = [d1.pk, d2.pk]
+        device_filter = runtests_params.get_device_filter()
         assert {*Device.objects.filter(device_filter).values_list("name", flat=True)} == {"g1-dev1"}

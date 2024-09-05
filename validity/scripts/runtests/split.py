@@ -23,9 +23,9 @@ class SplitWorker(TerminateMixin):
     datasource_queryset: QuerySet[VDataSource] = field(default_factory=VDataSource.objects.all)
     device_queryset: QuerySet[VDevice] = field(default_factory=VDevice.objects.all)
 
-    def datasources_to_sync(self, override_datasource: int | None, device_filter: Q) -> Iterable[VDataSource]:
-        if override_datasource:
-            return [self.datasource_queryset.get(pk=override_datasource)]
+    def datasources_to_sync(self, overriding_datasource: int | None, device_filter: Q) -> Iterable[VDataSource]:
+        if overriding_datasource:
+            return [self.datasource_queryset.get(pk=overriding_datasource)]
         datasource_ids = (
             self.device_queryset.filter(device_filter)
             .annotate_datasource_id()
@@ -34,8 +34,8 @@ class SplitWorker(TerminateMixin):
         )
         return self.datasource_queryset.filter(pk__in=datasource_ids)
 
-    def sync_datasources(self, override_datasource: int | None, device_filter: Q):
-        datasources = self.datasources_to_sync(override_datasource, device_filter)
+    def sync_datasources(self, overriding_datasource: int | None, device_filter: Q):
+        datasources = self.datasources_to_sync(overriding_datasource, device_filter)
         self.datasource_sync_fn(datasources, device_filter)
 
     def _work_slices(
@@ -81,7 +81,7 @@ class SplitWorker(TerminateMixin):
         if params.workers_num > 1:
             logger.info(
                 f"Distributing the work among {params.workers_num} workers. "
-                f"Each worker handlers {devices_per_worker} device(s) in average"
+                f"Each worker handles {devices_per_worker} device(s) in average"
             )
 
         slices = [*self._work_slices(params.selector_qs, params.devices, devices_per_worker)]
@@ -99,6 +99,6 @@ class SplitWorker(TerminateMixin):
             logger = self.log_factory()
             device_filter = params.get_device_filter()
             if params.sync_datasources:
-                self.sync_datasources(params.override_datasource, device_filter)
+                self.sync_datasources(params.overriding_datasource, device_filter)
             slices = self.distribute_work(params, logger, device_filter)
             return SplitResult(log=logger.messages, slices=slices)

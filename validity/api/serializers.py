@@ -396,7 +396,7 @@ class RunTestsSerializer(serializers.Serializer):
     explanation_verbosity = serializers.ChoiceField(
         choices=ExplanationVerbosityChoices.choices, required=False, default=ExplanationVerbosityChoices.maximum
     )
-    override_datasource = PrimaryKeyField(required=False, queryset=DataSource.objects.all())
+    overriding_datasource = PrimaryKeyField(required=False, queryset=DataSource.objects.all())
     workers_num = serializers.IntegerField(min_value=1, default=1)
     schedule_at = serializers.DateTimeField(required=False, allow_null=True)
     schedule_interval = serializers.IntegerField(required=False, allow_null=True)
