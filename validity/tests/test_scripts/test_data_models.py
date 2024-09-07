@@ -38,6 +38,7 @@ class TestRunTestsParams:
         runtests_params.selectors = [selectors[0].id, selectors[2].id]
         assert list(runtests_params.selector_qs) == [selectors[0], selectors[2]]
 
+    @pytest.mark.django_db(transaction=True, reset_sequences=True)
     def test_selector_qs_with_tags(self, runtests_params, selectors):
         tag1 = TagFactory()
         tag2 = TagFactory()
@@ -56,8 +57,8 @@ class TestRunTestsParams:
         assert list(runtests_params.selector_qs) == [selectors[0]]
 
     @pytest.mark.django_db
-    def test_get_device_filter_empty_selectors(self, params):
-        assert params.get_device_filter() == Q(pk__in=[])
+    def test_get_device_filter_empty_selectors(self, runtests_params):
+        assert runtests_params.get_device_filter() == Q(pk__in=[])
 
     @pytest.mark.django_db
     def test_get_device_filter_with_selectors(self, runtests_params, selectors):

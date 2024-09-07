@@ -27,6 +27,10 @@ def test_logger(error_with_traceback):
         {"status": "failure", "message": "failure-msg"},
         {
             "status": "failure",
-            "message": "Unhandled error occured: `<class 'ValueError'>: error`\n```\n  File \"/plugin/validity/validity/tests/test_scripts/test_logger.py\", line 9, in error_with_traceback\n    raise ValueError('error')\n\n```",
+            "message": (
+                "Unhandled error occured: `<class 'ValueError'>: error`\n```\n  "
+                'File "/plugin/validity/validity/tests/test_scripts/test_logger.py", '
+                """line 10, in error_with_traceback\n    raise ValueError("error")\n\n```"""
+            ),
         },
     ]

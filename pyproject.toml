@@ -60,6 +60,7 @@ branch = true
 omit = [
         "validity/tests/*",
         "validity/migrations/*",
+        "validity/dependencies.py",
 ]
 source = ["validity"]
 

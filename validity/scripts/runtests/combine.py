@@ -17,6 +17,7 @@ from validity import di
 from validity.models import ComplianceReport
 from validity.netbox_changes import enqueue_object, events_queue
 from ..data_models import FullRunTestsParams, Message, TestResultRatio
+from ..exceptions import AbortScript
 from ..launch import Launcher
 from ..logger import Logger
 from ..parent_jobs import JobExtractor
@@ -24,7 +25,9 @@ from .base import TerminateMixin
 
 
 def enqueue(report, request, action):
-    return enqueue_object(events_queue.get(), report, request.get_user(), request.id, action)
+    queue = events_queue.get()
+    enqueue_object(queue, report, request.get_user(), request.id, action)
+    events_queue.set(queue)
 
 
 @di.dependency(scope=Singleton)
@@ -50,6 +53,11 @@ class CombineWorker(TerminateMixin):
         grandparent_logs = job_extractor.parent.parent.job.result.log
         return [*grandparent_logs, *parent_logs, *logger.messages]
 
+    def compose_logs(self, logger, job_extractor, report_id):
+        report_url = reverse("plugins:validity:compliancereport", kwargs={"pk": report_id})
+        logger.success(f"Job succeeded. See [Compliance Report]({report_url}) for detailed statistics")
+        return self.collect_logs(logger, job_extractor)
+
     def terminate_succeeded_job(self, job: Job, test_stats: TestResultRatio, logs: list[Message]):
         job.data = {"log": [log.serialized for log in logs], "output": {"statistics": test_stats.serialized}}
         job.terminate()
@@ -62,26 +70,24 @@ class CombineWorker(TerminateMixin):
             params.schedule_at = job.started + datetime.timedelta(minutes=params.schedule_interval)
             launcher(params)
 
-    def get_previous_errors(self, job_extractor: JobExtractor) -> list[Message]:
-        error_logs = chain.from_iterable(
-            extractor.job.result.log for extractor in job_extractor.parents if extractor.job.result.errored
+    def abort_if_apply_errors(self, job_extractor: JobExtractor) -> None:
+        error_logs = list(
+            chain.from_iterable(
+                extractor.job.result.log for extractor in job_extractor.parents if extractor.job.result.errored
+            )
         )
-        return list(error_logs)
+        if error_logs:
+            raise AbortScript("ApplyWorkerError", status=JobStatusChoices.STATUS_ERRORED, logs=error_logs)
 
     def __call__(self, params: FullRunTestsParams) -> Any:
         netbox_job = params.get_job()
         with self.terminate_job_on_error(netbox_job):
             job_extractor = self.job_extractor_factory()
-            if err_logs := self.get_previous_errors(job_extractor):
-                self.terminate_job(netbox_job, JobStatusChoices.STATUS_ERRORED, error="ApplyWorkerError", logs=err_logs)
-                return
-            logger = self.log_factory()
+            self.abort_if_apply_errors(job_extractor)
             self.fire_report_webhook(params.report_id, params.request)
-            test_stats = self.count_test_stats(job_extractor)
-            report_url = reverse("plugins:validity:compliancereport", kwargs={"pk": params.report_id})
-            logger.success(f"Job succeeded. See [Compliance Report]({report_url}) for detailed statistics")
-            logs = self.collect_logs(logger, job_extractor)
             self.schedule_next_job(params, netbox_job)
+            logs = self.compose_logs(self.log_factory(), job_extractor, params.report_id)
+            test_stats = self.count_test_stats(job_extractor)
             self.terminate_job(
                 netbox_job, JobStatusChoices.STATUS_COMPLETED, logs=logs, output={"statistics": test_stats.serialized}
             )

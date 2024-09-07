@@ -4,12 +4,12 @@ from typing import Callable, Iterable
 
 from dimi import Singleton
 from django.db.models import Q, QuerySet
-from extras.scripts import AbortScript
 
 from validity import di
 from validity.models import ComplianceSelector, VDataSource, VDevice
 from validity.utils.misc import batched, datasource_sync
 from ..data_models import FullRunTestsParams, SplitResult
+from ..exceptions import AbortScript
 from ..logger import Logger
 from .base import TerminateMixin
 

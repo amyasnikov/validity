@@ -9,6 +9,7 @@ from validity import di
 from validity.choices import ConnectionTypeChoices
 from validity.pollers import NetmikoPoller, RequestsPoller, ScrapliNetconfPoller
 from validity.settings import ValiditySettings
+from validity.utils.misc import null_request
 
 
 @di.dependency
@@ -49,7 +50,7 @@ def runtests_launcher(
 
     return Launcher(
         job_name="RunTests",
-        job_object_factory=ComplianceReport.objects.create,
+        job_object_factory=null_request()(ComplianceReport.objects.create),
         rq_queue=django_rq.get_queue(vsettings.runtests_queue),
         tasks=[
             Task(split_worker, job_timeout=vsettings.script_timeouts.runtests_split),

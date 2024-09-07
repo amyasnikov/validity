@@ -6,8 +6,10 @@ from factories import CompTestDBFactory, CompTestResultFactory, DeviceFactory, N
 
 from validity.compliance.exceptions import EvalError
 from validity.models import ComplianceTest
-from validity.scripts.data_models import ExecutionResult, TestResultRatio
-from validity.scripts.runtests.apply import ApplyWorker, DeviceTestIterator, TestExecutor
+from validity.scripts.data_models import ExecutionResult
+from validity.scripts.data_models import TestResultRatio as ResultRatio
+from validity.scripts.runtests.apply import ApplyWorker, DeviceTestIterator
+from validity.scripts.runtests.apply import TestExecutor as TExecutor
 
 
 NS_1 = """
@@ -45,7 +47,7 @@ NS_3 = "some wrong syntax"
 )
 @pytest.mark.django_db
 def test_nameset_functions(nameset_texts, extracted_fn_names, warning_calls):
-    script = TestExecutor(1, 2, 10)
+    script = TExecutor(1, 2, 10)
     namesets = [NameSetDBFactory(definitions=d) for d in nameset_texts]
     functions = script.nameset_functions(namesets)
     assert extracted_fn_names == functions.keys()
@@ -70,7 +72,7 @@ __all__ = ['func']
 )
 @pytest.mark.django_db
 def test_builtins_are_available_in_nameset(definitions):
-    script = TestExecutor(10, 20, 30)
+    script = TExecutor(10, 20, 30)
     namesets = [NameSetDBFactory(definitions=definitions)]
     functions = script.nameset_functions(namesets)
     functions["func"]()
@@ -86,7 +88,7 @@ def test_run_tests_for_device():
     tests[0].run.return_value = True, []
     tests[1].run.return_value = False, [("some", "explanation")]
     tests[2].run.side_effect = EvalError("some test error")
-    executor = TestExecutor(10, explanation_verbosity=2, report_id=30)
+    executor = TExecutor(10, explanation_verbosity=2, report_id=30)
     results = [
         {
             "passed": r.passed,
@@ -145,7 +147,7 @@ def test_applyworker_success(full_runtests_params, apply_worker):
     executor = apply_worker.test_executor_cls.return_value
     test_results = executor.return_value
     result = apply_worker(params=full_runtests_params, worker_id=1)
-    assert result == ExecutionResult(test_stat=TestResultRatio(passed=5, total=10), log=["log1", "log2"])
+    assert result == ExecutionResult(test_stat=ResultRatio(passed=5, total=10), log=["log1", "log2"])
     device_test_gen.assert_called_once_with(
         {1: [1, 2, 3]}, full_runtests_params.test_tags, full_runtests_params.overriding_datasource
     )
@@ -170,4 +172,4 @@ def test_applyworker_exception(full_runtests_params, apply_worker):
     apply_worker.test_executor_cls = Mock(side_effect=ValueError("some error"))
     apply_worker.logger_factory = MockLogger
     result = apply_worker(params=full_runtests_params, worker_id=1)
-    assert result == ExecutionResult(test_stat=TestResultRatio(passed=0, total=0), log=["some error"], errored=True)
+    assert result == ExecutionResult(test_stat=ResultRatio(passed=0, total=0), log=["some error"], errored=True)

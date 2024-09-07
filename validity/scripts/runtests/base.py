@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 from core.choices import JobStatusChoices
 from core.models import Job
 from django.db.models import QuerySet
-from extras.scripts import AbortScript
 
 from validity.models import ComplianceTestResult
+from ..exceptions import AbortScript
 
 
 @dataclass(repr=False, kw_only=True)
@@ -21,8 +21,9 @@ class TerminateMixin:
     def terminate_errored_job(self, job: Job, error: Exception):
         logger = self.log_factory()
         if isinstance(error, AbortScript):
+            logger.messages.extend(error.logs)
             logger.failure(str(error))
-            status = JobStatusChoices.STATUS_FAILED
+            status = error.status
         else:
             logger.log_exception(error)
             status = JobStatusChoices.STATUS_ERRORED
