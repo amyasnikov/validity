@@ -17,12 +17,12 @@ class Logger:
     """
 
     SYSTEM_LEVELS = {
-        LogLevelChoices.LOG_DEBUG: logging.DEBUG,
-        LogLevelChoices.LOG_DEFAULT: logging.INFO,
-        LogLevelChoices.LOG_SUCCESS: logging.INFO,
-        LogLevelChoices.LOG_INFO: logging.INFO,
-        LogLevelChoices.LOG_WARNING: logging.WARNING,
-        LogLevelChoices.LOG_FAILURE: logging.ERROR,
+        "debug": logging.DEBUG,
+        "default": logging.INFO,
+        "success": logging.INFO,
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "failure": logging.ERROR,
     }
 
     def __init__(self, script_id: str | None = None) -> None:
