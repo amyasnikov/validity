@@ -98,7 +98,7 @@ def nb_version():
 @register.inclusion_tag("validity/inc/fieldset.html")
 def render_fieldset(form, fieldset):
     # backport of the native render_fieldset appeared in 4.0
-    name, items = fieldset if config.netbox_version < "4.0.0" else fieldset.name, fieldset.items
+    name, items = fieldset if config.netbox_version < "4.0.0" else (fieldset.name, fieldset.items)
     return {"group": name, "fields": items, "form": form}
 
 
