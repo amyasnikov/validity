@@ -10,42 +10,7 @@ import validity.models.test_result
 from django.db import migrations, models
 from django.utils.translation import gettext_lazy as __
 from validity.utils.orm import CustomFieldBuilder
-from pathlib import Path
-from validity import scripts
 
-
-SCRIPTS_INSTALL_FOLDER = Path(scripts.__file__).parent.resolve() / "install"
-DATASOURCE_NAME = "validity_scripts"
-SCRIPT_NAME = "validity_scripts.py"
-
-
-def setup_scripts(apps, schema_editor):
-    from validity.models import VDataSource
-    from extras.models import ScriptModule
-
-    DataFile = apps.get_model("core", "DataFile")
-    datasource = VDataSource.objects.create(
-        name=DATASOURCE_NAME,
-        type="local",
-        source_url=f"file://{SCRIPTS_INSTALL_FOLDER}",
-    )
-    datasource.sync_in_migration(DataFile)
-    module = ScriptModule(
-        data_source=datasource,
-        data_file=datasource.datafiles.get(path=SCRIPT_NAME),
-        file_root="scripts",
-        auto_sync_enabled=True,
-    )
-    module.clean()
-    module.save()
-
-
-def delete_scripts(apps, schema_editor):
-    DataSource = apps.get_model("core", "DataSource")
-    ScriptModule = apps.get_model("extras", "ScriptModule")
-    db_alias = schema_editor.connection.alias
-    ScriptModule.objects.using(db_alias).filter(data_source__name=DATASOURCE_NAME).delete()
-    DataSource.objects.using(db_alias).filter(name=DATASOURCE_NAME).delete()
 
 
 def create_cf(apps, schema_editor):
@@ -161,18 +126,6 @@ def delete_polling_datasource(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    replaces = [
-        ("validity", "0001_initial"),
-        ("validity", "0002_custom_fields"),
-        ("validity", "0003_complianceselector_dp_tag_prefix"),
-        ("validity", "0004_netbox35_scripts"),
-        ("validity", "0005_rename_serializer"),
-        ("validity", "0006_datasources"),
-        ("validity", "0007_polling"),
-        ("validity", "0008_script_change"),
-        ("validity", "0009_serializer_parameters"),
-    ]
-
     initial = True
 
     dependencies = [
