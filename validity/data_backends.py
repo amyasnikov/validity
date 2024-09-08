@@ -9,17 +9,10 @@ from django import forms
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from netbox.config import ConfigItem
-from netbox.registry import registry
+from netbox.data_backends import DataBackend
 
-from validity import config
 from validity.models import VDevice
 from .pollers.result import DescriptiveError, PollingInfo
-
-
-if config.netbox_version >= 3.7:
-    from netbox.data_backends import DataBackend
-else:
-    from core.data_backends import DataBackend
 
 
 class PollingBackend(DataBackend):
@@ -88,13 +81,3 @@ class PollingBackend(DataBackend):
 
 
 backends = [PollingBackend]
-
-if config.netbox_version < 3.7:
-    # "register" DS backend manually via monkeypatch
-    from core.choices import DataSourceTypeChoices
-    from core.forms import DataSourceForm
-    from core.models import DataSource
-
-    registry["data_backends"][PollingBackend.name] = PollingBackend
-    DataSourceTypeChoices._choices += [(PollingBackend.name, PollingBackend.label)]
-    DataSourceForm.base_fields["type"] = DataSource._meta.get_field("type").formfield()

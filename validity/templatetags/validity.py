@@ -90,11 +90,6 @@ def bg():
     return "bg" if config.netbox_version < "4.0.0" else "text-bg"
 
 
-@register.filter
-def nb_version():
-    return config.netbox_version
-
-
 @register.inclusion_tag("validity/inc/fieldset.html")
 def render_fieldset(form, fieldset):
     # backport of the native render_fieldset appeared in 4.0
