@@ -37,6 +37,7 @@ content-type = "text/markdown"
 
 
 [tool.setuptools.packages.find]
+exclude = ["validity.tests*"]
 include = ["validity*"]
 
 [tool.setuptools.package-data]
