@@ -1,0 +1,43 @@
+{% extends 'extras/script_result.html' %}
+{% load validity %}
+{% block title %}Script Execution Result{% endblock title %}
+
+{% block header %}
+<div class="page-header m-0">
+  <div class="container-fluid mt-2">
+    <nav class="breadcrumb-container" aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url job.object.run_view %}">Run</a></li>
+        <li class="breadcrumb-item">{{ job.created|isodatetime }}</li>
+      </ol>
+    </nav>
+    <div>
+      <h2 class="page-title my-1 mt-3">Script Execution Result</h2>
+    </div>
+  </div>
+  <div class="page-tabs mt-3">
+    <div class="container-fluid">
+      <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <a href="#results" role="tab" data-bs-toggle="tab" class="nav-link active">Results</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock header %}
+
+{% block content-wrapper %}
+{% block content %}
+<div class="tab-content">
+  <div class="row">
+    <div class="col col-md-12"{% if not job.completed %} hx-get="." hx-trigger="load delay:0.5s, every 5s"{% endif %}>
+      {% block htmx-template %}
+      {% include 'validity/scripts/result_htmx.html' %}
+      {% endblock htmx-template %}
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+{% endblock content-wrapper %}

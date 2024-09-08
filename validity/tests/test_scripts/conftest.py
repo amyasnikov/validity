@@ -1,10 +1,17 @@
-from unittest.mock import Mock
+import uuid
 
 import pytest
-from extras.scripts import Script
+from factories import RunTestsJobFactory
+
+from validity.scripts.data_models import RequestInfo, RunTestsParams
 
 
 @pytest.fixture
-def mock_script_logging(monkeypatch):
-    for log_func in ["log_debug", "log_info", "log_failure", "log_success", "log_warning"]:
-        monkeypatch.setattr(Script, log_func, Mock())
+def runtests_params():
+    return RunTestsParams(request=RequestInfo(id=uuid.uuid4(), user_id=1))
+
+
+@pytest.fixture
+def full_runtests_params(runtests_params):
+    job = RunTestsJobFactory()
+    return runtests_params.with_job_info(job)

@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Dict, Iterable, Iterator
+from typing import Any, Iterable, Iterator
 
 from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404
@@ -14,8 +14,15 @@ from .base import FilterViewWithForm, TestResultBaseView
 
 
 class ComplianceReportListView(generic.ObjectListView):
-    queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests().order_by("-created")
+    queryset = (
+        models.ComplianceReport.objects.prefetch_related("jobs")
+        .annotate_result_stats()
+        .count_devices_and_tests()
+        .order_by("-created")
+    )
     table = tables.ComplianceReportTable
+    filterset = filtersets.ComplianceReportFilterSet
+    filterset_form = forms.ComplianceReportFilerForm
 
     def get_table(self, data, request, bulk_actions=True):
         table = super().get_table(data, request, bulk_actions)
@@ -30,7 +37,7 @@ class ComplianceReportView(generic.ObjectView):
 
     def get_table(self, groupby_qs):
         table = tables.ComplianceReportTable(data=groupby_qs)
-        table.exclude += ("id", "created", "test_count")
+        table.exclude += ("id", "created", "test_count", "job_status")
         return table
 
     def transform_groupby_qs(self, groupby_qs: Iterable[dict], groupby_field: DeviceGroupByChoices) -> Iterator[dict]:
@@ -94,7 +101,7 @@ class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
         table.configure(self.request)
         return table
 
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(**kwargs) | {
             "object": self.object,
             "tab": self.tab,

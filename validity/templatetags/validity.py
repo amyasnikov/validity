@@ -1,10 +1,12 @@
 from typing import Any
 
 from django import template
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Model
 from django.http.request import HttpRequest
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from utilities.templatetags.builtins.filters import linkify, placeholder
 
@@ -91,3 +93,18 @@ def bg():
 @register.filter
 def nb_version():
     return config.netbox_version
+
+
+@register.inclusion_tag("validity/inc/fieldset.html")
+def render_fieldset(form, fieldset):
+    # backport of the native render_fieldset appeared in 4.0
+    name, items = fieldset if config.netbox_version < "4.0.0" else (fieldset.name, fieldset.items)
+    return {"group": name, "fields": items, "form": form}
+
+
+@register.filter()
+def isodatetime(value, spec="seconds"):
+    # backport of the native isodatetime in 4.0
+    value = localtime(value) if value.tzinfo else value
+    text = f"{value.date().isoformat()} {value.time().isoformat(spec)}"
+    return mark_safe(f'<span title="{naturaltime(value)}">{text}</span>')

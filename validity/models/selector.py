@@ -13,6 +13,7 @@ from tenancy.models import Tenant
 
 from validity.choices import BoolOperationChoices, DynamicPairsChoices
 from validity.compliance.dynamic_pairs import DynamicPairNameFilter, dpf_factory
+from validity.managers import ComplianceSelectorQS
 from validity.utils.misc import reraise
 from .base import BaseModel
 from .device import VDevice
@@ -41,6 +42,8 @@ class ComplianceSelector(BaseModel):
         _("Dynamic Pairs"), max_length=20, choices=DynamicPairsChoices.choices, default="NO"
     )
     dp_tag_prefix = models.CharField(_("Dynamic Pair Tag Prefix"), max_length=255, blank=True)
+
+    objects = ComplianceSelectorQS.as_manager()
 
     clone_fields = (
         "filter_operation",

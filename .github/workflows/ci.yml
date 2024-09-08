@@ -21,8 +21,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        netbox_version: [v3.6.9, v3.7.8, v4.0.7]
+        netbox_version: [v3.7.8, v4.0.11]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -58,8 +59,9 @@ jobs:
   test_migrations:
       runs-on: ubuntu-latest
       strategy:
+        fail-fast: false
         matrix:
-          netbox_version: [v3.6.9, v3.7.8, v4.0.2]
+          netbox_version: [v3.7.8, v4.0.11]
       steps:
         - name: Checkout
           uses: actions/checkout@v3

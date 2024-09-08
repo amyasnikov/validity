@@ -1,5 +1,6 @@
 from .filterset import (
     CommandFilterForm,
+    ComplianceReportFilerForm,
     ComplianceSelectorFilterForm,
     ComplianceTestFilterForm,
     ComplianceTestResultFilterForm,
@@ -18,5 +19,6 @@ from .general import (
     ComplianceTestForm,
     NameSetForm,
     PollerForm,
+    RunTestsForm,
     SerializerForm,
 )

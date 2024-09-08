@@ -1,12 +1,14 @@
-from core.models import DataSource
+from core.choices import JobStatusChoices
+from core.models import DataSource, Job
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import CharField, Form, NullBooleanField, Select
+from django.forms import CharField, DateTimeField, Form, NullBooleanField, Select
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
 from netbox.forms import NetBoxModelFilterSetForm
 from tenancy.models import Tenant
-from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES
+from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES, FilterForm
 from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.widgets import DateTimePicker
 
 from validity import models
 from validity.choices import (
@@ -18,7 +20,7 @@ from validity.choices import (
     ExtractionMethodChoices,
     SeverityChoices,
 )
-from validity.netbox_changes import FieldSet
+from validity.netbox_changes import FieldSet, SavedFiltersMixin
 from .fields import PlaceholderChoiceField
 from .mixins import AddM2MPlaceholderFormMixin, ExcludeMixin
 
@@ -158,6 +160,14 @@ class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
     datasource_id = DynamicModelMultipleChoiceField(
         label=_("Data Source"), queryset=DataSource.objects.all(), required=False
     )
+
+
+class ComplianceReportFilerForm(SavedFiltersMixin, FilterForm):
+    model = models.ComplianceReport
+    job_id = DynamicModelMultipleChoiceField(required=False, label=_("Job ID"), queryset=Job.objects.all())
+    job_status = PlaceholderChoiceField(required=False, label=_("Job Status"), choices=JobStatusChoices)
+    created__lte = DateTimeField(required=False, widget=DateTimePicker(), label=_("Created Before"))
+    created__gte = DateTimeField(required=False, widget=DateTimePicker(), label=_("Created After"))
 
 
 class PollerFilterForm(NetBoxModelFilterSetForm):

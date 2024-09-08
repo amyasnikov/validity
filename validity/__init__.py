@@ -1,8 +1,7 @@
 import logging
 
-from django.conf import settings as django_settings
+from dimi import Container
 from netbox.settings import VERSION
-from pydantic import BaseModel, Field
 
 from validity.utils.version import NetboxVersion
 
@@ -31,7 +30,7 @@ class NetBoxValidityConfig(PluginConfig):
     netbox_version = NetboxVersion(VERSION)
 
     def ready(self):
-        import validity.data_backends
+        from validity import data_backends, dependencies, signals
 
         return super().ready()
 
@@ -39,12 +38,4 @@ class NetBoxValidityConfig(PluginConfig):
 config = NetBoxValidityConfig
 
 
-class ValiditySettings(BaseModel):
-    store_last_results: int = Field(default=5, gt=0, lt=1001)
-    store_reports: int = Field(default=5, gt=0, lt=1001)
-    sleep_between_tests: float = 0
-    result_batch_size: int = Field(default=500, ge=1)
-    polling_threads: int = Field(default=500, ge=1)
-
-
-settings = ValiditySettings.model_validate(django_settings.PLUGINS_CONFIG.get("validity", {}))
+di = Container()

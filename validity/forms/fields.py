@@ -1,6 +1,9 @@
+import operator
+from abc import ABC, abstractmethod
 from typing import Any
 
 from django.forms import ChoiceField, JSONField
+from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 
 from validity.fields import EncryptedDict
 from .widgets import SelectWithPlaceholder
@@ -27,3 +30,30 @@ class PlaceholderChoiceField(ChoiceField):
         kwargs["choices"] = (("", placeholder),) + tuple(kwargs["choices"])
         kwargs["widget"] = SelectWithPlaceholder()
         super().__init__(**kwargs)
+
+
+class ModelPropertyMixin(ABC):
+    """
+    Supplies model's field (property) instead of model itself
+    """
+
+    def __init__(self, *args, property_name: str = "pk", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.property_name = property_name
+
+    def clean(self, value):
+        val = super().clean(value)
+        return self.extract_property(val) if val is not None else None
+
+    @abstractmethod
+    def extract_property(self, value): ...
+
+
+class DynamicModelChoicePropertyField(ModelPropertyMixin, DynamicModelChoiceField):
+    def extract_property(self, value):
+        return operator.attrgetter(self.property_name)(value)
+
+
+class DynamicModelMultipleChoicePropertyField(ModelPropertyMixin, DynamicModelMultipleChoiceField):
+    def extract_property(self, value):
+        return [operator.attrgetter(self.property_name)(item) for item in value]

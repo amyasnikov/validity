@@ -200,6 +200,10 @@ def model_to_proxy(model: Model, proxy_type: type[M]) -> M:
 
 @dataclass
 class CustomFieldBuilder:
+    """
+    Facilitates CustomField creation procedure
+    """
+
     cf_model: type
     content_type_model: type
     db_alias: str = ""

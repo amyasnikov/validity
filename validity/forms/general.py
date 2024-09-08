@@ -1,7 +1,9 @@
 from core.forms.mixins import SyncedDataMixin
-from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
-from django.forms import CharField, ChoiceField, Select, Textarea, ValidationError
+from core.models import DataSource
+from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Site
+from django.forms import BooleanField, CharField, ChoiceField, IntegerField, Select, Textarea, ValidationError
 from django.utils.translation import gettext_lazy as _
+from extras.forms import ScriptForm
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
@@ -10,8 +12,9 @@ from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultiple
 from utilities.forms.widgets import HTMXSelect
 
 from validity import models
-from validity.choices import ConnectionTypeChoices
+from validity.choices import ConnectionTypeChoices, ExplanationVerbosityChoices
 from validity.netbox_changes import FieldSet
+from .fields import DynamicModelChoicePropertyField, DynamicModelMultipleChoicePropertyField
 from .mixins import SubformMixin
 from .widgets import PrettyJSONWidget
 
@@ -161,3 +164,67 @@ class CommandForm(SubformMixin, NetBoxModelForm):
         model = models.Command
         fields = ("name", "label", "type", "retrieves_config", "serializer", "tags")
         widgets = {"type": HTMXSelect()}
+
+
+class RunTestsForm(ScriptForm):
+    sync_datasources = BooleanField(
+        required=False,
+        label=_("Sync Data Sources"),
+        help_text=_("Sync all referenced Data Sources"),
+    )
+    selectors = DynamicModelMultipleChoicePropertyField(
+        queryset=models.ComplianceSelector.objects.all(),
+        required=False,
+        label=_("Specific Selectors"),
+        help_text=_("Run the tests only for specific selectors"),
+    )
+    devices = DynamicModelMultipleChoicePropertyField(
+        queryset=Device.objects.all(),
+        required=False,
+        label=_("Specific Devices"),
+        help_text=_("Run the tests only for specific devices"),
+    )
+    test_tags = DynamicModelMultipleChoicePropertyField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label=_("Specific Test Tags"),
+        help_text=_("Run the tests which contain specific tags only"),
+    )
+    explanation_verbosity = ChoiceField(
+        choices=ExplanationVerbosityChoices.choices,
+        initial=ExplanationVerbosityChoices.maximum,
+        help_text=_("Explanation Verbosity Level"),
+        required=False,
+    )
+    overriding_datasource = DynamicModelChoicePropertyField(
+        queryset=DataSource.objects.all(),
+        required=False,
+        label=_("Override DataSource"),
+        help_text=_("Find all devices state/config data in this Data Source instead of bound ones"),
+    )
+    workers_num = IntegerField(
+        min_value=1,
+        initial=1,
+        required=False,
+        label=_("Number of Workers"),
+        help_text=_("Speed up tests execution by splitting the work among multiple RQ workers"),
+    )
+    _commit = None  # remove this Field from ScriptForm
+
+    fieldsets = (
+        FieldSet(
+            "sync_datasources",
+            "selectors",
+            "devices",
+            "test_tags",
+            "explanation_verbosity",
+            "workers_num",
+            "overriding_datasource",
+            name=_("Main Parameters"),
+        ),
+        FieldSet("_schedule_at", "_interval", name=_("Postponed Execution")),
+    )
+
+    def clean(self):
+        schedule_at = self.cleaned_data.get("_schedule_at")
+        return super().clean() | {"_schedule_at": schedule_at}

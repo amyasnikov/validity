@@ -1,3 +1,4 @@
+import datetime
 import itertools
 from functools import partial
 
@@ -9,13 +10,12 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import Column, RequestConfig, Table, TemplateColumn
-from netbox.tables import BooleanColumn as BooleanColumn
-from netbox.tables import ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
-from netbox.tables.columns import ActionsColumn, LinkedCountColumn
+from netbox.tables import BaseTable, BooleanColumn, ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
+from netbox.tables.columns import ActionsColumn, LinkedCountColumn, MarkdownColumn
 from utilities.paginator import EnhancedPaginator
 
 from validity import models
-from validity.templatetags.validity import colorful_percentage
+from validity.templatetags.validity import colorful_percentage, isodatetime
 
 
 class SelectorTable(NetBoxTable):
@@ -173,6 +173,7 @@ class StatsColumn(Column):
 
 class ComplianceReportTable(NetBoxTable):
     id = Column(linkify=True)
+    job_status = ChoiceFieldColumn(verbose_name=_("Job Status"), accessor="jobs__first__status")
     groupby_value = Column(
         verbose_name=_("GroupBy Value"),
         linkify=lambda record: reverse(record["viewname"], kwargs={"pk": record["groupby_pk"]}),
@@ -190,6 +191,7 @@ class ComplianceReportTable(NetBoxTable):
         model = models.ComplianceReport
         fields = (
             "id",
+            "job_status",
             "groupby_value",
             "device_count",
             "test_count",
@@ -200,6 +202,11 @@ class ComplianceReportTable(NetBoxTable):
             "created",
         )
         default_columns = fields
+
+    def render_job_status(self, column, bound_column, record, value):
+        record = record.jobs.first()
+        bound_column.name = "status"
+        return column.render(record, bound_column, value)
 
 
 class DeviceReportM2MColumn(ManyToManyColumn):
@@ -279,3 +286,19 @@ class DynamicPairsTable(DeviceTable):
             paginate_by = self.get_paginate_by(request, max_paginate_by)
             paginate = {"paginator_class": paginator_class, "per_page": paginate_by}
             RequestConfig(request, paginate).configure(self)
+
+
+class ScriptResultTable(BaseTable):
+    index = Column(verbose_name=_("Line"), empty_values=())
+    time = Column(verbose_name=_("Time"))
+    status = TemplateColumn(
+        template_code="""{% load log_levels %}{% log_level record.status %}""", verbose_name=_("Level")
+    )
+    message = MarkdownColumn(verbose_name=_("Message"))
+
+    class Meta(BaseTable.Meta):
+        empty_text = _("No results found")
+        fields = ("index", "time", "status", "message")
+
+    def render_time(self, value):
+        return isodatetime(datetime.datetime.fromisoformat(value))

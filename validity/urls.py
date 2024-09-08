@@ -10,7 +10,7 @@ urlpatterns = [
     path("selectors/delete/", views.ComplianceSelectorBulkDeleteView.as_view(), name="complianceselector_bulk_delete"),
     path("selectors/<int:pk>/", include(get_model_urls("validity", "complianceselector"))),
     path("tests/", views.ComplianceTestListView.as_view(), name="compliancetest_list"),
-    path("tests/run/", views.run_tests, name="compliancetest_run"),
+    path("tests/run/", views.RunTestsView.as_view(), name="compliancetest_run"),
     path("tests/add/", views.ComplianceTestEditView.as_view(), name="compliancetest_add"),
     path("tests/delete/", views.ComplianceTestBulkDeleteView.as_view(), name="compliancetest_bulk_delete"),
     path("tests/<int:pk>/", include(get_model_urls("validity", "compliancetest"))),
@@ -26,6 +26,8 @@ urlpatterns = [
     path("namesets/<int:pk>/", include(get_model_urls("validity", "nameset"))),
     path("reports/", views.ComplianceReportListView.as_view(), name="compliancereport_list"),
     path("reports/<int:pk>/", include(get_model_urls("validity", "compliancereport"))),
+    # hack to display NetBox Job view without an error
+    path("reports/<int:pk>/", views.ComplianceReportView.as_view(), name="compliancereport_jobs"),
     path("pollers/", views.PollerListView.as_view(), name="poller_list"),
     path("pollers/add/", views.PollerEditView.as_view(), name="poller_add"),
     path("pollers/delete/", views.PollerBulkDeleteView.as_view(), name="poller_bulk_delete"),
@@ -34,4 +36,5 @@ urlpatterns = [
     path("commands/add/", views.CommandEditView.as_view(), name="command_add"),
     path("commands/delete/", views.CommandBulkDeleteView.as_view(), name="command_bulk_delete"),
     path("commands/<int:pk>/", include(get_model_urls("validity", "command"))),
+    path("scripts/results/<int:pk>/", views.ScriptResultView.as_view(), name="script_result"),
 ]

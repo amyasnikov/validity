@@ -1,0 +1,36 @@
+{% load helpers %}
+{% load log_levels %}
+{% load i18n %}
+{% load validity %}
+
+<div class="htmx-container">
+  <p>
+    {% if job.started %}
+      Started: <strong>{{ job.started|isodatetime }}</strong>
+    {% elif job.scheduled %}
+      Scheduled: <strong>{{ job.scheduled|isodatetime }}</strong>
+    {% else %}
+      Created: <strong>{{ job.created|isodatetime }}</strong>
+    {% endif %}
+    {% if job.completed %}
+      Duration: <strong>{{ job.duration }}</strong>
+    {% endif %}
+    <span id="pending-result-label">{% badge job.get_status_display job.get_status_color %}</span>
+  </p>
+  {% if job.completed %}
+    <div class="card">
+      <div class="table-responsive" id="object_list">
+        <h5 class="card-header">Log</h5>
+        {% include 'inc/table.html' %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+    <h5 class="card-header">Output</h5>
+      <pre class="card-body font-monospace">{{ job.data | get_key:"output" | yaml }}</pre>
+    </div>
+
+  {% elif job.started %}
+    {% include 'extras/inc/result_pending.html' %}
+  {% endif %}
+</div>

@@ -1,5 +1,6 @@
 import textwrap
 from http import HTTPStatus
+from unittest.mock import Mock
 
 import pytest
 from base import ViewTest
@@ -18,6 +19,7 @@ from factories import (
     PlatformFactory,
     PollerFactory,
     ReportFactory,
+    RunTestsJobFactory,
     SelectorFactory,
     SerializerDBFactory,
     SerializerDSFactory,
@@ -27,8 +29,9 @@ from factories import (
     state_item,
 )
 
-from validity import models
+from validity import dependencies, models
 from validity.compliance.state import State
+from validity.scripts.data_models import RunTestsParams
 
 
 class TestDBNameSet(ViewTest):
@@ -204,7 +207,34 @@ def test_datasource_devices(admin_client):
     assert resp.status_code == HTTPStatus.OK
 
 
-@pytest.mark.django_db
-def test_run_tests(admin_client, setup_runtests_script):
-    resp = admin_client.get("/plugins/validity/tests/run/", follow=True)
+class TestRunTests:
+    url = "/plugins/validity/tests/run/"
+
+    def test_get(self, admin_client):
+        resp = admin_client.get(self.url)
+        assert resp.status_code == HTTPStatus.OK
+
+    @pytest.mark.parametrize(
+        "form_data, status_code, worker_count",
+        [
+            ({}, HTTPStatus.FOUND, 1),
+            ({}, HTTPStatus.OK, 0),
+            ({"devices": [1, 2]}, HTTPStatus.OK, 1),  # devices do not exist
+        ],
+    )
+    def test_post(self, admin_client, di, form_data, status_code, worker_count):
+        launcher = Mock(**{"rq_queue.name": "queue_1", "return_value.pk": 1})
+        with di.override(
+            {dependencies.runtests_launcher: lambda: launcher, dependencies.runtests_worker_count: lambda: worker_count}
+        ):
+            result = admin_client.post(self.url, form_data)
+            assert result.status_code == status_code
+            if status_code == HTTPStatus.FOUND:  # if form is valid
+                launcher.assert_called_once()
+                assert isinstance(launcher.call_args.args[0], RunTestsParams)
+
+
+def test_testresult(admin_client):
+    job = RunTestsJobFactory()
+    resp = admin_client.get(f"/plugins/validity/scripts/results/{job.pk}/")
     assert resp.status_code == HTTPStatus.OK

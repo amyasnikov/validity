@@ -1,6 +1,8 @@
 from functools import partialmethod
 from itertools import chain
 
+from core.models import Job
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import (
     BigIntegerField,
@@ -10,6 +12,7 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     FloatField,
+    ManyToManyField,
     Prefetch,
     Q,
     Value,
@@ -19,8 +22,8 @@ from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
 from netbox.models import RestrictedQuerySet
 
-from validity import settings
 from validity.choices import DeviceGroupByChoices, SeverityChoices
+from validity.settings import ValiditySettingsMixin
 from validity.utils.orm import CustomPrefetchMixin, SetAttributesMixin
 
 
@@ -47,7 +50,7 @@ class ComplianceTestQS(RestrictedQuerySet):
         )
 
 
-class ComplianceTestResultQS(RestrictedQuerySet):
+class ComplianceTestResultQS(ValiditySettingsMixin, RestrictedQuerySet):
     def only_latest(self, exclude: bool = False) -> "ComplianceTestResultQS":
         qs = self.order_by("test__pk", "device__pk", "-created").distinct("test__pk", "device__pk")
         if exclude:
@@ -62,9 +65,8 @@ class ComplianceTestResultQS(RestrictedQuerySet):
     def count_devices_and_tests(self):
         return self.aggregate(device_count=Count("devices", distinct=True), test_count=Count("tests", distinct=True))
 
-    def delete_old(self, _settings=settings):
-        del_count = self.filter(report=None).last_more_than(_settings.store_last_results)._raw_delete(self.db)
-        return (del_count, {"validity.ComplianceTestResult": del_count})
+    def raw_delete(self):
+        return self._raw_delete(self.db)
 
 
 def percentage(field1: str, field2: str) -> Case:
@@ -90,7 +92,7 @@ class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
         return self.annotate_config_path().annotate_command_path()
 
 
-class ComplianceReportQS(RestrictedQuerySet):
+class ComplianceReportQS(ValiditySettingsMixin, RestrictedQuerySet):
     def annotate_result_stats(self, groupby_field: DeviceGroupByChoices | None = None):
         qs = self
         if groupby_field:
@@ -118,15 +120,21 @@ class ComplianceReportQS(RestrictedQuerySet):
             device_count=Count("results__device", distinct=True), test_count=Count("results__test", distinct=True)
         )
 
-    def delete_old(self, _settings=settings):
-        from validity.models import ComplianceTestResult
+    def delete_old(self):
+        from validity.models import ComplianceReport, ComplianceTestResult
 
-        old_reports = list(self.order_by("-created").values_list("pk", flat=True)[_settings.store_reports :])
-        deleted_results = ComplianceTestResult.objects.filter(report__pk__in=old_reports)._raw_delete(self.db)
+        old_reports = list(self.order_by("-created").values_list("pk", flat=True)[self.v_settings.store_reports :])
+        deleted_results = ComplianceTestResult.objects.filter(report__pk__in=old_reports).raw_delete()
+        report_content_type = ContentType.objects.get_for_model(ComplianceReport)
+        deleted_jobs = Job.objects.filter(object_id__in=old_reports, object_type=report_content_type).delete()
         deleted_reports, _ = self.filter(pk__in=old_reports).delete()
         return (
-            deleted_results + deleted_reports,
-            {"validity.ComplianceTestResult": deleted_results, "validity.ComplianceReport": deleted_reports},
+            deleted_results + deleted_reports + deleted_reports,
+            {
+                "validity.ComplianceTestResult": deleted_results,
+                "validity.ComplianceReport": deleted_reports,
+                "core.Job": deleted_jobs,
+            },
         )
 
 
@@ -267,3 +275,13 @@ class CommandQS(CustomPrefetchMixin, SetAttributesMixin, RestrictedQuerySet):
             instance.path = path
         super().bind_attributes(instance)
         self._aux_attributes = initial_attrs
+
+
+class ComplianceSelectorQS(RestrictedQuerySet):
+    def prefetch_filters(self):
+        filter_fields = (
+            field.name
+            for field in self.model._meta.get_fields()
+            if isinstance(field, ManyToManyField) and field.name.endswith("_filter")
+        )
+        return self.prefetch_related(*filter_fields)

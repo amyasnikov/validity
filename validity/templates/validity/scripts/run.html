@@ -1,0 +1,44 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load log_levels %}
+{% load validity %}
+
+{% block title %}Run Compliance Tests{% endblock %}
+{% block breadcrumbs %}
+  <li class="breadcrumb-item"><a href="{% url 'plugins:validity:compliancetest_list' %}">Compliance Tests</a></li>
+{% endblock breadcrumbs %}
+{% block subtitle %}
+  <div class="text-secondary fs-5">
+    Execute all or particular Compliance Tests against specified scope of Devices and generate the Report
+  </div>
+{% endblock subtitle %}
+{% block controls %}{% endblock %}
+{% block object_identifier %}{% endblock object_identifier %}
+{% block tabs %}{% endblock tabs %}
+
+
+{% block content %}
+  <div class="row">
+    <div class="col">
+      {% if not perms.extras.run_compliancetest %}
+        <div class="alert alert-warning">
+          <i class="mdi mdi-alert"></i>You do not have permission to run Compliance Tests.
+        </div>
+      {% endif %}
+      <form action="" method="post" enctype="multipart/form-data" class="form-object-edit object-edit mt-5">
+        {% csrf_token %}
+        <div class="field-group my-4">
+        {% for fieldset in form.fieldsets %}
+          {% render_fieldset form fieldset %}
+        {% endfor %}
+        </div>
+        <div class="text-end">
+          <a href="{% url 'plugins:validity:compliancetest_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" name="_run" class="btn btn-primary">
+            <i class="mdi mdi-play"></i>Run
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock content %}

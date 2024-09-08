@@ -5,7 +5,9 @@ services:
       dockerfile: ./development/Dockerfile
       args:
         NETBOX_VERSION: ${NETBOX_VERSION}
-    command: sh -c "python manage.py rqworker"
+    command: ./start.sh $DEBUGWORKER manage.py rqworker
+    ports:
+      - "5679:5678"
     depends_on:
       - postgres
       - redis
@@ -24,13 +26,7 @@ services:
 
   netbox:
     <<: *worker
-    command: >
-      bash -c "
-      if [[ $DEBUGWEB == 1 ]]; then
-      python -m debugpy --listen 0.0.0.0:5678 manage.py runserver 0.0.0.0:8000;
-      else
-      python manage.py runserver 0.0.0.0:8000;
-      fi"
+    command: ./start.sh $DEBUGWEB manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
       - "5678:5678"

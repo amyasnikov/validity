@@ -1,8 +1,12 @@
 import datetime
+import uuid
 
 import django
 import factory
+from core.models import Job
 from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from extras.models import Tag
 from factory.django import DjangoModelFactory
 from tenancy.models import Tenant
@@ -230,6 +234,31 @@ class PollerFactory(DjangoModelFactory):
 
     class Meta:
         model = models.Poller
+
+
+class UserFactory(DjangoModelFactory):
+    email = "su@admin.com"
+    username = "su"
+    password = factory.PostGenerationMethodCall("set_password", "admin")
+
+    is_superuser = True
+    is_staff = True
+    is_active = True
+
+    class Meta:
+        model = get_user_model()
+
+
+class RunTestsJobFactory(DjangoModelFactory):
+    name = "RunTests"
+    object = factory.SubFactory(ReportFactory)
+    object_id = factory.SelfAttribute("object.pk")
+    object_type = factory.LazyAttribute(lambda obj: ContentType.objects.get_for_model(type(obj.object)))
+    user = factory.SubFactory(UserFactory)
+    job_id = factory.LazyFunction(uuid.uuid4)
+
+    class Meta:
+        model = Job
 
 
 _NOT_DEFINED = object()

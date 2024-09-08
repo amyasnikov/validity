@@ -289,6 +289,7 @@ class Migration(migrations.Migration):
             options={
                 "abstract": False,
                 "ordering": ("name",),
+                "permissions": [("run", "Can run compliance test")],
             },
             bases=(validity.models.base.URLMixin, models.Model),
         ),
@@ -512,5 +513,4 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(create_cf, delete_cf),
         migrations.RunPython(create_polling_datasource, delete_polling_datasource),
-        migrations.RunPython(setup_scripts, delete_scripts),
     ]
