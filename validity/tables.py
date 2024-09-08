@@ -1,3 +1,4 @@
+import datetime
 import itertools
 from functools import partial
 
@@ -14,7 +15,7 @@ from netbox.tables.columns import ActionsColumn, LinkedCountColumn, MarkdownColu
 from utilities.paginator import EnhancedPaginator
 
 from validity import models
-from validity.templatetags.validity import colorful_percentage
+from validity.templatetags.validity import colorful_percentage, isodatetime
 
 
 class SelectorTable(NetBoxTable):
@@ -298,3 +299,6 @@ class ScriptResultTable(BaseTable):
     class Meta(BaseTable.Meta):
         empty_text = _("No results found")
         fields = ("index", "time", "status", "message")
+
+    def render_time(self, value):
+        return isodatetime(datetime.datetime.fromisoformat(value))
