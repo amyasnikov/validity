@@ -27,38 +27,17 @@
 </div>
 {% endblock header %}
 
+{% block content-wrapper %}
 {% block content %}
-    <div class="tab-pane show active" id="results" role="tabpanel" aria-labelledby="results-tab">
-
-      <form method="post" class="form form-horizontal">
-        {% csrf_token %}
-        {# "Select all" form #}
-        {% if table.paginator.num_pages > 1 %}
-          <div id="select-all-box" class="d-none card d-print-none">
-            <div class="form col-md-12">
-              <div class="card-body">
-                <div class="form-check">
-                  <input type="checkbox" id="select-all" name="_all" class="form-check-input" />
-                  <label for="select-all" class="form-check-label">
-                      Select <strong>all {{ table.rows|length }} {{ table.data.verbose_name_plural }}</strong> matching query
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        {% endif %}
-
-        <div class="form form-horizontal">
-          {% csrf_token %}
-          <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
-
-            <div class="col col-md-12"{% if not job.completed %} hx-get="." hx-trigger="load delay:0.5s, every 5s"{% endif %}>
-              {% block htmx-template %}
-              {% include 'validity/scripts/result_htmx.html' %}
-              {% endblock htmx-template %}
-            </div>
-
-        </div>
-      </form>
+<div class="tab-content">
+  <div class="row">
+    <div class="col col-md-12"{% if not job.completed %} hx-get="." hx-trigger="load delay:0.5s, every 5s"{% endif %}>
+      {% block htmx-template %}
+      {% include 'validity/scripts/result_htmx.html' %}
+      {% endblock htmx-template %}
     </div>
+  </div>
+</div>
+
 {% endblock content %}
+{% endblock content-wrapper %}
