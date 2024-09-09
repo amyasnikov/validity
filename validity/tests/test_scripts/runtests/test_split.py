@@ -70,12 +70,14 @@ def test_sync_datasources(create_custom_fields, overriding_datasource):
 
     worker = SplitWorker(datasource_sync_fn=Mock())
     overriding_pk = overriding_datasource.pk if overriding_datasource else None
-    worker.sync_datasources(overriding_datasource=overriding_pk, device_filter=Q(name__in=["d1", "d2"]))
+    logger = Mock()
+    worker.sync_datasources(overriding_pk, device_filter=Q(name__in=["d1", "d2"]), logger=logger)
     worker.datasource_sync_fn.assert_called_once()
     datasources, device_filter = worker.datasource_sync_fn.call_args.args
     assert device_filter == Q(name__in=["d1", "d2"])
     expected_result = [overriding_datasource] if overriding_datasource else [ds1, ds2]
     assert list(datasources) == expected_result
+    logger.info.assert_called_once()
 
 
 @pytest.mark.parametrize("device_num", [2])
@@ -93,6 +95,11 @@ def test_call(selectors, devices, runtests_params, monkeypatch):
     assert result == SplitResult(
         log=[
             Message(
+                status="warning",
+                message="No bound Data Sources found. Sync skipped",
+                time=datetime.datetime(2000, 1, 1, 0, 0),
+            ),
+            Message(
                 status="info",
                 message="Running the tests for *2 devices*",
                 time=datetime.datetime(2000, 1, 1, 0, 0),
@@ -107,6 +114,6 @@ def test_call(selectors, devices, runtests_params, monkeypatch):
         ],
         slices=[{1: [1]}, {2: [2]}],
     )
-    worker.datasource_sync_fn.assert_called_once()
+    assert worker.datasource_sync_fn.call_count == 0
     job.refresh_from_db()
     assert job.status == "running"
