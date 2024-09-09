@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 
 @contextmanager
 def null_request():
+    """
+    Prevents EventRule instances from triggering by setting current request to None
+    """
     ctx = current_request.get()
     current_request.set(None)
     try:
