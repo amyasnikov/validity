@@ -12,8 +12,7 @@ from netbox.models import (
     NetBoxModel,
     RestrictedQuerySet,
 )
-
-from validity.netbox_changes import EventRulesMixin
+from netbox.models.features import EventRulesMixin
 
 
 logger = logging.getLogger(__name__)

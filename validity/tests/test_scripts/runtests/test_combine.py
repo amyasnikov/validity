@@ -93,4 +93,4 @@ def test_successful_call(worker, full_runtests_params, job_extractor, monkeypatc
         "output": {"statistics": {"total": 7, "passed": 3}},
     }
     assert job.error == ""
-    worker.enqueue_func.assert_called_once_with(job.object, full_runtests_params.request, "create")
+    worker.enqueue_func.assert_called_once_with(job.object, full_runtests_params.request)

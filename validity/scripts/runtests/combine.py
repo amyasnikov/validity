@@ -11,11 +11,11 @@ from dimi import Singleton
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
-from extras.choices import ObjectChangeActionChoices
+from netbox.context import events_queue
 
 from validity import di
 from validity.models import ComplianceReport
-from validity.netbox_changes import enqueue_object, events_queue
+from validity.netbox_changes import QUEUE_CREATE_ACTION, enqueue_event
 from ..data_models import FullRunTestsParams, Message, TestResultRatio
 from ..exceptions import AbortScript
 from ..launch import Launcher
@@ -24,9 +24,9 @@ from ..parent_jobs import JobExtractor
 from .base import TerminateMixin
 
 
-def enqueue(report, request, action):
+def enqueue(report, request):
     queue = events_queue.get()
-    enqueue_object(queue, report, request.get_user(), request.id, action)
+    enqueue_event(queue, report, request.get_user(), request.id, QUEUE_CREATE_ACTION)
     events_queue.set(queue)
 
 
@@ -35,14 +35,14 @@ def enqueue(report, request, action):
 class CombineWorker(TerminateMixin):
     log_factory: Callable[[], Logger] = Logger
     job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
-    enqueue_func: Callable[[ComplianceReport, HttpRequest, str], None] = enqueue
+    enqueue_func: Callable[[ComplianceReport, HttpRequest], None] = enqueue
     report_queryset: QuerySet[ComplianceReport] = field(
         default_factory=ComplianceReport.objects.annotate_result_stats().count_devices_and_tests
     )
 
     def fire_report_webhook(self, report_id: int, request: HttpRequest) -> None:
         report = self.report_queryset.get(pk=report_id)
-        self.enqueue_func(report, request, ObjectChangeActionChoices.ACTION_CREATE)
+        self.enqueue_func(report, request)
 
     def count_test_stats(self, job_extractor: JobExtractor) -> TestResultRatio:
         result_ratios = (parent.job.result.test_stat for parent in job_extractor.parents)

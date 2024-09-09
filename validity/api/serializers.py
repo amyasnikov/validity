@@ -18,11 +18,11 @@ from netbox.api.fields import SerializedPKRelatedField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 from rest_framework.reverse import reverse
-from tenancy.api.nested_serializers import NestedTenantSerializer
 from tenancy.models import Tenant
 
 from validity import config, models
 from validity.choices import ExplanationVerbosityChoices
+from validity.netbox_changes import NestedTenantSerializer
 from .helpers import (
     EncryptedDictField,
     FieldsMixin,

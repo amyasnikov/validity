@@ -1,10 +1,17 @@
-# NetBox 3.7
+# NetBox 4.0
 from pydoc import locate as __locate
 
-from .oldest import *
+from .old import *
 
 
-enqueue_object = __locate("extras.events.enqueue_object")
-events_queue = __locate("netbox.context.events_queue")
-EventRulesMixin = __locate("netbox.models.features.EventRulesMixin")
-SavedFiltersMixin = __locate("netbox.forms.mixins.SavedFiltersMixin")
+FieldSet = __locate("utilities.forms.rendering.FieldSet")
+plugins = __locate("netbox.plugins")
+ButtonColorChoices = __locate("netbox.choices.ButtonColorChoices")
+PluginTemplateExtension = __locate("netbox.plugins.PluginTemplateExtension")
+CF_OBJ_TYPE = "related_object_type"
+CF_CONTENT_TYPES = "object_types"
+htmx_partial = __locate("utilities.htmx.htmx_partial")
+
+
+class BootstrapMixin:
+    pass
