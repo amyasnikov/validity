@@ -1,10 +1,10 @@
 # Webhooks
 
-NetBox has a built-in feature called [Webhooks](https://docs.netbox.dev/en/stable/integrations/webhooks/). This feature allows a user to provision a webhook to a custom endpoint when some NetBox model is created/updated/deleted.
+NetBox has a built-in feature called [Event Rules](https://netboxlabs.com/docs/netbox/en/stable/models/extras/eventrule/) and [Webhooks](https://netboxlabs.com/docs/netbox/en/stable/models/extras/webhook/). This feature allows a user to provision a webhook to a custom endpoint when some NetBox model is created/updated/deleted.
 
 The webhook may be provisioned to capture Compliance Report creation. Using this approach you can notify some third party system (OSS/BSS/Monitoring/etc.) about the overall compliance state of your network.
 
-Let's create a webhook using [pynetbox](https://github.com/netbox-community/pynetbox) library.
+Let's create a webhook and an event rule using [pynetbox](https://github.com/netbox-community/pynetbox) library.
 
 You may do the same thing using web GUI (`Other > Webhooks` menu)
 
@@ -15,16 +15,25 @@ token = 'get api token via web gui and place it here'
 
 nb = Api(url='http://127.0.0.1:8000', token=token)
 
-nb.extras.webhooks.create(
+webhook = nb.extras.webhooks.create(
     name='sample_webhook',
-    type_create=True,  # bind webhook to object creation event
     payload_url='http://localhost:9000/api/webhook/',
     http_method='POST',
-    content_types=['validity.compliancereport']
+    ssl_verification=False,
 )
+
+nb.extras.event_rules.create(
+    name="sample_event",
+    object_types=["validity.compliancereport"],
+    event_types=["object_created"],
+    action_type="webhook",
+    action_object_type="extras.webhook",
+    action_object=webhook.id
+)
+
 ```
 
-It's done. Now when Run Compliance Tests script finishes its work, it will trigger a webhook to the `http://localhost:9000/api/webhook/` handle.
+It's done. Now when Run Compliance Tests script finishes its work, it will trigger the webhook to the `http://localhost:9000/api/webhook/` handle.
 
 
 Here is the example contents of the webhook configured above:

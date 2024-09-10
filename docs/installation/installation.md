@@ -1,13 +1,13 @@
 # Installation
 
 
-Validity is the [NetBox](https://netbox.dev/) plugin. So, before installing validity you have to install NetBox first. Please refer [NetBox docs](https://docs.netbox.dev/en/stable/installation/) for how to do it.
+Validity is the [NetBox](https://netboxlabs.com/oss/netbox/) plugin. So, before installing Validity you have to install NetBox first. Please refer [NetBox docs](https://netboxlabs.com/docs/netbox/en/stable/installation/) for how to do it.
 
-## System Requirements
+## System Requirements (latest version)
 
 | **Python** | **NetBox**      |
 |------------|-----------------|
-| >=3.10     | 3.6 &#124; 3.7 &#124; 4.0 |
+| >=3.10     | 3.7 &#124; 4.0 &#124; 4.1 |
 
 ## Installation steps
 Once you have installed NetBox, you should follow these steps

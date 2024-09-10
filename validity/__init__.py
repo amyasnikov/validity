@@ -24,13 +24,13 @@ class NetBoxValidityConfig(PluginConfig):
     version = "2.3.3"
     base_url = "validity"
     django_apps = ["django_bootstrap5"]
-    min_version = "3.6.0"
+    min_version = "3.7.0"
 
     # custom field
     netbox_version = NetboxVersion(VERSION)
 
     def ready(self):
-        from validity import data_backends, dependencies, signals
+        from validity import dependencies, signals
 
         return super().ready()
 

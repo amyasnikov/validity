@@ -1,10 +1,13 @@
 site_name: Validity
 repo_url: https://github.com/amyasnikov/validity/
-theme: readthedocs
+theme: material
 nav:
   - Intro: index.md
-  - Installation: installation.md
-  - Plugin Settings: plugin_settings.md
+  - Installation:
+    - Installation: installation/installation.md
+    - Plugin Settings: installation/plugin_settings.md
+    - NetBox Compatibility: installation/netbox_compatibility.md
+    - Upgrading: installation/upgrading.md
   - Quickstart: quickstart.md
   - 'Quickstart: Polling': quickstart_polling.md
   - Entities:
@@ -24,8 +27,18 @@ nav:
     - Webhooks: features/webhooks.md
 
 markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - admonition
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
   - tables
   - toc
 plugins:
   - include-markdown
+
+extra_css:
+  - extra_styles.css

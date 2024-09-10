@@ -210,13 +210,12 @@ So, if these 2 lists are equal, then each interface on the device has a descript
 ## Running the script and evaluating the results
 
 Now all the required entities are created, and you can execute the test you've created.
-This can be done via **RunTests** script.
+This can be done via the following API handle:
 
 ```python
 resp = requests.post(
-    'http://127.0.0.1:8000/api/extras/scripts/validity_scripts/RunTests/',
-    headers={'Authorization': f'Token {token}'},
-    json={'commit': True, 'data': {'make_report': False}},
+    'http://127.0.0.1:8000/api/plugins/validity/tests/run/',
+    headers={'Authorization': f'Token {token}'}
 )
 
 result_id = resp.json()['result']['id']

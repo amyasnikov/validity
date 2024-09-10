@@ -95,7 +95,7 @@ Validity has an option to parse MikroTik RouterOS config files. You just need `R
 
 !!! warning
     Parser works only with **configuration** which structure strictly follows the `/export` command format.
-    If you want to work with operational state (`print`-commands), the easiest way would be to leverage MikroTik REST API and [YAML](#YAML) serializer.
+    If you want to work with operational state (`print`-commands), the easiest way would be to leverage MikroTik REST API and [JSON/YAML](#yaml) serializer.
 
 **Input data:**
 ```

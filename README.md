@@ -5,13 +5,13 @@
         <img src="https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg" alt="CI">
         <img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/amyasnikov/9e518ae8babd18b7edd8ee5aad58146b/raw/cov.json" alt="Coverage">
         <img src="https://img.shields.io/badge/Python-3.10+-blue.svg" alt="Python version">
-        <img src="https://img.shields.io/badge/NetBox-3.6|3.7|4.0-blue.svg" alt="NetBox version">
+        <img src="https://img.shields.io/badge/NetBox-3.7|4.0|4.1-blue.svg" alt="NetBox version">
     </p>
 </div>
 
 <!--mkdocs-start-->
 ## What?
-Validity is the [NetBox](https://netbox.dev) plugin to write "auto tests" for your network devices. You define compliance tests and Validity checks device state or configuration against these tests. The two most obvious use cases for such a functionality include:
+Validity is the [NetBox](https://netboxlabs.com/oss/netbox/) plugin to write "auto tests" for your network devices. You define compliance tests and Validity checks device state or configuration against these tests. The two most obvious use cases for such a functionality include:
 
 * **Configuration compliance**. You can make sure your devices are provisioned properly, and their config follows the rules you have defined via tests.
 * **Pre- / post-configuration checks**. You can make sure your network is in the expected state before or/and after configuration changes have been made. You can use Validity API to include these checks into your automation pipelines.
@@ -55,6 +55,8 @@ Unlike many other plugins, Validity supports **multiple** NetBox versions inside
 Validity aims to support **the latest 3 major/minor releases of NetBox**.
 
 For example, if latest NetBox version is 4.1, then latest Validity is going to support NetBox 4.1, 4.0 and 3.7.
+
+Check out [compatibility matrix](https://validity.readthedocs.io/en/latest/installation/netbox_compatibility/) for the details.
 
 
 ## Download and Install

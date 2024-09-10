@@ -10,9 +10,9 @@ class ScriptTimeouts(BaseModel):
     Timeout syntax complies with rq timeout format
     """
 
-    runtests_split: int | str = "15m"
+    runtests_split: int | str = "10m"
     runtests_apply: int | str = "30m"
-    runtests_combine: int | str = "15m"
+    runtests_combine: int | str = "10m"
 
 
 class ValiditySettings(BaseModel):

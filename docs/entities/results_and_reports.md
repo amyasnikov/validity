@@ -1,10 +1,10 @@
 # Test Results
 
-Test Results are produced by Validity as a result of [Run Compliance Tests](scripts.md#run-compliance-tests) script execution.
+Test Results are produced by Validity as a result of [Run Tests](scripts.md#run-tests) script execution.
 
 One Test Result represents the execution of one Compliance Test against one Device.
 
-Old Test Results are the subject for auto-deletion. See [Settings](../plugin_settings.md#store_last_results) for details.
+Old Test Results are the subject for auto-deletion. See [Settings](../installation/plugin_settings.md#store_reports) for details.
 
 ## Fields
 
@@ -33,7 +33,7 @@ Boolean result of the Compliance Test Expression execution. PASSED or FAILED.
 
 #### Report
 
-Report this test is bound to. Compliance test may not be bound to any Report. You can define it at the start of [Run Compliance Tests](scripts.md#run-compliance-tests) using "Create Report" checkmark.
+Report this test is bound to. Compliance test may not be bound to any Report. You can define it at the start of [Run Tests](scripts.md#run-tests) using "Create Report" checkmark.
 
 #### Explanation
 
@@ -58,9 +58,7 @@ For this expression you can get the following explanation:
 
 # Reports
 
-Report ties together Test Results generated from one execution of the [Run Compliance Tests](scripts.md#run-compliance-tests) script.
-
-A user may choose either to create a report together with the Test Results during the Run Compliance Tests script execution or no.
+Report ties together Test Results generated from one execution of the [Run Tests](scripts.md#run-tests) script.
 
 At the report page you can observe test result statistics (total and grouped by severity). Moreover, in web GUI you can choose an additional param to group the results by and display the statistics for each group.
 

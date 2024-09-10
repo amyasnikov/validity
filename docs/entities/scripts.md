@@ -1,25 +1,47 @@
-# Custom Scripts
+# Scripts
 
-Validity is shipped together with some [Custom Scripts](https://docs.netbox.dev/en/stable/customization/custom-scripts/).
+**Scripts** is the way Validity executes long-running tasks. Previously Validity used [NetBox Custom Scripts](https://netboxlabs.com/docs/netbox/en/stable/customization/custom-scripts/) feature for this purpose, but since **release 3.0.0** Validity uses [RQ](https://python-rq.org/) directly to execute its long-running jobs (out of habit, still called "scripts").
 
-The scripts are available under `Customization > Scripts` GUI menu.
+## Run Tests
 
-## Run Compliance Tests
+This script executes Compliance Tests and creates Report and Test Result instances.
 
-This script executes Compliance Tests and creates Test Result instances.
+The script also performs a bunch of auxiliary actions such as:
 
-This script also deletes the old Test Results and Reports if they exceed the maximum number from [settings](../plugin_settings.md).
+* Related Data Sources Sync (if requested from user)
+* Deletion of old Reports and Tests Results (see [store_reports](../installation/plugin_settings.md#store_reports) setting)
 
-The script may generate a lot of DB queries. To spread the queries over time you can adjust [sleep_between_tests](../plugin_settings.md#sleep_between_tests) setting.
 
-#### Params
+### Parallel Tests Execution
+
+Validity allows splitting Tests Execution between multiple RQ workers. In this case each RQ worker executes its own portion of the work reducing the overall time required to process all amount of Tests.
+
+Tests Execution is divided between multiple workers on a per-device basis. It means that all the Tests for one particular Device will always be executed on one single worker.
+
+For example if you have 100 devices and want to execute the Tests for them on 3 workers in parallel, just choose `workers_num=3`, it will lead to two of the workers serving 33 devices each and the last one serving 34.
+
+!!! note
+    It's the responsibility of NetBox administrator to spawn multiple RQ workers. In most of the deployments there is only one worker by default.
+
+
+### Execution Params
 
 | **Param**                   | **API Param** | **Description**                                                   |
 |-----------------------------|---------------|-------------------------------------------------------------------|
-| Sync Data Sources           | sync_datasources  | Sync all Data Sources which are bound to Devices<br/> participating in the script execution|
-| Make Compliance<br/>Report  | make_report   | Create Report together with Test Results                          |
+| Sync Data Sources           | sync_datasources  | Sync all Data Sources which are bound to Devices participating in the script execution|
 | Specific Selectors          | selectors     | Run the tests only for a limited number of selectors              |
 | Specific Devices            | devices       | Run the tests only for a limited number of devices.               |
-| Specific Test Tags          | test_tags     | Run only those tests which have at least one of<br/> the specified tags|
-| Explanation Verbosity<br/>Level | explanation_verbosity | **0** - No explanation at all.<br/>**1** - Explanation of the calculation steps<br/>**2** - the same as **1** plus deepdiff value in case of<br/> comparisons|
-| Override DataSource         | override_datasource| Ignore Data Sources bound to Devices and use<br/> this one instead. It may be useful if you want to<br/> use **Validity Polling** Data Source just to run some<br/> operational tests only for now.|
+| Specific Test Tags          | test_tags     | Run only those tests which have at least one of the specified tags|
+| Explanation Verbosity Level | explanation_verbosity | **0** - No explanation at all.**1** - Explanation of the calculation steps**2** - the same as **1** plus deepdiff value in case of comparisons|
+| Number of Workers           | workers_num   | Number of RQ workers to split test execution between them         |
+| Override DataSource         | overriding_datasource| Ignore Data Sources bound to Devices and use this one instead. It may be useful if you want to use **Validity Polling** Data Source just to run some operational tests only for now.|
+
+
+### Stages
+Internally Run Tests script has 3 stages:
+
+* **split**: synchronizes Data Sources (if requested by user) and splits test execution into splices
+* **apply**: Executes portion of tests assigned to it at split stage and saves the results to database.  Only this stage can be executed on multiple workers in parallel
+* **combine**: collects the overall statistics, fires webhook (if configured)
+
+Each stage has its own timeout which can be adjusted in [Plugin Settings](../installation/plugin_settings.md#script_timeouts)
