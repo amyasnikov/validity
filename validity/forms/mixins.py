@@ -4,6 +4,7 @@ from typing import Literal, Sequence
 from utilities.forms import get_field_value
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
+from validity.models import Poller
 from validity.netbox_changes import FieldSet
 
 
@@ -22,6 +23,13 @@ class ExcludeMixin:
         super().__init__(*args, **kwargs)
         for field in exclude:
             self.fields.pop(field, None)
+
+
+class PollerCleanMixin:
+    def clean(self):
+        connection_type = self.cleaned_data.get("connection_type") or get_field_value(self, "connection_type")
+        Poller.validate_commands(connection_type, self.cleaned_data.get("commands", []))
+        return super().clean()
 
 
 class SubformMixin:
