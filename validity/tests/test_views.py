@@ -1,9 +1,12 @@
 import textwrap
+from functools import partial
 from http import HTTPStatus
+from typing import Callable
 from unittest.mock import Mock
 
 import pytest
 from base import ViewTest
+from django.utils.functional import classproperty
 from factories import (
     CommandFactory,
     CompTestDBFactory,
@@ -238,3 +241,77 @@ def test_testresult(admin_client):
     job = RunTestsJobFactory()
     resp = admin_client.get(f"/plugins/validity/scripts/results/{job.pk}/")
     assert resp.status_code == HTTPStatus.OK
+
+
+#
+# Test Bulk Import Views
+#
+
+
+class BulkImportViewTest(ViewTest):
+    get_suffixes = ["import"]
+    post_suffixes = ["import"]
+    detail_suffixes = {}
+    extra_factories: list[Callable[[], None]] = []
+    base_body = {"import_method": "direct", "format": "auto", "csv_delimiter": "auto"}
+    post_data: str
+
+    @classmethod
+    def create_models(cls):
+        result = super().create_models()
+        for factory in cls.extra_factories:
+            factory()
+        return result
+
+    @classproperty
+    def post_body(cls):
+        return cls.base_body | {"data": cls.post_data}
+
+
+class TestSelectorImportView(BulkImportViewTest):
+    factory_class = SelectorFactory
+    model_class = models.ComplianceSelector
+    extra_factories = [
+        partial(DeviceTypeFactory, slug="mod1"),
+        partial(TenantFactory, slug="t1"),
+        partial(TenantFactory, slug="t2"),
+    ]
+    post_data = 'name,filter_operation,type_filter,tenant_filter\nsel1,OR,mod1,"t1,t2"'
+
+
+class TestNameSetImportView(BulkImportViewTest):
+    factory_class = NameSetDBFactory
+    model_class = models.NameSet
+    post_data = (
+        "name,description,global,definitions\n"
+        '''ns1,some_description,true,"__all__=['defaultdict']\nfrom collections import defaultdict"'''
+    )
+
+
+class TestCompTestImportView(BulkImportViewTest):
+    factory_class = CompTestDBFactory
+    model_class = models.ComplianceTest
+    post_data = "name,severity,description,selectors,data_source,data_file\n" "t1,LOW,some descr,s1,ds1,f1"
+    extra_factories = [partial(SelectorFactory, name="s1"), partial(DataFileFactory, path="f1", source__name="ds1")]
+
+
+class TestSerializerImportView(BulkImportViewTest):
+    factory_class = SerializerDBFactory
+    model_class = models.Serializer
+    post_data = "name,extraction_method,parameters,template\n" 'ser1,TTP,{"jq_expression": ".data"},some_template_code'
+
+
+class TestCommandImportView(BulkImportViewTest):
+    factory_class = CommandFactory
+    model_class = models.Command
+    post_data = "name,label,type,parameters\n" 'c1,c1,CLI,{"cli_command": "show_run"}'
+
+
+class TestPollerImportView(BulkImportViewTest):
+    factory_class = PollerFactory
+    model_class = models.Poller
+    post_data = (
+        "name,connection_type,commands,public_credentials,private_credentials\n"
+        'p1,netmiko,"c1,c2",{"cred1": "va1"},{"cred2": "val2"}'
+    )
+    extra_factories = [partial(CommandFactory, label="c1"), partial(CommandFactory, label="c2")]

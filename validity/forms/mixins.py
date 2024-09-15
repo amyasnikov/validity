@@ -28,7 +28,7 @@ class ExcludeMixin:
 class PollerCleanMixin:
     def clean(self):
         connection_type = self.cleaned_data.get("connection_type") or get_field_value(self, "connection_type")
-        Poller.validate_commands(connection_type, self.cleaned_data["commands"])
+        Poller.validate_commands(connection_type, self.cleaned_data.get("commands", []))
         return super().clean()
 
 

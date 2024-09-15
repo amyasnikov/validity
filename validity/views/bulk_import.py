@@ -12,6 +12,9 @@ class NameSetBulkImportView(BulkImportView):
     queryset = models.NameSet.objects.all()
     model_form = forms.NameSetImportForm
 
+    def post(self, request):
+        return super().post(request)
+
 
 class SerializerBulkImportView(BulkImportView):
     queryset = models.Serializer.objects.all()

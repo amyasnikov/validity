@@ -25,13 +25,13 @@ class DataSourceMixin(Form):
         queryset=DataSource.objects.all(),
         required=False,
         to_field_name="name",
-        help_text=_("Data Source to get test expression from"),
+        help_text=_("Data Source"),
     )
     data_file = CSVModelChoiceField(
         queryset=DataFile.objects.all(),
         required=False,
         to_field_name="path",
-        help_text=_("File to get test expression from"),
+        help_text=_("File from Data Source"),
     )
 
     def clean_data_source(self):
@@ -72,8 +72,15 @@ class NameSetImportForm(DataSourceMixin, NetBoxModelImportForm):
         fields = ("name", "description", "_global", "tests", "definitions", "data_source", "data_file")
 
     def __init__(self, *args, headers=None, **kwargs):
+        base_fields = {"global": self.base_fields["_global"]} | self.base_fields
+        base_fields.pop("_global")
+        self.base_fields = base_fields
         super().__init__(*args, headers=headers, **kwargs)
-        self.base_fields["global"] = self.base_fields.pop("_global")
+
+    def save(self, commit=True) -> choices.Any:
+        if (_global := self.cleaned_data.get("global")) is not None:
+            self.instance._global = _global
+        return super().save(commit)
 
 
 class SerializerImportForm(SubFormMixin, DataSourceMixin, NetBoxModelImportForm):
@@ -82,7 +89,8 @@ class SerializerImportForm(SubFormMixin, DataSourceMixin, NetBoxModelImportForm)
     )
     parameters = JSONField(
         help_text=_(
-            "JSON-encoded Serializer parameters depending on Extraction Method value. See REST API to check for specific keys/values"
+            "JSON-encoded Serializer parameters depending on Extraction Method value. "
+            "See REST API to check for specific keys/values"
         )
     )
 
@@ -187,10 +195,14 @@ class PollerImportForm(PollerCleanMixin, NetBoxModelImportForm):
     public_credentials = JSONField(help_text=_("Public Credentials"), required=False)
     private_credentials = JSONField(
         help_text=_(
-            "Private Credentials. ATTENTION: encryption depends on Django's SECRET_KEY var, values from another NetBox may not be decrypted properly"
+            "Private Credentials. ATTENTION: encryption depends on Django's SECRET_KEY var, "
+            "values from another NetBox may not be decrypted properly"
         ),
         required=False,
     )
+
+    def full_clean(self) -> None:
+        return super().full_clean()
 
     class Meta:
         model = models.Poller
