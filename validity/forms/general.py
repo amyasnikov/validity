@@ -7,7 +7,7 @@ from extras.forms import ScriptForm
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
-from utilities.forms import add_blank_choice, get_field_value
+from utilities.forms import add_blank_choice
 from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
@@ -15,7 +15,7 @@ from validity import models
 from validity.choices import ConnectionTypeChoices, ExplanationVerbosityChoices
 from validity.netbox_changes import FieldSet
 from .fields import DynamicModelChoicePropertyField, DynamicModelMultipleChoicePropertyField
-from .mixins import SubformMixin
+from .mixins import PollerCleanMixin, SubformMixin
 from .widgets import PrettyJSONWidget
 
 
@@ -133,7 +133,7 @@ class NameSetForm(NetBoxModelForm):
         fields = ("name", "description", "_global", "tests", "definitions", "data_source", "data_file", "tags")
 
 
-class PollerForm(NetBoxModelForm):
+class PollerForm(PollerCleanMixin, NetBoxModelForm):
     connection_type = ChoiceField(
         choices=add_blank_choice(ConnectionTypeChoices.choices), widget=Select(attrs={"id": "connection_type_select"})
     )
@@ -146,11 +146,6 @@ class PollerForm(NetBoxModelForm):
             "public_credentials": PrettyJSONWidget(),
             "private_credentials": PrettyJSONWidget(),
         }
-
-    def clean(self):
-        connection_type = self.cleaned_data.get("connection_type") or get_field_value(self, "connection_type")
-        models.Poller.validate_commands(connection_type, self.cleaned_data["commands"])
-        return super().clean()
 
 
 class CommandForm(SubformMixin, NetBoxModelForm):
