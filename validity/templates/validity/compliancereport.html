@@ -29,7 +29,10 @@
             {% with job=object.jobs.first %}
             <tr>
               <th scope="row">Job</th>
-              <td>{% if job %}{{ job | linkify }} | {{ job | colored_choice:"status" }}{% else %}—{% endif %}</td>
+              <td>
+                {% if job %}<a href="{{ job.get_absolute_url }}">{{ job.pk }}</a>
+                | {{ job | colored_choice:"status" }}{% else %}—{% endif %}
+              </td>
             </tr>
             {% if job.error %}
             <tr>
@@ -46,10 +49,21 @@
               <th scope="row">Unique Tests involved</th>
               <td>{{ object.test_count }}</td>
             </tr>
-            {% report_stats_row object "Overall Results" "total" %}
-            {% report_stats_row object "LOW Severity Results" "low" %}
-            {% report_stats_row object "MIDDLE Severity Results" "middle" %}
-            {% report_stats_row object "HIGH Severity Results" "high" %}
+            <tr>
+              <th>Overall Results</th>
+              <td>{% report_stats object "total" %}</td>
+            </tr>
+          </table>
+          <div class="card-header"></div>
+          <table class="table table-hover">
+            <tr>
+              <th>LOW Severity</th><th>MIDDLE Severity</th><th>HIGH Severity</th>
+            </tr>
+            <tr>
+              <td>{% report_stats object "low" %}</td>
+              <td>{% report_stats object "middle" %}</td>
+              <td>{% report_stats object "high" %}</td>
+            </tr>
           </table>
         </div>
       </div>
