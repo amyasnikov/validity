@@ -65,7 +65,7 @@ You can download Validity via **pip**
 ```
 pip install netbox-validity
 ```
-After that follow the [installation guide](https://validity.readthedocs.io/en/latest/installation/) to correctly add Validity to your NetBox.
+After that follow the [installation guide](https://validity.readthedocs.io/en/latest/installation/installation/) to correctly add Validity to your NetBox.
 <!--mkdocs-end-->
 
 ## Documentation
