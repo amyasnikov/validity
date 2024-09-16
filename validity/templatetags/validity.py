@@ -73,16 +73,14 @@ def urljoin(*parts: str) -> str:
     return "/".join(url_parts)
 
 
-@register.inclusion_tag("validity/inc/report_stats_row.html")
-def report_stats_row(obj, row_name, severity):
-    for i, row_part in enumerate((row_parts := row_name.split())):
-        if row_part.lower() in {"low", "middle", "high"}:
-            row_parts[i] = f"<b>{row_part.upper()}</b>"
-    row_name = mark_safe(" ".join(row_parts))
+@register.simple_tag
+def report_stats(obj, severity):
     count = getattr(obj, f"{severity}_count")
+    if count == 0:
+        return "—"
     passed = getattr(obj, f"{severity}_passed")
     percentage = getattr(obj, f"{severity}_percentage")
-    return {"row_name": row_name, "passed": passed, "count": count, "percentage": percentage}
+    return mark_safe(f"{passed}/{count} ") + colorful_percentage(percentage)
 
 
 @register.simple_tag
