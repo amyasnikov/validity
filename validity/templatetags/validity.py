@@ -44,7 +44,7 @@ def data_source(model) -> str:
 
 @register.filter
 def colorful_percentage(percent: float) -> str:
-    levels = {75: "warning", 50: "orange", 25: "danger"}
+    levels = {75: "yellow", 50: "orange", 25: "danger"}
     badge_color = "success"
     for level, color in levels.items():
         if level <= percent:
