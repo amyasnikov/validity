@@ -6,7 +6,7 @@ class DataSourceValidator(CustomValidator):
     This validator prevents creation of more than one Data Source with "default" mark set to True
     """
 
-    def validate(self, instance):
+    def validate(self, instance, request=None):
         DataSource = type(instance)
         if DataSource.__name__ != "DataSource":
             return
