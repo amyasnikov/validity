@@ -91,6 +91,7 @@ class ReportDeviceView(ObjectPermissionRequiredMixin, SingleTableMixin, FilterVi
             self.queryset.filter(results__report=self.object)
             .annotate_result_stats(self.object.pk, severity_ge)
             .prefetch_results(self.object.pk, severity_ge)
+            .order_by("_name")
         )
 
     def get_filterform_initial(self):

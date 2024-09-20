@@ -29,10 +29,24 @@
 </div>
 <div class="card mb-3">
   <div class="card-body">
-    <h5 class="card-title mb-2">{% block table_title %}{% endblock %}</h5>
+    <div class="row mb-2">
+      <h5 class="col card-title">{% block table_title %}{% endblock %}</h5>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="table-configure input-group">
+          <button type="button" data-bs-toggle="modal" title="Configure Table"
+                  data-bs-target="#ObjectTable_config"
+                  class="btn">
+            <i class="mdi mdi-cog"></i>Configure Table
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="table-responsive">
       {% render_table table 'inc/table.html' %}
     </div>
     {%include 'inc/paginator.html' with paginator=table.paginator page=table.page%}
   </div>
   {% endblock %}
+  {% block modals %}
+  {% table_config_form table table_name="ObjectTable" %}
+{% endblock modals %}
