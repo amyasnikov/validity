@@ -2,6 +2,7 @@ from typing import Annotated, Any
 
 from core.models import Job
 from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.forms import Form
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -17,7 +18,6 @@ from validity.netbox_changes import htmx_partial
 from validity.scripts.data_models import RunTestsParams, ScriptParams
 from validity.scripts.launch import Launcher
 from validity.tables import ScriptResultTable
-from .base import PermissionRequiredMixin
 
 
 class RunScriptView(PermissionRequiredMixin, FormView):

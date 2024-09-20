@@ -13,7 +13,7 @@ from utilities.views import ViewTab
 from validity import filtersets, forms, models, tables
 
 
-class PermissionRequiredMixin(_ObjectPermissionRequiredMixin):
+class ObjectPermissionRequiredMixin(_ObjectPermissionRequiredMixin):
     permission_required: str
 
     def get_required_permission(self):
@@ -48,7 +48,7 @@ class TableMixin:
         return {"table": table, "search_value": request.GET.get("q", "")}
 
 
-class FilterViewWithForm(PermissionRequiredMixin, FilterView):
+class FilterViewWithForm(FilterView):
     filterform_class: type[Form]
     exclude_form_fields: tuple[str, ...] = ()
 
@@ -74,7 +74,7 @@ class FilterViewWithForm(PermissionRequiredMixin, FilterView):
         return super().get_context_data(**kwargs) | {"filterset_form": self.get_filterform()}
 
 
-class TestResultBaseView(SingleTableMixin, FilterViewWithForm):
+class TestResultBaseView(ObjectPermissionRequiredMixin, SingleTableMixin, FilterViewWithForm):
     template_name = "validity/compliance_results.html"
     tab = ViewTab("Test Results", badge=lambda obj: obj.results.count())
     model = models.ComplianceTestResult
@@ -82,6 +82,7 @@ class TestResultBaseView(SingleTableMixin, FilterViewWithForm):
     filterform_class = partial(forms.TestResultFilterForm, add_m2m_placeholder=True)
     table_class = tables.ComplianceResultTable
     permission_required = "validity.view_compliancetestresult"
+    queryset = models.ComplianceTestResult.objects.select_related("test", "device")
 
     parent_model: type[Model]
     result_relation: str
@@ -96,9 +97,7 @@ class TestResultBaseView(SingleTableMixin, FilterViewWithForm):
         return table
 
     def get_queryset(self):
-        return models.ComplianceTestResult.objects.select_related("test", "device").filter(
-            **{self.result_relation: self.kwargs["pk"]}
-        )
+        return self.queryset.filter(**{self.result_relation: self.kwargs["pk"]})
 
     def get_object(self):
         return get_object_or_404(self.parent_model, pk=self.kwargs["pk"])
