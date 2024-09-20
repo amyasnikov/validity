@@ -7,9 +7,17 @@ from django.shortcuts import get_object_or_404
 from django_filters import FilterSet
 from django_filters.views import FilterView
 from django_tables2 import SingleTableMixin, Table
+from utilities.views import ObjectPermissionRequiredMixin as _ObjectPermissionRequiredMixin
 from utilities.views import ViewTab
 
 from validity import filtersets, forms, models, tables
+
+
+class PermissionRequiredMixin(_ObjectPermissionRequiredMixin):
+    permission_required: str
+
+    def get_required_permission(self):
+        return self.permission_required
 
 
 class TableMixin:
@@ -40,7 +48,7 @@ class TableMixin:
         return {"table": table, "search_value": request.GET.get("q", "")}
 
 
-class FilterViewWithForm(FilterView):
+class FilterViewWithForm(PermissionRequiredMixin, FilterView):
     filterform_class: type[Form]
     exclude_form_fields: tuple[str, ...] = ()
 

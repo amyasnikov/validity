@@ -76,7 +76,7 @@ class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
         .count(),
     )
     filterset_class = filtersets.DeviceReportFilterSet
-    permission_required = "view_compliancereport"
+    permission_required = "validity.view_compliancereport"
     template_name = "validity/report_devices.html"
     filterform_class = forms.DeviceReportFilterForm
 
@@ -126,7 +126,6 @@ class ReportResultView(TestResultBaseView):
         "site_id",
         "location_id",
     )
-    permission_required = "view_compliancereport"
 
 
 @register_model_view(models.ComplianceReport, "delete")
