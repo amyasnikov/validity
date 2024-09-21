@@ -3,6 +3,7 @@ from functools import cached_property
 from core.models import DataSource
 from dcim.filtersets import DeviceFilterSet
 from dcim.tables import DeviceTable
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import get_object_or_404
 from django_tables2 import SingleTableMixin
 from utilities.views import ViewTab, register_model_view
@@ -14,7 +15,7 @@ from .base import FilterViewWithForm
 
 
 @register_model_view(DataSource, "devices")
-class DataSourceBoundDevicesView(SingleTableMixin, FilterViewWithForm):
+class DataSourceBoundDevicesView(PermissionRequiredMixin, SingleTableMixin, FilterViewWithForm):
     template_name = "validity/aux_tab_table.html"
     tab = ViewTab("Bound Devices", badge=lambda obj: model_to_proxy(obj, VDataSource).bound_devices.count())
     model = DataSource
@@ -24,7 +25,7 @@ class DataSourceBoundDevicesView(SingleTableMixin, FilterViewWithForm):
     permission_required = "dcim.view_device"
 
     def get_queryset(self):
-        return model_to_proxy(self.object, VDataSource).bound_devices
+        return model_to_proxy(self.object, VDataSource).bound_devices.restrict(self.request.user, "view")
 
     @cached_property
     def object(self):

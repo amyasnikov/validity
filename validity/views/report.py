@@ -10,7 +10,7 @@ from utilities.views import ViewTab, register_model_view
 
 from validity import filtersets, forms, models, tables
 from validity.choices import DeviceGroupByChoices, SeverityChoices
-from .base import FilterViewWithForm, TestResultBaseView
+from .base import FilterViewWithForm, ObjectPermissionRequiredMixin, TestResultBaseView
 
 
 class ComplianceReportListView(generic.ObjectListView):
@@ -66,7 +66,7 @@ class ComplianceReportView(generic.ObjectView):
 
 
 @register_model_view(models.ComplianceReport, "devices")
-class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
+class ReportDeviceView(ObjectPermissionRequiredMixin, SingleTableMixin, FilterViewWithForm):
     table_class = tables.ComplianceReportDeviceTable
     tab = ViewTab(
         "Devices",
@@ -76,9 +76,10 @@ class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
         .count(),
     )
     filterset_class = filtersets.DeviceReportFilterSet
-    permission_required = "view_compliancereport"
+    permission_required = "validity.view_compliancereport"
     template_name = "validity/report_devices.html"
     filterform_class = forms.DeviceReportFilterForm
+    queryset = models.VDevice.objects.all()
 
     @functools.cached_property
     def object(self):
@@ -87,7 +88,7 @@ class ReportDeviceView(SingleTableMixin, FilterViewWithForm):
     def get_queryset(self) -> QuerySet[models.VDevice]:
         severity_ge = SeverityChoices.from_request(self.request)
         return (
-            models.VDevice.objects.filter(results__report=self.object)
+            self.queryset.filter(results__report=self.object)
             .annotate_result_stats(self.object.pk, severity_ge)
             .prefetch_results(self.object.pk, severity_ge)
         )
@@ -126,7 +127,6 @@ class ReportResultView(TestResultBaseView):
         "site_id",
         "location_id",
     )
-    permission_required = "view_compliancereport"
 
 
 @register_model_view(models.ComplianceReport, "delete")
