@@ -11,6 +11,16 @@ The script also performs a bunch of auxiliary actions such as:
 * Related Data Sources Sync (if requested from user)
 * Deletion of old Reports and Tests Results (see [store_reports](../installation/plugin_settings.md#store_reports) setting)
 
+!!! note
+    Make sure you've added proper permissions to execute RunTests script for your non-superuser account. Running the script requires `validity.run_compliancetest` permission. Such permission can be created via the following pynetbox call:
+
+    ```python
+    nb.users.permissions.create(
+        name='validity_runtests',
+        object_types=["validity.compliancetest"],
+        actions=["run"],
+    )
+    ```
 
 ### Parallel Tests Execution
 
