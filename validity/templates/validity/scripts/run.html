@@ -16,15 +16,9 @@
 {% block object_identifier %}{% endblock object_identifier %}
 {% block tabs %}{% endblock tabs %}
 
-
 {% block content %}
   <div class="row">
     <div class="col">
-      {% if not perms.extras.run_compliancetest %}
-        <div class="alert alert-warning">
-          <i class="mdi mdi-alert"></i>You do not have permission to run Compliance Tests.
-        </div>
-      {% endif %}
       <form action="" method="post" enctype="multipart/form-data" class="form-object-edit object-edit mt-5">
         {% csrf_token %}
         <div class="field-group my-4">
