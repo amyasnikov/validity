@@ -96,6 +96,9 @@ class TestResultBaseView(ObjectPermissionRequiredMixin, SingleTableMixin, Filter
         table.exclude = (self.result_relation,)
         return table
 
+    def get_table_kwargs(self):
+        return {"user": self.request.user}
+
     def get_queryset(self):
         return self.queryset.filter(**{self.result_relation: self.kwargs["pk"]})
 

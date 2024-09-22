@@ -227,7 +227,7 @@ class DeviceReportM2MColumn(ManyToManyColumn):
         return result if result else "—"
 
 
-class ComplianceReportDeviceTable(NetBoxTable):
+class ComplianceReportDeviceTable(BaseTable):
     device = TemplateColumn(
         order_by=("_name",), template_code=DEVICE_LINK, linkify=True, accessor="name", attrs={"th": {"class": "col-2"}}
     )
@@ -251,7 +251,7 @@ class ComplianceReportDeviceTable(NetBoxTable):
         badge_color="danger",
     )
 
-    class Meta(NetBoxTable.Meta):
+    class Meta(BaseTable.Meta):
         model = models.VDevice
         fields = ("device", "compliance_passed", "result_stats", "passed_results", "failed_results")
         default_columns = fields

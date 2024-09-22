@@ -91,6 +91,7 @@ class ReportDeviceView(ObjectPermissionRequiredMixin, SingleTableMixin, FilterVi
             self.queryset.filter(results__report=self.object)
             .annotate_result_stats(self.object.pk, severity_ge)
             .prefetch_results(self.object.pk, severity_ge)
+            .order_by("_name")
         )
 
     def get_filterform_initial(self):
@@ -101,6 +102,9 @@ class ReportDeviceView(ObjectPermissionRequiredMixin, SingleTableMixin, FilterVi
         table = table_class(data=self.get_table_data(), **kwargs)
         table.configure(self.request)
         return table
+
+    def get_table_kwargs(self):
+        return {"user": self.request.user}
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(**kwargs) | {
