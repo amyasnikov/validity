@@ -103,6 +103,9 @@ class ReportDeviceView(ObjectPermissionRequiredMixin, SingleTableMixin, FilterVi
         table.configure(self.request)
         return table
 
+    def get_table_kwargs(self):
+        return {"user": self.request.user}
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(**kwargs) | {
             "object": self.object,
