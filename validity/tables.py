@@ -156,6 +156,7 @@ class NameSetTable(NetBoxTable):
 
 class StatsColumn(Column):
     def __init__(self, data_prefix: str, **kwargs):
+        kwargs.setdefault("order_by", f"{data_prefix}_percentage")
         super().__init__(**kwargs)
         self.data_prefix = data_prefix
 
