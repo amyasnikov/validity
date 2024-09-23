@@ -165,7 +165,7 @@ class ComplianceReportSerializer(NetBoxModelSerializer):
         )
         brief_fields = ("id", "url", "display")
 
-    def get_results_url(self, obj):
+    def get_results_url(self, obj) -> str:
         results_url = reverse("plugins-api:validity-api:compliancetestresult-list", request=self.context["request"])
         return results_url + f"?report_id={obj.pk}"
 

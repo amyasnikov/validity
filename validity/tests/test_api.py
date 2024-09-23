@@ -222,3 +222,8 @@ def test_run_tests(admin_client, di, post_body, status_code):
         assert resp.status_code == status_code
         if resp.status_code == HTTPStatus.OK:
             launcher.assert_called_once()
+
+
+def test_api_schema_is_not_broken(admin_client):
+    resp = admin_client.get("/api/schema/")
+    assert resp.status_code == HTTPStatus.OK
