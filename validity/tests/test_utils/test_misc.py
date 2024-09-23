@@ -1,9 +1,10 @@
 import operator
 from contextlib import nullcontext
+from dataclasses import dataclass
 
 import pytest
 
-from validity.utils.misc import reraise
+from validity.utils.misc import partialcls, reraise
 from validity.utils.version import NetboxVersion
 
 
@@ -64,3 +65,16 @@ def test_netbox_version(obj1, obj2, compare_results):
     operators = [operator.lt, operator.le, operator.eq, operator.ge, operator.gt]
     for op, expected_result in zip(operators, compare_results):
         assert op(obj1, obj2) is expected_result
+
+
+def test_partialcls():
+    @dataclass
+    class A:
+        a: int
+        b: int
+
+    A2 = partialcls(A, b=10)
+    assert A2(5) == A(5, 10)
+    assert A2(1, 2) == A(1, 2)
+    assert A2(a=3, b=4) == A(3, 4)
+    assert type(A2(1, 2)) is A

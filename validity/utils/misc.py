@@ -1,9 +1,8 @@
 import inspect
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
-from functools import partialmethod
 from itertools import islice
-from typing import TYPE_CHECKING, Any, Callable, Iterable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 from core.exceptions import SyncError
 from django.db.models import Q
@@ -87,13 +86,15 @@ def batched(iterable: Iterable, n: int, container: type = list):
         yield batch
 
 
-_T = TypeVar("_T", bound=type)
-
-
-def partialcls(cls: _T, *args, class_name: str | None = None, **kwargs) -> _T:
+def partialcls(cls, *args, **kwargs):
     """
-    Creates subclass of a given class with partially filled __init__ params
+    Returns partial class with args and kwargs applied to __init__.
+    All original class attributes are preserved. When called, returns original class instance
     """
-    class_name = class_name or cls.__name__
-    class_attributes = {"__init__": partialmethod(cls.__init__, *args, **kwargs)}
-    return type(cls.__name__, (cls,), class_attributes)
+
+    def __new__(_, *new_args, **new_kwargs):
+        new_args = args + new_args
+        new_kwargs = kwargs | new_kwargs
+        return cls(*new_args, **new_kwargs)
+
+    return type(cls.__name__, (cls,), {"__new__": __new__})
