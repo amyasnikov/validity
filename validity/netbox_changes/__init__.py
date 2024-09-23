@@ -6,6 +6,7 @@ different versions of NetBox together
 from functools import partial
 
 from validity import config
+from validity.api.helpers import nested_factory
 
 
 if config.netbox_version >= "4.1.0":
@@ -25,4 +26,4 @@ if config.netbox_version < "4.0.0":
 else:
     from tenancy.api.serializers import TenantSerializer as __TenantSerializer
 
-    NestedTenantSerializer = partial(__TenantSerializer, nested=True)
+    NestedTenantSerializer = nested_factory(__TenantSerializer, nb_version=config.netbox_version)
