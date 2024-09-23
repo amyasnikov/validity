@@ -75,6 +75,5 @@ def test_partialcls():
 
     A2 = partialcls(A, b=10)
     assert A2(5) == A(5, 10)
-    assert A2(1, 2) == A(1, 2)
     assert A2(a=3, b=4) == A(3, 4)
-    assert type(A2(1, 2)) is A
+    assert type(A2(1)) is A

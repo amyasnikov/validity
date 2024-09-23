@@ -277,14 +277,11 @@ class DynamicPairsTable(DeviceTable):
             return max_paginate_by // 2
 
     def get_paginator_class(self, max_paginate_by, orphans):
-        def get_page_lengths(self):
-            return (max_paginate_by // 2, max_paginate_by)
-
         return type(
             "CustomPaginator",
             (EnhancedPaginator,),
             {
-                "get_page_lengths": get_page_lengths,
+                "get_page_lengths": lambda self: (max_paginate_by // 2, max_paginate_by),
                 "__init__": partialmethod(EnhancedPaginator.__init__, orphans=orphans),
             },
         )
