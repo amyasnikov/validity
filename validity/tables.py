@@ -1,6 +1,6 @@
 import datetime
 import itertools
-from functools import partial
+from functools import partialmethod
 
 from dcim.models import Device
 from dcim.tables import DeviceTable
@@ -276,16 +276,21 @@ class DynamicPairsTable(DeviceTable):
         except (KeyError, ValueError):
             return max_paginate_by // 2
 
-    def configure(self, request, max_paginate_by=None, orphans=None):
-        def get_page_lengths(self):
-            return (max_paginate_by // 2, max_paginate_by)
+    def get_paginator_class(self, max_paginate_by, orphans):
+        return type(
+            "CustomPaginator",
+            (EnhancedPaginator,),
+            {
+                "get_page_lengths": lambda self: (max_paginate_by // 2, max_paginate_by),
+                "__init__": partialmethod(EnhancedPaginator.__init__, orphans=orphans),
+            },
+        )
 
+    def configure(self, request, max_paginate_by=None, orphans=None):
         super().configure(request)
         if max_paginate_by and orphans:
-            paginator_class = type("CustomPaginator", (EnhancedPaginator,), {"get_page_lengths": get_page_lengths})
-            paginator_class = partial(paginator_class, orphans=orphans)
             paginate_by = self.get_paginate_by(request, max_paginate_by)
-            paginate = {"paginator_class": paginator_class, "per_page": paginate_by}
+            paginate = {"paginator_class": self.get_paginator_class(max_paginate_by, orphans), "per_page": paginate_by}
             RequestConfig(request, paginate).configure(self)
 
 

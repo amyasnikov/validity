@@ -84,3 +84,17 @@ def batched(iterable: Iterable, n: int, container: type = list):
         if not batch:
             return
         yield batch
+
+
+def partialcls(cls, *args, **kwargs):
+    """
+    Returns partial class with args and kwargs applied to __init__.
+    All original class attributes are preserved. When called, returns original class instance
+    """
+
+    def __new__(_, *new_args, **new_kwargs):
+        new_args = args + new_args
+        new_kwargs = kwargs | new_kwargs
+        return cls(*new_args, **new_kwargs)
+
+    return type(cls.__name__, (cls,), {"__new__": __new__})
