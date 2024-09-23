@@ -1,5 +1,4 @@
 import ast
-from functools import partial
 from typing import Any, Callable
 
 from django.core.exceptions import ValidationError
@@ -9,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from validity.choices import SeverityChoices
 from validity.compliance.eval import ExplanationalEval
 from validity.managers import ComplianceTestQS
+from validity.utils.misc import partialcls
 from .base import BaseModel, DataSourceMixin
 
 
@@ -23,7 +23,7 @@ class ComplianceTest(DataSourceMixin, BaseModel):
 
     clone_fields = ("expression", "selectors", "severity", "data_source", "data_file")
     text_db_field_name = "expression"
-    evaluator_cls = partial(ExplanationalEval, load_defaults=True)
+    evaluator_cls = partialcls(ExplanationalEval, load_defaults=True)
 
     objects = ComplianceTestQS.as_manager()
 

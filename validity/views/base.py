@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Any, Dict
 
 from django.db.models import Model
@@ -11,6 +10,7 @@ from utilities.views import ObjectPermissionRequiredMixin as _ObjectPermissionRe
 from utilities.views import ViewTab
 
 from validity import filtersets, forms, models, tables
+from validity.utils.misc import partialcls
 
 
 class ObjectPermissionRequiredMixin(_ObjectPermissionRequiredMixin):
@@ -79,7 +79,7 @@ class TestResultBaseView(ObjectPermissionRequiredMixin, SingleTableMixin, Filter
     tab = ViewTab("Test Results", badge=lambda obj: obj.results.count())
     model = models.ComplianceTestResult
     filterset_class = filtersets.ComplianceTestResultFilterSet
-    filterform_class = partial(forms.TestResultFilterForm, add_m2m_placeholder=True)
+    filterform_class = partialcls(forms.TestResultFilterForm, add_m2m_placeholder=True)
     table_class = tables.ComplianceResultTable
     permission_required = "validity.view_compliancetestresult"
     queryset = models.ComplianceTestResult.objects.select_related("test", "device")
