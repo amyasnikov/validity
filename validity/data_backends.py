@@ -75,7 +75,7 @@ class PollingBackend(DataBackend):
                 if cmd_result.errored:
                     errors.add(cmd_result.descriptive_error)
                 cmd_result.write_on_disk(dir_name)
-            polling_info = PollingInfo(devices_polled=devices.count(), errors=errors, partial_sync=not device_filter)
+            polling_info = PollingInfo(devices_polled=devices.count(), errors=errors, partial_sync=bool(device_filter))
             self.write_metainfo(dir_name, polling_info)
             yield dir_name
 
