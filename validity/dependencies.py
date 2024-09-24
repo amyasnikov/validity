@@ -31,6 +31,7 @@ def poller_map():
     }
 
 
+import validity.pollers.factory  # noqa
 from validity.scripts import ApplyWorker, CombineWorker, Launcher, SplitWorker, Task  # noqa
 
 
