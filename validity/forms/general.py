@@ -111,6 +111,8 @@ class SerializerForm(SyncedDataMixin, SubformMixin, NetBoxModelForm):
         if not self.subform or not self.subform.requires_template:
             for field in ["template", "data_source", "data_file"]:
                 del self.fields[field]
+                if self.instance:
+                    setattr(self.instance, field, self.instance._meta.get_field(field).get_default())
 
     class Meta:
         model = models.Serializer
