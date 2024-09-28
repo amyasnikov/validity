@@ -67,8 +67,7 @@ class State(dict):
 
     def with_config(self, serializable: Serializable):
         state_item = StateItem(serializer=serializable.serializer, data_file=serializable.data_file, command=None)
-        with suppress(SerializationError):
-            state_item.serialized  # noqa: B018
+        if state_item.error is None or self.config_command_label is None:
             super().__setitem__("config", state_item)
             self.config_command_label = None
         return self

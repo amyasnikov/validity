@@ -1,10 +1,16 @@
 import io
+import logging
 
 import textfsm
 
+from validity.utils.misc import log_exceptions
 from .common import postprocess_jq
 
 
+logger = logging.getLogger(__name__)
+
+
+@log_exceptions(logger, "info", log_traceback=True)
 @postprocess_jq
 def serialize_textfsm(plain_data: str, template: str, parameters: dict) -> list[dict]:
     dict_results = []

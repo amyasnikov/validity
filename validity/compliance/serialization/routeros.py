@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Generator, Literal
 
-from validity.utils.misc import reraise
+from validity.utils.misc import log_exceptions, reraise
 from ..exceptions import SerializationError
 
 
@@ -146,5 +146,6 @@ def parse_config(plain_config: str) -> dict:
     return result
 
 
+@log_exceptions(logger, level="info", log_traceback=True)
 def serialize_ros(plain_data: str, template: str, parameters: dict):
     return parse_config(plain_data)
