@@ -93,3 +93,21 @@ class TestState:
         assert state.get_full_item("config").command is None
         cfg_item2 = StateItem(SerializerDBFactory(), DataFileFactory(), None)
         assert state.with_config(cfg_item2).get_full_item("config") == cfg_item2
+
+    @pytest.mark.django_db
+    def test_with_config_errored(self):
+        cfg_serializable = Serializable(SerializerDBFactory(), None)
+        state = State({}).with_config(cfg_serializable)
+        assert state.get_full_item("config") == StateItem(
+            serializer=cfg_serializable.serializer, data_file=None, command=None
+        )
+        with pytest.raises(NoComponentError):
+            state["config"]
+
+    @pytest.mark.django_db
+    def test_with_config_no_override(self):
+        cfg_serializable = Serializable(SerializerDBFactory(), None)
+        command_config = state_item("item1", {"some": "config"})
+        state = State({"config": command_config}, config_command_label="item1").with_config(cfg_serializable)
+        assert state.get_full_item("config") == command_config
+        assert state["config"] == {"some": "config"}

@@ -2,6 +2,7 @@ import inspect
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from itertools import islice
+from logging import Logger
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 from core.exceptions import SyncError
@@ -31,7 +32,7 @@ def reraise(
     catch: type[Exception] | tuple[type[Exception], ...],
     raise_: type[Exception],
     *args,
-    orig_error_param="orig_error",
+    orig_error_param: str | None = "orig_error",
     **kwargs,
 ):
     """
@@ -98,3 +99,16 @@ def partialcls(cls, *args, **kwargs):
         return cls(*new_args, **new_kwargs)
 
     return type(cls.__name__, (cls,), {"__new__": __new__})
+
+
+@contextmanager
+def log_exceptions(logger: Logger, level: str, log_traceback=True):
+    """
+    Log exceptions of a function/method/codeblock
+    """
+    try:
+        yield
+    except Exception as exc:
+        log_method = getattr(logger, level)
+        log_method(msg=str(exc), exc_info=log_traceback)
+        raise

@@ -24,7 +24,7 @@ class CommandResult:
     error_header: ClassVar[str] = "POLLING ERROR\n"
 
     def __post_init__(self):
-        assert self.result or self.error is not None
+        assert self.result or self.error is not None, "Got empty result from device"
 
     foldername = property(lambda self: slugify(str(self.device)))
     filename = property(lambda self: self.command.label + ".txt")

@@ -7,5 +7,5 @@ from .common import postprocess_jq
 
 @postprocess_jq
 def serialize_yaml(plain_data: str, template: str, parameters: dict) -> dict:
-    with reraise(yaml.YAMLError, SerializationError, "Got invalid JSON/YAML"):
+    with reraise(yaml.YAMLError, SerializationError, "Got invalid JSON/YAML", orig_error_param=None):
         return yaml.safe_load(plain_data)

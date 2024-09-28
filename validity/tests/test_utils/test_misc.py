@@ -1,10 +1,11 @@
 import operator
 from contextlib import nullcontext
 from dataclasses import dataclass
+from unittest.mock import Mock
 
 import pytest
 
-from validity.utils.misc import partialcls, reraise
+from validity.utils.misc import log_exceptions, partialcls, reraise
 from validity.utils.version import NetboxVersion
 
 
@@ -77,3 +78,14 @@ def test_partialcls():
     assert A2(5) == A(5, 10)
     assert A2(a=3, b=4) == A(3, 4)
     assert type(A2(1)) is A
+
+
+def test_log_exceptions():
+    logger = Mock()
+    with log_exceptions(logger, "info", log_traceback=True):
+        pass
+    logger.info.assert_not_called()
+    with pytest.raises(ValueError):
+        with log_exceptions(logger, "info", log_traceback=True):
+            raise ValueError("qwerty")
+    logger.info.assert_called_once_with(msg="qwerty", exc_info=True)
