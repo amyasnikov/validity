@@ -2,7 +2,9 @@ from core.api.nested_serializers import NestedDataFileSerializer, NestedDataSour
 from core.api.serializers import JobSerializer
 from core.models import DataSource
 from dcim.api.nested_serializers import (
-    NestedDeviceSerializer,
+    NestedDeviceSerializer as _NestedDeviceSerializer,
+)
+from dcim.api.nested_serializers import (
     NestedDeviceTypeSerializer,
     NestedLocationSerializer,
     NestedManufacturerSerializer,
@@ -31,6 +33,14 @@ from .helpers import (
     SubformValidationMixin,
     nested_factory,
 )
+
+
+class NestedDeviceSerializer(_NestedDeviceSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="dcim-api:device-detail")
+
+    class Meta:
+        model = Device
+        fields = ["id", "url", "display", "name"]
 
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
