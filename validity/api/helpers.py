@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import ManyToManyField
 from netbox.api.serializers import WritableNestedSerializer
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import JSONField, ModelSerializer
+from rest_framework.serializers import HyperlinkedIdentityField, JSONField, ModelSerializer
 
 from validity import NetboxVersion
 from validity.fields.encrypted import EncryptedDict
@@ -36,6 +36,20 @@ def nested_factory(
     s_attribs = {a: serializer._declared_fields[a] for a in attributes}
     s_attribs["Meta"] = meta_factory(parent=serializer.Meta, fields=serializer.Meta.brief_fields)
     return type(name, bases, s_attribs)
+
+
+def proxy_factory(
+    serializer_class: type[ModelSerializer], view_name: str, fields: Sequence[str] = ()
+) -> type[ModelSerializer]:
+    """
+    Creates Nested Serializer for a proxy model.
+    Proxy models can't use regular nested serializers, see https://github.com/amyasnikov/validity/issues/121
+    """
+    url = HyperlinkedIdentityField(view_name=view_name)
+    meta = serializer_class.Meta
+    if fields:
+        meta = meta_factory(serializer_class.Meta, fields=fields)
+    return type(serializer_class.__name__, (serializer_class,), {"url": url, "Meta": meta})
 
 
 class EncryptedDictField(JSONField):

@@ -72,7 +72,7 @@ class ComplianceTestViewSet(RunMixin, NetBoxModelViewSet):
 
 
 class ComplianceTestResultViewSet(NetBoxReadOnlyModelViewSet):
-    queryset = models.ComplianceTestResult.objects.select_related("device", "test", "report")
+    queryset = models.ComplianceTestResult.objects.select_related("device", "test", "report", "dynamic_pair")
     serializer_class = serializers.ComplianceTestResultSerializer
     filterset_class = filtersets.ComplianceTestResultFilterSet
 
