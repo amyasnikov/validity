@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import pytest
 from factories import CompTestDBFactory, CompTestResultFactory, DeviceFactory, NameSetDBFactory, SelectorFactory
 
+from validity.compliance.eval.eval_defaults import DEFAULT_NAMESET
 from validity.compliance.exceptions import EvalError
 from validity.models import ComplianceTest
 from validity.scripts.data_models import ExecutionResult
@@ -72,7 +73,7 @@ __all__ = ['func']
 )
 @pytest.mark.django_db
 def test_builtins_are_available_in_nameset(definitions):
-    script = TExecutor(10, 20, 30)
+    script = TExecutor(10, 20, 30, extra_globals=DEFAULT_NAMESET)
     namesets = [NameSetDBFactory(definitions=definitions)]
     functions = script.nameset_functions(namesets)
     functions["func"]()

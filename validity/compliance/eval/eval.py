@@ -7,7 +7,7 @@ import simpleeval
 
 from validity.utils.misc import reraise
 from ..exceptions import EvalError
-from . import default_nameset, eval_defaults
+from . import eval_defaults
 
 
 class DictCompWithElt(ast.DictComp):
@@ -56,10 +56,9 @@ class ExplanationalEval(EvalWithCompoundTypes):
         super().__init__(operators, functions, names)
 
     def _load_defaults(self, /, **kwargs):
+        # TODO: remove this from the class, pass eval defaults as dependencies
         kwargs = {k: {} if v is None else v for k, v in kwargs.items()}
-        kwargs["functions"] = {name: getattr(default_nameset, name) for name in default_nameset.__all__} | kwargs[
-            "functions"
-        ]
+        kwargs["functions"] = eval_defaults.DEFAULT_NAMESET | kwargs["functions"]
         kwargs["operators"] = eval_defaults.DEFAULT_OPERATORS | kwargs["operators"]
         kwargs["names"] = eval_defaults.DEFAULT_NAMES | kwargs["names"]
         return kwargs["operators"], kwargs["functions"], kwargs["names"]

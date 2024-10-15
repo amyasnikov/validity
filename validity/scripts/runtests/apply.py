@@ -7,8 +7,10 @@ from dimi import Singleton
 from django.db.models import Prefetch, QuerySet
 
 from validity import di
+from validity.compliance.eval.eval_defaults import DEFAULT_NAMESET
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet, VDataSource, VDevice
+from validity.utils.misc import partialcls
 from ..data_models import ExecutionResult, FullRunTestsParams, TestResultRatio
 from ..logger import Logger
 from ..parent_jobs import JobExtractor
@@ -19,7 +21,9 @@ class TestExecutor:
     Executes all the tests for specified subset of devices
     """
 
-    def __init__(self, worker_id: int, explanation_verbosity: int, report_id: int) -> None:
+    def __init__(
+        self, worker_id: int, explanation_verbosity: int, report_id: int, extra_globals: dict[str, Any] | None = None
+    ) -> None:
         self.explanation_verbosity = explanation_verbosity
         self.report_id = report_id
         self.log = Logger(script_id=f"Worker {worker_id}")
@@ -27,13 +31,14 @@ class TestExecutor:
         self.results_passed = 0
         self._nameset_functions = {}
         self.global_namesets = NameSet.objects.filter(_global=True)
+        self.extra_globals = extra_globals
 
     def nameset_functions(self, namesets: Iterable[NameSet]) -> dict[str, Callable]:
         result = {}
         for nameset in chain(namesets, self.global_namesets):
             if nameset.name not in self._nameset_functions:
                 try:
-                    new_functions = nameset.extract()
+                    new_functions = nameset.extract(self.extra_globals)
                 except Exception as e:
                     self.log.warning(f"Cannot extract code from nameset {nameset}, {type(e).__name__}: {e}")
                     new_functions = {}
@@ -131,7 +136,7 @@ class ApplyWorker:
     Provides a function to execute specified tests, save the results to DB and return ExecutionResult
     """
 
-    test_executor_cls: type[TestExecutor] = TestExecutor
+    test_executor_cls: type[TestExecutor] = partialcls(TestExecutor, extra_globals=DEFAULT_NAMESET)
     logger_factory: Callable[[str], Logger] = Logger
     device_test_gen: type[DeviceTestIterator] = DeviceTestIterator
     result_batch_size: Annotated[int, "validity_settings.result_batch_size"]
