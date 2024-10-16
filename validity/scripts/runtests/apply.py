@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from functools import cached_property
+from functools import cached_property, partial
 from itertools import chain
 from typing import Annotated, Any, Callable, Iterable, Iterator
 
@@ -10,7 +10,6 @@ from validity import di
 from validity.compliance.eval.eval_defaults import DEFAULT_NAMESET
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet, VDataSource, VDevice
-from validity.utils.misc import partialcls
 from ..data_models import ExecutionResult, FullRunTestsParams, TestResultRatio
 from ..logger import Logger
 from ..parent_jobs import JobExtractor
@@ -136,7 +135,9 @@ class ApplyWorker:
     Provides a function to execute specified tests, save the results to DB and return ExecutionResult
     """
 
-    test_executor_cls: type[TestExecutor] = partialcls(TestExecutor, extra_globals=DEFAULT_NAMESET)
+    test_executor_factory: Callable[[int, int, int], TestExecutor] = partial(
+        TestExecutor, extra_globals=DEFAULT_NAMESET
+    )
     logger_factory: Callable[[str], Logger] = Logger
     device_test_gen: type[DeviceTestIterator] = DeviceTestIterator
     result_batch_size: Annotated[int, "validity_settings.result_batch_size"]
@@ -145,7 +146,7 @@ class ApplyWorker:
 
     def __call__(self, *, params: FullRunTestsParams, worker_id: int) -> ExecutionResult:
         try:
-            executor = self.test_executor_cls(worker_id, params.explanation_verbosity, params.report_id)
+            executor = self.test_executor_factory(worker_id, params.explanation_verbosity, params.report_id)
             test_results = self.get_test_results(params, worker_id, executor)
             self.save_results_to_db(test_results)
             return ExecutionResult(

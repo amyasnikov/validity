@@ -133,7 +133,7 @@ def apply_worker():
     job_extractor_factory.return_value.parent.job.result.slices = [None, {1: [1, 2, 3]}]
     return ApplyWorker(
         testresult_queryset=Mock(),
-        test_executor_cls=Mock(return_value=executor),
+        test_executor_factory=Mock(return_value=executor),
         result_batch_size=100,
         job_extractor_factory=job_extractor_factory,
         device_test_gen=device_test_gen,
@@ -145,7 +145,7 @@ def test_applyworker_success(full_runtests_params, apply_worker):
     full_runtests_params.overriding_datasource = 10
     full_runtests_params.test_tags = [555]
     device_test_gen = apply_worker.device_test_gen
-    executor = apply_worker.test_executor_cls.return_value
+    executor = apply_worker.test_executor_factory.return_value
     test_results = executor.return_value
     result = apply_worker(params=full_runtests_params, worker_id=1)
     assert result == ExecutionResult(test_stat=ResultRatio(passed=5, total=10), log=["log1", "log2"])
@@ -170,7 +170,7 @@ class MockLogger:
 
 @pytest.mark.django_db
 def test_applyworker_exception(full_runtests_params, apply_worker):
-    apply_worker.test_executor_cls = Mock(side_effect=ValueError("some error"))
+    apply_worker.test_executor_factory = Mock(side_effect=ValueError("some error"))
     apply_worker.logger_factory = MockLogger
     result = apply_worker(params=full_runtests_params, worker_id=1)
     assert result == ExecutionResult(test_stat=ResultRatio(passed=0, total=0), log=["some error"], errored=True)
