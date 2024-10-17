@@ -60,7 +60,7 @@ LOGGING = {
 
 PLUGINS.append("validity")
 
-PLUGINS_CONFIG = {"validity": {"store_last_results": 5, "git_folder": "/opt/git_repos/", "autocopy_scripts": True}}
+PLUGINS_CONFIG = {"validity": {}}
 
 
 # for debug toolbar
