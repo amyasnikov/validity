@@ -105,11 +105,13 @@ class TestPoller:
         "connection_type, command_type, is_valid", [("netmiko", "CLI", True), ("netmiko", "netconf", False)]
     )
     @pytest.mark.django_db
-    def test_match_command_type(self, connection_type, command_type, is_valid):
+    def test_match_command_type(self, connection_type, command_type, is_valid, di):
         command = CommandFactory(type=command_type)
         ctx = nullcontext() if is_valid else pytest.raises(ValidationError)
         with ctx:
-            Poller.validate_commands(connection_type=connection_type, commands=[command])
+            Poller.validate_commands(
+                connection_type=connection_type, commands=[command], command_types=di["PollerChoices"].command_types
+            )
 
     @pytest.mark.parametrize(
         "retrive_config, is_valid",
@@ -127,4 +129,4 @@ class TestPoller:
         commands = [CommandFactory(type=t) for t in retrive_config]
         ctx = nullcontext() if is_valid else pytest.raises(ValidationError)
         with ctx:
-            Poller.validate_commands(connection_type="CLI", commands=commands)
+            Poller.validate_commands(connection_type="CLI", commands=commands, command_types={})

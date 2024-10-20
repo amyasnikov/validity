@@ -1,12 +1,13 @@
 import inspect
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
-from itertools import islice
+from itertools import chain, islice
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from typing import TYPE_CHECKING, Any, Callable, Collection, Iterable
 
 from core.exceptions import SyncError
 from django.db.models import Q
+from django.utils.functional import Promise
 from netbox.context import current_request
 
 
@@ -112,3 +113,11 @@ def log_exceptions(logger: Logger, level: str, log_traceback=True):
         log_method = getattr(logger, level)
         log_method(msg=str(exc), exc_info=log_traceback)
         raise
+
+
+class LazyIterator(Promise):
+    def __init__(self, *parts: Callable[[], Collection] | Collection):
+        self._parts = parts
+
+    def __iter__(self):
+        yield from chain.from_iterable(part() if callable(part) else part for part in self._parts)

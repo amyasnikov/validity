@@ -3,15 +3,17 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from validity.pollers import NetmikoPoller
+from validity.pollers import NetmikoPoller, RequestsPoller
+from validity.pollers.factory import PollerChoices
 from validity.pollers.http import HttpDriver
+from validity.settings import PollerInfo
 
 
 class TestNetmikoPoller:
     @pytest.fixture
     def get_mocked_poller(self, monkeypatch):
         def _get_poller(credentials, commands, mock):
-            monkeypatch.setattr(NetmikoPoller, "driver_cls", mock)
+            monkeypatch.setattr(NetmikoPoller, "driver_factory", mock)
             return NetmikoPoller(credentials, commands)
 
         return _get_poller
@@ -30,8 +32,8 @@ class TestNetmikoPoller:
         poller = get_mocked_poller(credentials, [], Mock())
         device = get_mocked_device("1.1.1.1")
         assert poller.get_credentials(device) == credentials | {poller.host_param_name: "1.1.1.1"}
-        assert poller.get_driver(device) == poller.driver_cls.return_value
-        poller.driver_cls.assert_called_once_with(**credentials, **{poller.host_param_name: "1.1.1.1"})
+        assert poller.get_driver(device) == poller.driver_factory.return_value
+        poller.driver_factory.assert_called_once_with(**credentials, **{poller.host_param_name: "1.1.1.1"})
 
     def test_poll_one_command(self, get_mocked_poller):
         poller = get_mocked_poller({}, [], Mock())
@@ -84,3 +86,18 @@ def test_http_driver():
         auth=None,
     )
     assert result == requests.request.return_value.content.decode.return_value
+
+
+def test_poller_choices():
+    poller_choices = PollerChoices(
+        pollers_info=[
+            PollerInfo(klass=NetmikoPoller, name="some_poller", color="red", command_types=["CLI"]),
+            PollerInfo(
+                klass=RequestsPoller, name="p2", verbose_name="P2", color="green", command_types=["json_api", "custom"]
+            ),
+        ]
+    )
+    assert poller_choices.choices == [("some_poller", "Some Poller"), ("p2", "P2")]
+    assert poller_choices.colors == {"some_poller": "red", "p2": "green"}
+    assert poller_choices.classes == {"some_poller": NetmikoPoller, "p2": RequestsPoller}
+    assert poller_choices.command_types == {"some_poller": ["CLI"], "p2": ["json_api", "custom"]}
