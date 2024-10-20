@@ -8,8 +8,9 @@ from netbox.forms import NetBoxModelImportForm
 from tenancy.models import Tenant
 from utilities.forms.fields import CSVChoiceField, CSVModelChoiceField, CSVModelMultipleChoiceField, JSONField
 
-from validity import choices, models
+from validity import choices, di, models
 from validity.api.helpers import SubformValidationMixin
+from ..utils.misc import LazyIterator
 from .mixins import PollerCleanMixin
 
 
@@ -77,7 +78,7 @@ class NameSetImportForm(DataSourceMixin, NetBoxModelImportForm):
         self.base_fields = base_fields
         super().__init__(*args, headers=headers, **kwargs)
 
-    def save(self, commit=True) -> choices.Any:
+    def save(self, commit=True):
         if (_global := self.cleaned_data.get("global")) is not None:
             self.instance._global = _global
         return super().save(commit)
@@ -186,7 +187,9 @@ class CommandImportForm(SubFormMixin, NetBoxModelImportForm):
 
 
 class PollerImportForm(PollerCleanMixin, NetBoxModelImportForm):
-    connection_type = CSVChoiceField(choices=choices.ConnectionTypeChoices.choices, help_text=_("Connection Type"))
+    connection_type = CSVChoiceField(
+        choices=LazyIterator(lambda: di["PollerChoices"].choices), help_text=_("Connection Type")
+    )
     commands = CSVModelMultipleChoiceField(
         queryset=models.Command.objects.all(),
         to_field_name="label",
@@ -200,9 +203,6 @@ class PollerImportForm(PollerCleanMixin, NetBoxModelImportForm):
         ),
         required=False,
     )
-
-    def full_clean(self) -> None:
-        return super().full_clean()
 
     class Meta:
         model = models.Poller

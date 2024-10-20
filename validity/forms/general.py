@@ -7,13 +7,13 @@ from extras.forms import ScriptForm
 from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
-from utilities.forms import add_blank_choice
 from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
 from utilities.forms.widgets import HTMXSelect
 
-from validity import models
-from validity.choices import ConnectionTypeChoices, ExplanationVerbosityChoices
+from validity import di, models
+from validity.choices import ExplanationVerbosityChoices
 from validity.netbox_changes import FieldSet
+from ..utils.misc import LazyIterator
 from .fields import DynamicModelChoicePropertyField, DynamicModelMultipleChoicePropertyField
 from .mixins import PollerCleanMixin, SubformMixin
 from .widgets import PrettyJSONWidget
@@ -137,7 +137,8 @@ class NameSetForm(NetBoxModelForm):
 
 class PollerForm(PollerCleanMixin, NetBoxModelForm):
     connection_type = ChoiceField(
-        choices=add_blank_choice(ConnectionTypeChoices.choices), widget=Select(attrs={"id": "connection_type_select"})
+        choices=LazyIterator([(None, "---------")], lambda: di["PollerChoices"].choices),
+        widget=Select(attrs={"id": "connection_type_select"}),
     )
     commands = DynamicModelMultipleChoiceField(queryset=models.Command.objects.all())
 

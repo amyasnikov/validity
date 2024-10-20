@@ -8,9 +8,8 @@ from rq import Queue, Worker
 from rq.job import Job
 
 from validity import di
-from validity.choices import ConnectionTypeChoices
 from validity.pollers import NetmikoPoller, RequestsPoller, ScrapliNetconfPoller
-from validity.settings import ValiditySettings
+from validity.settings import PollerInfo, ValiditySettings
 from validity.utils.misc import null_request
 
 
@@ -25,14 +24,25 @@ def validity_settings(django_settings: Annotated[LazySettings, django_settings])
 
 
 @di.dependency(scope=Singleton)
-def poller_map():
-    return {
-        ConnectionTypeChoices.netmiko: NetmikoPoller,
-        ConnectionTypeChoices.requests: RequestsPoller,
-        ConnectionTypeChoices.scrapli_netconf: ScrapliNetconfPoller,
-    }
+def pollers_info(custom_pollers: Annotated[list[PollerInfo], "validity_settings.custom_pollers"]) -> list[PollerInfo]:
+    return [
+        PollerInfo(
+            klass=NetmikoPoller, name="netmiko", verbose_name="netmiko", color="blue", command_types=["CLI", "custom"]
+        ),
+        PollerInfo(
+            klass=RequestsPoller, name="requests", verbose_name="requests", color="info", command_types=["json_api"]
+        ),
+        PollerInfo(
+            klass=ScrapliNetconfPoller,
+            name="scrapli_netconf",
+            verbose_name="scrapli_netconf",
+            color="orange",
+            command_types=["netconf", "custom"],
+        ),
+    ] + custom_pollers
 
 
+import validity.choices  # noqa
 import validity.pollers.factory  # noqa
 from validity.scripts import ApplyWorker, CombineWorker, Launcher, SplitWorker, Task  # noqa
 

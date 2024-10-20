@@ -1,4 +1,4 @@
-from typing import Any, Optional, TypeVar
+from typing import Optional, TypeVar
 
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import ChoicesMeta
@@ -39,8 +39,12 @@ _Type = TypeVar("_Type")
 
 class MemberMixin:
     @classmethod
-    def member(cls: type[_Type], value: Any) -> Optional[_Type]:
+    def member(cls: type[_Type], value: str) -> Optional[_Type]:
         return cls._value2member_map_.get(value)  # type: ignore
+
+    @classmethod
+    def contains(cls, value: str) -> bool:
+        return value in cls._value2member_map_
 
 
 class BoolOperationChoices(TextChoices, metaclass=ColoredChoiceMeta):
@@ -94,10 +98,6 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
     SITE = "device__site__slug", _("Site")
     TEST = "test__name", _("Test")
 
-    @classmethod
-    def contains(cls, value: str) -> bool:
-        return value in cls._value2member_map_
-
     def viewname(self) -> str:
         view_prefixes = {self.TENANT: "tenancy:", self.TEST: "plugins:validity:compliance"}
         default_prefix = "dcim:"
@@ -109,22 +109,11 @@ class DeviceGroupByChoices(MemberMixin, TextChoices):
         return "__".join(pk_path)
 
 
-class ConnectionTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
-    netmiko = "netmiko", "netmiko", "blue"
-    requests = "requests", "requests", "info"
-    scrapli_netconf = "scrapli_netconf", "scrapli_netconf", "orange"
-
-    __command_types__ = {"netmiko": "CLI", "scrapli_netconf": "netconf", "requests": "json_api"}
-
-    @property
-    def acceptable_command_type(self) -> "CommandTypeChoices":
-        return CommandTypeChoices[self.__command_types__[self.name]]
-
-
 class CommandTypeChoices(TextChoices, metaclass=ColoredChoiceMeta):
     CLI = "CLI", "CLI", "blue"
     netconf = "netconf", "orange"
     json_api = "json_api", "JSON API", "info"
+    custom = "custom", _("Custom"), "gray"
 
 
 class ExplanationVerbosityChoices(IntegerChoices):
