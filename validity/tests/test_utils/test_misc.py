@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from validity.utils.misc import log_exceptions, partialcls, reraise
+from validity.utils.misc import LazyIterator, log_exceptions, partialcls, reraise
 from validity.utils.version import NetboxVersion
 
 
@@ -89,3 +89,14 @@ def test_log_exceptions():
         with log_exceptions(logger, "info", log_traceback=True):
             raise ValueError("qwerty")
     logger.info.assert_called_once_with(msg="qwerty", exc_info=True)
+
+
+def test_lazy_iterator():
+    part1 = [10, 20, 30]
+    part2 = lambda: [40, 50]  # noqa
+    part3 = Mock(return_value=[60])
+    part4 = (70,)
+    iterator = LazyIterator(part1, part2, part3, part4)
+    part3.assert_not_called()
+    assert list(iterator) == [10, 20, 30, 40, 50, 60, 70]
+    assert list(iterator) == [10, 20, 30, 40, 50, 60, 70]  # checking iterator is not exhausted

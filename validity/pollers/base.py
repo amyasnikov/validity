@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from validity.models import Command, VDevice
 
 
-class Poller(ABC):
+class BasePoller(ABC):
     host_param_name: str
 
     def __init__(self, credentials: dict, commands: Collection["Command"]) -> None:
@@ -28,7 +28,7 @@ class Poller(ABC):
         return self.credentials | {self.host_param_name: str(ip.address.ip)}
 
 
-class ThreadPoller(Poller):
+class ThreadPoller(BasePoller):
     """
     Polls devices one by one using threads
     """
