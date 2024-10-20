@@ -5,7 +5,7 @@ from dimi import Singleton
 from validity import di
 from validity.settings import PollerInfo
 from validity.utils.misc import partialcls
-from .base import Poller, ThreadPoller
+from .base import BasePoller, ThreadPoller
 
 
 if TYPE_CHECKING:
@@ -31,13 +31,13 @@ class PollerChoices:
 class PollerFactory:
     def __init__(
         self,
-        poller_map: Annotated[dict[str, type[Poller]], "PollerChoices.classes"],
+        poller_map: Annotated[dict[str, type[BasePoller]], "PollerChoices.classes"],
         max_threads: Annotated[int, "validity_settings.polling_threads"],
     ) -> None:
         self.poller_map = poller_map
         self.max_threads = max_threads
 
-    def __call__(self, connection_type: str, credentials: dict, commands: Sequence["Command"]) -> Poller:
+    def __call__(self, connection_type: str, credentials: dict, commands: Sequence["Command"]) -> BasePoller:
         if poller_cls := self.poller_map.get(connection_type):
             if issubclass(poller_cls, ThreadPoller):
                 poller_cls = partialcls(poller_cls, thread_workers=self.max_threads)

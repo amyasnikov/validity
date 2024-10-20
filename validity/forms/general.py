@@ -13,7 +13,7 @@ from utilities.forms.widgets import HTMXSelect
 from validity import di, models
 from validity.choices import ExplanationVerbosityChoices
 from validity.netbox_changes import FieldSet
-from ..utils.misc import LazyIterator
+from validity.utils.misc import LazyIterator
 from .fields import DynamicModelChoicePropertyField, DynamicModelMultipleChoicePropertyField
 from .mixins import PollerCleanMixin, SubformMixin
 from .widgets import PrettyJSONWidget

@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from validity import di
-from validity.pollers import Poller
+from validity.pollers import BasePoller
 
 
 class ScriptTimeouts(BaseModel):
@@ -19,7 +19,7 @@ class ScriptTimeouts(BaseModel):
 class PollerInfo(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    klass: type[Poller]
+    klass: type[BasePoller]
     name: str = Field(pattern="[a-z_]+")
     verbose_name: str = Field(default="", validate_default=True)
     color: str = Field(pattern="[a-z-]+")
@@ -27,10 +27,10 @@ class PollerInfo(BaseModel):
 
     @field_validator("verbose_name")
     @classmethod
-    def validate_verbose_name(cls, value):
+    def validate_verbose_name(cls, value, info):
         if value:
             return value
-        return " ".join(part.title() for part in value.split("_"))
+        return " ".join(part.title() for part in info.data["name"].split("_"))
 
 
 class ValiditySettings(BaseModel):
