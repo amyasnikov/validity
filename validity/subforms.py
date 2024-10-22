@@ -60,6 +60,13 @@ class NetconfCommandForm(BaseSubform):
         return rpc
 
 
+class CustomCommandForm(BaseSubform):
+    params = forms.JSONField(label=_("Command Parameters"))
+
+    def clean(self):
+        return self.cleaned_data["params"]
+
+
 # Serializer Subforms
 
 

@@ -11,17 +11,17 @@ from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES, FilterForm
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 from utilities.forms.widgets import DateTimePicker
 
-from validity import models
+from validity import di, models
 from validity.choices import (
     BoolOperationChoices,
     CommandTypeChoices,
-    ConnectionTypeChoices,
     DeviceGroupByChoices,
     DynamicPairsChoices,
     ExtractionMethodChoices,
     SeverityChoices,
 )
 from validity.netbox_changes import FieldSet
+from validity.utils.misc import LazyIterator
 from .fields import PlaceholderChoiceField
 from .mixins import AddM2MPlaceholderFormMixin, ExcludeMixin
 
@@ -175,7 +175,7 @@ class PollerFilterForm(NetBoxModelFilterSetForm):
     model = models.Poller
     name = CharField(required=False)
     connection_type = PlaceholderChoiceField(
-        required=False, label=_("Connection Type"), choices=ConnectionTypeChoices.choices
+        required=False, label=_("Connection Type"), choices=LazyIterator(lambda: di["PollerChoices"].choices)
     )
 
 

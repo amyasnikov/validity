@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class ScrapliNetconfPoller(ConsecutivePoller):
-    driver_cls = NetconfDriver
+    driver_factory = NetconfDriver
     host_param_name = "host"
 
     def poll_one_command(self, driver: NetconfDriver, command: "Command") -> str:

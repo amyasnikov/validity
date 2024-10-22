@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from core.api.nested_serializers import (
     NestedDataFileSerializer as _NestedDataFileSerializer,
 )
@@ -27,7 +29,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from tenancy.models import Tenant
 
-from validity import config, models
+from validity import config, di, models
 from validity.choices import ExplanationVerbosityChoices
 from validity.netbox_changes import NestedTenantSerializer
 from .helpers import (
@@ -366,8 +368,9 @@ class PollerSerializer(NetBoxModelSerializer):
         )
         brief_fields = ("id", "url", "display", "name")
 
-    def validate(self, data):
-        models.Poller.validate_commands(data["connection_type"], data["commands"])
+    @di.inject
+    def validate(self, data, command_types: Annotated[dict[str, list[str]], "PollerChoices.command_types"]):
+        models.Poller.validate_commands(data["commands"], command_types, data["connection_type"])
         return super().validate(data)
 
 

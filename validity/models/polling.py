@@ -2,16 +2,17 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Annotated, Collection
 
 from dcim.models import Device
-from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from validity import di
-from validity.choices import CommandTypeChoices, ConnectionTypeChoices
+from validity.choices import CommandTypeChoices
 from validity.fields import EncryptedDictField
 from validity.managers import CommandQS, PollerQS
-from validity.subforms import CLICommandForm, JSONAPICommandForm, NetconfCommandForm
+from validity.model_validators import commands_with_appropriate_type, only_one_config_command
+from validity.subforms import CLICommandForm, CustomCommandForm, JSONAPICommandForm, NetconfCommandForm
+from validity.utils.misc import LazyIterator
 from .base import BaseModel, SubformMixin
 from .serializer import Serializer
 
@@ -55,7 +56,12 @@ class Command(SubformMixin, BaseModel):
 
     subform_type_field = "type"
     subform_json_field = "parameters"
-    subforms = {"CLI": CLICommandForm, "json_api": JSONAPICommandForm, "netconf": NetconfCommandForm}
+    subforms = {
+        "CLI": CLICommandForm,
+        "json_api": JSONAPICommandForm,
+        "netconf": NetconfCommandForm,
+        "custom": CustomCommandForm,
+    }
 
     class Meta:
         ordering = ("name",)
@@ -69,7 +75,9 @@ class Command(SubformMixin, BaseModel):
 
 class Poller(BaseModel):
     name = models.CharField(_("Name"), max_length=255, unique=True)
-    connection_type = models.CharField(_("Connection Type"), max_length=50, choices=ConnectionTypeChoices.choices)
+    connection_type = models.CharField(
+        _("Connection Type"), max_length=50, choices=LazyIterator(lambda: di["PollerChoices"].choices)
+    )
     public_credentials = models.JSONField(
         _("Public Credentials"),
         default=dict,
@@ -99,7 +107,7 @@ class Poller(BaseModel):
         return self.public_credentials | self.private_credentials.decrypted
 
     def get_connection_type_color(self):
-        return ConnectionTypeChoices.colors.get(self.connection_type)
+        return di["PollerChoices"].colors.get(self.connection_type)
 
     @property
     def bound_devices(self) -> models.QuerySet[Device]:
@@ -119,23 +127,6 @@ class Poller(BaseModel):
         return poller_factory(self.connection_type, self.credentials, self.commands.all())
 
     @staticmethod
-    def validate_commands(connection_type: str, commands: Collection[Command]):
-        # All the commands must be of the matching type
-        conn_type = ConnectionTypeChoices[connection_type]
-        if any(cmd.type != conn_type.acceptable_command_type for cmd in commands):
-            raise ValidationError(
-                {
-                    "commands": _("%(conntype)s accepts only %(cmdtype)s commands")
-                    % {"conntype": conn_type.label, "cmdtype": conn_type.acceptable_command_type.label}
-                }
-            )
-
-        # Only one bound "retrives config" command may exist
-        config_commands_count = sum(1 for cmd in commands if cmd.retrieves_config)
-        if config_commands_count > 1:
-            raise ValidationError(
-                {
-                    "commands": _("No more than 1 command to retrieve config is allowed, but %(cnt)s were specified")
-                    % {"cnt": config_commands_count}
-                }
-            )
+    def validate_commands(commands: Collection[Command], command_types: dict[str, list[str]], connection_type: str):
+        commands_with_appropriate_type(commands, command_types, connection_type)
+        only_one_config_command(commands)

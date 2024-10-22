@@ -1,10 +1,10 @@
 import json
-from typing import Literal, Sequence
+from typing import Annotated, Literal, Sequence
 
 from utilities.forms import get_field_value
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
-from validity.models import Poller
+from validity import di, models
 from validity.netbox_changes import FieldSet
 
 
@@ -26,9 +26,10 @@ class ExcludeMixin:
 
 
 class PollerCleanMixin:
-    def clean(self):
+    @di.inject
+    def clean(self, command_types: Annotated[dict[str, list[str]], "PollerChoices.command_types"]):
         connection_type = self.cleaned_data.get("connection_type") or get_field_value(self, "connection_type")
-        Poller.validate_commands(connection_type, self.cleaned_data.get("commands", []))
+        models.Poller.validate_commands(self.cleaned_data.get("commands", []), command_types, connection_type)
         return super().clean()
 
 
