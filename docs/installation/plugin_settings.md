@@ -43,7 +43,14 @@ Validity uses threads to perform device polling. This setting defines the upper 
 
 *Type:* `str`
 
-RQ queue name for running the tests. May be useful if you want to move tests execution into separate queue (e.g. handled by separate set of workers)
+RQ queue name for running the tests. May be useful if you want to move tests execution into a separate queue (e.g. handled by separate set of workers)
+
+!!! note
+    Default RQ worker serves 3 queues only: `high`, `default` and `low`. You have to reconfigure your RQ worker (or just start another one in parallel) in case of choosing a different queue name.
+
+    For instance, if your runtests_queue is set to `my_queue`, then RQ worker has to be started with this queue name as a parameter:
+
+    `./manage.py rqworker my_queue`
 
 
 ### script_timeouts
