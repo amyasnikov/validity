@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 class NetmikoPoller(ConsecutivePoller):
     host_param_name = "host"
-    driver_factory = staticmethod(ConnectHandler)  # ConnectHandler is a function
+    driver_disconnect_method = "disconnect"
+    driver_factory = ConnectHandler
 
     def poll_one_command(self, driver: BaseConnection, command: "Command") -> str:
         return driver.send_command(command.parameters["cli_command"])

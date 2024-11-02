@@ -11,9 +11,10 @@ if TYPE_CHECKING:
 
 class ScrapliNetconfPoller(ConsecutivePoller):
     driver_factory = NetconfDriver
+    driver_connect_method = "open"
+    driver_disconnect_method = "close"
     host_param_name = "host"
 
     def poll_one_command(self, driver: NetconfDriver, command: "Command") -> str:
-        with driver:
-            response = driver.rpc(command.parameters["rpc"])
-            return response.result
+        response = driver.rpc(command.parameters["rpc"])
+        return response.result
