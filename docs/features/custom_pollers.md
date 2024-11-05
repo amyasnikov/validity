@@ -39,6 +39,10 @@ class ScrapliPoller(CustomPoller):
         return resp.result
 ```
 
+!!! note
+    Be aware that every poller class instance is usually responsible for interaction with multiple devices. Hence, do not use poller fields for storing device-specific parameters.
+
+
 ### Filling PollerInfo
 
 Poller Info is required to tell Validity about your custom poller.

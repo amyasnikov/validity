@@ -67,8 +67,8 @@ class ThreadPoller(BasePoller):
 
 class DriverMixin:
     driver_factory: Callable  # Network driver class, e.g. netmiko.ConnectHandler
-    driver_connect_method: str
-    driver_disconnect_method: str
+    driver_connect_method: str = ""
+    driver_disconnect_method: str = ""
 
     def connect(self, credentials: dict[str, Any]):
         driver = type(self).driver_factory(**credentials)
@@ -111,7 +111,7 @@ class CustomPoller(ConsecutivePoller):
     Base class for creating user-defined pollers
     To define your own poller override the following attributes:
     - driver_factory - class/function for creating connection to particular device
-    - host_param_name - name of the driver_factory parameter, which holds device IP address
+    - host_param_name - name of the driver parameter which holds device IP address
     - poll_one_command() - method for sending one particular command to device and retrieving the result
     - driver_connect_method - optional driver method name to initiate the connection
     - driver_disconnect_method - optional driver method name to gracefully terminate the connection

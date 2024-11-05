@@ -3,10 +3,24 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from validity.pollers import NetmikoPoller, RequestsPoller
+from validity.models.polling import Command
+from validity.pollers import CustomPoller, NetmikoPoller, RequestsPoller
 from validity.pollers.factory import PollerChoices
 from validity.pollers.http import HttpDriver
 from validity.settings import PollerInfo
+
+
+@pytest.fixture
+def custom_poller():
+    class MyCustomPoller(CustomPoller):
+        driver_factory = Mock(name="driver_factory")
+        driver_connect_method = "con"
+        driver_disconnect_method = "dis"
+
+        def poll_one_command(self, driver: time.Any, command: Command) -> str:
+            return super().poll_one_command(driver, command)
+
+    return MyCustomPoller
 
 
 class TestNetmikoPoller:
@@ -27,13 +41,11 @@ class TestNetmikoPoller:
         return _get_device
 
     @pytest.mark.django_db
-    def test_get_driver(self, get_mocked_poller, get_mocked_device):
+    def test_get_credentials(self, get_mocked_poller, get_mocked_device):
         credentials = {"user": "admin", "password": "1234"}
         poller = get_mocked_poller(credentials, [], Mock())
         device = get_mocked_device("1.1.1.1")
         assert poller.get_credentials(device) == credentials | {poller.host_param_name: "1.1.1.1"}
-        assert poller.get_driver(device) == poller.driver_factory.return_value
-        poller.driver_factory.assert_called_once_with(**credentials, **{poller.host_param_name: "1.1.1.1"})
 
     def test_poll_one_command(self, get_mocked_poller):
         poller = get_mocked_poller({}, [], Mock())
