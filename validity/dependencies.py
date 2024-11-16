@@ -26,9 +26,7 @@ def validity_settings(django_settings: Annotated[LazySettings, django_settings])
 @di.dependency(scope=Singleton)
 def pollers_info(custom_pollers: Annotated[list[PollerInfo], "validity_settings.custom_pollers"]) -> list[PollerInfo]:
     return [
-        PollerInfo(
-            klass=NetmikoPoller, name="netmiko", verbose_name="netmiko", color="blue", command_types=["CLI", "custom"]
-        ),
+        PollerInfo(klass=NetmikoPoller, name="netmiko", verbose_name="netmiko", color="blue", command_types=["CLI"]),
         PollerInfo(
             klass=RequestsPoller, name="requests", verbose_name="requests", color="info", command_types=["json_api"]
         ),
@@ -37,7 +35,7 @@ def pollers_info(custom_pollers: Annotated[list[PollerInfo], "validity_settings.
             name="scrapli_netconf",
             verbose_name="scrapli_netconf",
             color="orange",
-            command_types=["netconf", "custom"],
+            command_types=["netconf"],
         ),
     ] + custom_pollers
 

@@ -17,6 +17,7 @@ To define your own Poller, two steps must be performed:
 Here is the minimal viable example of a custom poller class. It uses `scrapli` library to connect to devices via SSH.
 
 ```python
+from scrapli import Scrapli
 from validity.pollers import CustomPoller
 from validity.models import Command
 
