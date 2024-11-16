@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 from factories import CommandFactory, PollerFactory
 
+from validity import config
 from validity.dependencies import validity_settings
 from validity.forms import PollerForm
 from validity.models.polling import Command
@@ -25,10 +26,8 @@ def custom_poller(db, di):
     settings = ValiditySettings(
         custom_pollers=[PollerInfo(klass=MyCustomPoller, name="cupo", color="red", command_types=["custom"])]
     )
-    override = di.override({validity_settings: lambda: settings})
-    override.__enter__()
-    yield PollerFactory(connection_type="cupo")
-    override.__exit__(None, None, None)
+    with di.override({validity_settings: lambda: settings}):
+        yield PollerFactory(connection_type="cupo")
 
 
 def test_custom_poller_model(custom_poller, di):
@@ -46,6 +45,7 @@ def test_custom_poller_api(custom_poller, admin_client):
     assert resp.json()["connection_type"] == "cupo"
 
 
+@pytest.mark.skipif(condition=config.version < "4", reason="netbox < 4.0")
 def test_custom_poller_form(custom_poller):
     form = PollerForm()
     form_choices = {choice[0] for choice in form["connection_type"].field.choices}
