@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import TYPE_CHECKING, Any, Collection, Iterable, Iterator
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any, Callable, Collection, Iterable, Iterator
 
 from validity.utils.misc import reraise
 from .exceptions import PollingError
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from validity.models import Command, VDevice
 
 
-class DevicePoller(ABC):
+class BasePoller(ABC):
     host_param_name: str
 
     def __init__(self, credentials: dict, commands: Collection["Command"]) -> None:
@@ -28,7 +29,7 @@ class DevicePoller(ABC):
         return self.credentials | {self.host_param_name: str(ip.address.ip)}
 
 
-class ThreadPoller(DevicePoller):
+class ThreadPoller(BasePoller):
     """
     Polls devices one by one using threads
     """
@@ -65,11 +66,28 @@ class ThreadPoller(DevicePoller):
 
 
 class DriverMixin:
-    driver_cls: type  # Network driver class, e.g. netmiko.ConnectHandler
+    driver_factory: Callable  # Network driver class, e.g. netmiko.ConnectHandler
+    driver_connect_method: str = ""
+    driver_disconnect_method: str = ""
 
-    def get_driver(self, device: "VDevice"):
+    def connect(self, credentials: dict[str, Any]):
+        driver = type(self).driver_factory(**credentials)
+        if self.driver_connect_method:
+            getattr(driver, self.driver_connect_method)()
+        return driver
+
+    def disconnect(self, driver):
+        if self.driver_disconnect_method:
+            getattr(driver, self.driver_disconnect_method)()
+
+    @contextmanager
+    def connection(self, device: "VDevice"):
         creds = self.get_credentials(device)
-        return self.driver_cls(**creds)
+        driver = self.connect(creds)
+        try:
+            yield driver
+        finally:
+            self.disconnect(driver)
 
 
 class ConsecutivePoller(DriverMixin, ThreadPoller):
@@ -78,11 +96,23 @@ class ConsecutivePoller(DriverMixin, ThreadPoller):
         pass
 
     def poll_one_device(self, device: "VDevice") -> Iterator[CommandResult]:
-        driver = self.get_driver(device)
-        for command in self.commands:
-            try:
-                with reraise(Exception, PollingError, device_wide=False):
-                    output = self.poll_one_command(driver, command)
-                    yield CommandResult(device=device, command=command, result=output)
-            except PollingError as err:
-                yield CommandResult(device=device, command=command, error=err)
+        with self.connection(device) as driver:
+            for command in self.commands:
+                try:
+                    with reraise(Exception, PollingError, device_wide=False):
+                        output = self.poll_one_command(driver, command)
+                        yield CommandResult(device=device, command=command, result=output)
+                except PollingError as err:
+                    yield CommandResult(device=device, command=command, error=err)
+
+
+class CustomPoller(ConsecutivePoller):
+    """
+    Base class for creating user-defined pollers
+    To define your own poller override the following attributes:
+    - driver_factory - class/function for creating connection to particular device
+    - host_param_name - name of the driver parameter which holds device IP address
+    - poll_one_command() - method for sending one particular command to device and retrieving the result
+    - driver_connect_method - optional driver method name to initiate the connection
+    - driver_disconnect_method - optional driver method name to gracefully terminate the connection
+    """

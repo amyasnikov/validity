@@ -39,11 +39,11 @@ This field defines [Serializer](serializers.md) for Command output.
 ## Parameters
 This block contains type-specific parameters.
 
-### Type:CLI
+### Type: CLI
 #### CLI Command
 This field must contain text string which is going to be sent to device when polling occurs.
 
-### Type:NETCONF
+### Type: NETCONF
 #### RPC
 This field must contain an XML RPC which is going to be sent to device via Netconf.
 
@@ -80,3 +80,7 @@ Example:
   }
 }
 ```
+
+### Type: Custom
+
+This type has been introduced especially for [Custom Pollers](../features/custom_pollers.md) support. For this type you can define arbitrary parameters (in a form of JSON object) and then use them inside your custom poller.

@@ -6,14 +6,13 @@ function fillTextArea(public_creds, private_creds) {
 function fillCredentials(valueExtracter, connectionTypeInfo) {
     try {
         const connectionType = valueExtracter(connectionTypeInfo)
-        if (connectionType == "")
-            return;
         const defaultCredentials = JSON.parse(document.getElementById('default_credentials').textContent)[connectionType];
-        fillTextArea(defaultCredentials.public, defaultCredentials.private);
+        if (defaultCredentials !== undefined) {
+            fillTextArea(defaultCredentials.public, defaultCredentials.private);
+        }
     } catch(e) {
         console.log(e.name, e.message)
     }
-
 }
 
 window.onload = () => {

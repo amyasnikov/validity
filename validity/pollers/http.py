@@ -49,7 +49,7 @@ class HttpDriver:
 
 
 class RequestsPoller(ConsecutivePoller):
-    driver_cls = HttpDriver
+    driver_factory = HttpDriver
 
     def get_credentials(self, device: "VDevice"):
         return self.credentials | {"device": device}

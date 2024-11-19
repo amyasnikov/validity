@@ -3,15 +3,31 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from validity.pollers import NetmikoPoller
+from validity.models.polling import Command
+from validity.pollers import CustomPoller, NetmikoPoller, RequestsPoller
+from validity.pollers.factory import PollerChoices
 from validity.pollers.http import HttpDriver
+from validity.settings import PollerInfo
+
+
+@pytest.fixture
+def custom_poller():
+    class MyCustomPoller(CustomPoller):
+        driver_factory = Mock(name="driver_factory")
+        driver_connect_method = "con"
+        driver_disconnect_method = "dis"
+
+        def poll_one_command(self, driver: time.Any, command: Command) -> str:
+            return super().poll_one_command(driver, command)
+
+    return MyCustomPoller
 
 
 class TestNetmikoPoller:
     @pytest.fixture
     def get_mocked_poller(self, monkeypatch):
         def _get_poller(credentials, commands, mock):
-            monkeypatch.setattr(NetmikoPoller, "driver_cls", mock)
+            monkeypatch.setattr(NetmikoPoller, "driver_factory", mock)
             return NetmikoPoller(credentials, commands)
 
         return _get_poller
@@ -25,13 +41,11 @@ class TestNetmikoPoller:
         return _get_device
 
     @pytest.mark.django_db
-    def test_get_driver(self, get_mocked_poller, get_mocked_device):
+    def test_get_credentials(self, get_mocked_poller, get_mocked_device):
         credentials = {"user": "admin", "password": "1234"}
         poller = get_mocked_poller(credentials, [], Mock())
         device = get_mocked_device("1.1.1.1")
         assert poller.get_credentials(device) == credentials | {poller.host_param_name: "1.1.1.1"}
-        assert poller.get_driver(device) == poller.driver_cls.return_value
-        poller.driver_cls.assert_called_once_with(**credentials, **{poller.host_param_name: "1.1.1.1"})
 
     def test_poll_one_command(self, get_mocked_poller):
         poller = get_mocked_poller({}, [], Mock())
@@ -84,3 +98,18 @@ def test_http_driver():
         auth=None,
     )
     assert result == requests.request.return_value.content.decode.return_value
+
+
+def test_poller_choices():
+    poller_choices = PollerChoices(
+        pollers_info=[
+            PollerInfo(klass=NetmikoPoller, name="some_poller", color="red", command_types=["CLI"]),
+            PollerInfo(
+                klass=RequestsPoller, name="p2", verbose_name="P2", color="green", command_types=["json_api", "custom"]
+            ),
+        ]
+    )
+    assert poller_choices.choices == [("some_poller", "Some Poller"), ("p2", "P2")]
+    assert poller_choices.colors == {"some_poller": "red", "p2": "green"}
+    assert poller_choices.classes == {"some_poller": NetmikoPoller, "p2": RequestsPoller}
+    assert poller_choices.command_types == {"some_poller": ["CLI"], "p2": ["json_api", "custom"]}
