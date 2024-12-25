@@ -207,3 +207,19 @@ class PollerImportForm(PollerCleanMixin, NetBoxModelImportForm):
     class Meta:
         model = models.Poller
         fields = ("name", "connection_type", "commands", "public_credentials", "private_credentials")
+
+
+class BackupPointImportForm(NetBoxModelImportForm):
+    data_source = CSVModelChoiceField(
+        queryset=models.VDataSource.objects.all(), to_field_name="name", help_text=_("Data Source")
+    )
+    parameters = JSONField(
+        help_text=_(
+            "JSON-encoded backup parameters depending on Method value. See REST API to check for specific keys/values"
+        )
+    )
+    method = CSVChoiceField(choices=choices.BackupMethodChoices.choices, help_text=_("Backup Method"))
+
+    class Meta:
+        model = models.BackupPoint
+        fields = ("name", "data_source", "backup_after_sync", "url", "method", "ignore_rules", "parameters")

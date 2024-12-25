@@ -103,7 +103,7 @@ class SubformValidationMixin:
                 setattr(instance, field, field_value)
         if not instance.subform_type:
             return
-        subform = instance.subform_cls(instance.subform_json)
+        subform = instance.get_subform()
         if not subform.is_valid():
             errors = [
                 ": ".join((field, err[0])) if field != "__all__" else err for field, err in subform.errors.items()

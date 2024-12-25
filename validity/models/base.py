@@ -2,6 +2,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.forms import Form
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from netbox.models import (
@@ -94,9 +95,13 @@ class BaseReadOnlyModel(
 
 
 class SubformMixin:
+    """
+    Supports rendering HTMX-backed dynamic django forms depending on subform_type_field value
+    """
+
     subform_json_field: str
     subform_type_field: str
-    subforms: dict
+    subforms: dict[str, Form]
 
     @property
     def subform_type(self):
@@ -117,3 +122,6 @@ class SubformMixin:
     @subform_json.setter
     def subform_json(self, value):
         setattr(self, self.subform_json_field, value)
+
+    def get_subform(self):
+        return self.subform_cls(self.subform_json)

@@ -95,7 +95,7 @@ def render_fieldset(form, fieldset):
     return {"group": name, "fields": items, "form": form}
 
 
-@register.filter()
+@register.filter
 def isodatetime(value, spec="seconds"):
     # backport of the native isodatetime in 4.0
     value = localtime(value) if value.tzinfo else value

@@ -3,15 +3,15 @@
   <h5 class="card-header">{{ title | capfirst }}</h5>
   <div class="card-body">
     <table class="table table-hover attr-table">
-      {% for field_name, field in form.base_fields.items %}
+      {% for label, value in form.rendered_parameters %}
       <tr>
-        <th scope="row">{{ field.label }}</th>
-        <td>{{ parameters | get_key:field_name | placeholder }}</td>
+        <th scope="row">{{ label }}</th>
+        <td>{{ value | placeholder }}</td>
       </tr>
       {% empty %}
       <tr>
         <td colspan="2" class="text-muted">
-          No {{ title }} defined
+          No {{ title | capfirst }} defined
         </td>
       </tr>
       {% endfor %}

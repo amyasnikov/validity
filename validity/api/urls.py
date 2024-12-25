@@ -15,6 +15,7 @@ router.register("namesets", views.NameSetViewSet)
 router.register("reports", views.ComplianceReportViewSet)
 router.register("pollers", views.PollerViewSet)
 router.register("commands", views.CommandViewSet)
+router.register("backup-points", views.BackupPointViewSet)
 
 
 urlpatterns = [

@@ -11,12 +11,38 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import JSONAPIMethodChoices
+from validity.fields.encrypted import EncryptedDict
 from validity.netbox_changes import BootstrapMixin
 from validity.utils.json import jq
 from validity.utils.misc import reraise
 
 
-class BaseSubform(BootstrapMixin, forms.Form):
+class SensitiveMixin:
+    """
+    Allows to hide encrypted values in DetailView
+    """
+
+    sensitive_fields: set[str] = {}
+
+    placeholder: str = "*********"
+
+    @classmethod
+    def _sensitive_value(cls, field):
+        if field.name in cls.sensitive_fields:
+            return cls.placeholder
+        return field.value()
+
+    def rendered_parameters(self):
+        for field in self:
+            yield field.label, self._sensitive_value(field)
+
+
+class BaseSubform(SensitiveMixin, BootstrapMixin, forms.Form):
+    def __init__(self, data=None, *args, **kwargs):
+        if isinstance(data, EncryptedDict):
+            data = data.encrypted
+        super().__init__(data, *args, **kwargs)
+
     def clean(self):
         if self.data.keys() - self.base_fields.keys():
             allowed_fields = ", ".join(self.base_fields.keys())
@@ -104,3 +130,24 @@ class RouterOSSerializerForm(BaseSubform):
 
 class YAMLSerializerForm(SerializerBaseForm):
     requires_template = False
+
+
+# Backup Forms
+
+
+class GitBackupForm(BaseSubform):
+    username = forms.CharField(label=_("Username"), help_text=_("Required for HTTP authentication"))
+    password = forms.CharField(
+        label=_("Password"), help_text=_("Required for HTTP authentication. Will be encrypted before saving")
+    )
+    branch = forms.CharField(required=False, label=_("Branch"))
+
+    sensitive_fields = {"password"}
+
+
+class S3BackupForm(BaseSubform):
+    aws_access_key_id = forms.CharField(label=_("AWS access key ID"))
+    aws_secret_access_key = forms.CharField(label=_("AWS secret access key. Will be encrypted before saving"))
+    archive = forms.BooleanField(required=False, help_text=_("Compress the repo into zip archive before uploading"))
+
+    sensitive_fields = {"aws_secret_access_key"}

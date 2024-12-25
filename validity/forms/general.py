@@ -164,6 +164,17 @@ class CommandForm(SubformMixin, NetBoxModelForm):
         widgets = {"type": HTMXSelect()}
 
 
+class BackupPointForm(SubformMixin, NetBoxModelForm):
+    class Meta:
+        model = models.BackupPoint
+        fields = ("name", "data_source", "backup_after_sync", "url", "method", "ignore_rules")
+        widgets = {"method": HTMXSelect()}
+
+    main_fieldsets = [
+        FieldSet("name", "data_source", "backup_after_sync", "url", "method", "ignore_rules", name=_("Backup Point")),
+    ]
+
+
 class RunTestsForm(ScriptForm):
     sync_datasources = BooleanField(
         required=False,

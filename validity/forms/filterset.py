@@ -13,6 +13,7 @@ from utilities.forms.widgets import DateTimePicker
 
 from validity import di, models
 from validity.choices import (
+    BackupMethodChoices,
     BoolOperationChoices,
     CommandTypeChoices,
     DeviceGroupByChoices,
@@ -191,3 +192,17 @@ class CommandFilterForm(NetBoxModelFilterSetForm):
         label=_("Serializer"), queryset=models.Serializer.objects.all(), required=False
     )
     poller_id = DynamicModelMultipleChoiceField(label=_("Poller"), queryset=models.Poller.objects.all(), required=False)
+
+
+class BackupPointFilterForm(NetBoxModelFilterSetForm):
+    model = models.BackupPoint
+    name = CharField(required=False)
+    datasource_id = DynamicModelMultipleChoiceField(
+        label=_("Data Source"), queryset=DataSource.objects.all(), required=False
+    )
+    backup_after_sync = NullBooleanField(
+        label=_("Backup After Sync"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES)
+    )
+    method = PlaceholderChoiceField(required=False, label=_("Backup Method"), choices=BackupMethodChoices.choices)
+    last_uploaded__lte = DateTimeField(required=False, widget=DateTimePicker(), label=_("Last Uploaded Before"))
+    last_uploaded__gte = DateTimeField(required=False, widget=DateTimePicker(), label=_("Last Uploaded After"))

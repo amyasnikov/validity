@@ -8,6 +8,17 @@ from rq import Queue, Worker
 from rq.job import Job
 
 from validity import di
+from validity.compliance.serialization import (
+    SerializationBackend,
+    serialize_ros,
+    serialize_textfsm,
+    serialize_ttp,
+    serialize_xml,
+    serialize_yaml,
+)
+from validity.data_backup import BackupBackend, GitBackuper, S3Backuper
+from validity.integrations.git import DulwichGitClient
+from validity.integrations.s3 import BotoS3Client
 from validity.pollers import NetmikoPoller, RequestsPoller, ScrapliNetconfPoller
 from validity.settings import PollerInfo, ValiditySettings
 from validity.utils.misc import null_request
@@ -18,9 +29,37 @@ def django_settings():
     return settings
 
 
-@di.dependency(scope=Singleton)
-def validity_settings(django_settings: Annotated[LazySettings, django_settings]):
+@di.dependency(scope=Singleton, add_return_alias=True)
+def validity_settings(django_settings: Annotated[LazySettings, django_settings]) -> ValiditySettings:
     return ValiditySettings.model_validate(django_settings.PLUGINS_CONFIG.get("validity", {}))
+
+
+@di.dependency(scope=Singleton, add_return_alias=True)
+def backup_backend(vsettings: Annotated[ValiditySettings, ...]) -> BackupBackend:
+    return BackupBackend(
+        backupers={
+            "git": GitBackuper(
+                message="",
+                author_username=vsettings.integrations.git.author,
+                author_email=vsettings.integrations.git.email,
+                git_client=DulwichGitClient(),
+            ),
+            "S3": S3Backuper(s3_client=BotoS3Client(max_threads=vsettings.integrations.s3.threads)),
+        }
+    )
+
+
+@di.dependency(scope=Singleton, add_return_alias=True)
+def serialization_backend() -> SerializationBackend:
+    return SerializationBackend(
+        extraction_methods={
+            "YAML": serialize_yaml,
+            "ROUTEROS": serialize_ros,
+            "TTP": serialize_ttp,
+            "TEXTFSM": serialize_textfsm,
+            "XML": serialize_xml,
+        }
+    )
 
 
 @di.dependency(scope=Singleton)

@@ -27,6 +27,7 @@ class PollingBackend(DataBackend):
         "datasource_id": forms.IntegerField(
             label=_("Data Source ID"),
             widget=forms.TextInput(attrs={"class": "form-control"}),
+            help_text=_("Must match the primary key of the data source"),
         )
     }
 

@@ -308,3 +308,14 @@ class ScriptResultTable(BaseTable):
 
     def render_time(self, value):
         return isodatetime(datetime.datetime.fromisoformat(value))
+
+
+class BackupPointTable(NetBoxTable):
+    name = Column(linkify=True)
+    data_source = Column(linkify=True)
+    method = ChoiceFieldColumn()
+
+    class Meta(NetBoxTable.Meta):
+        model = models.BackupPoint
+        fields = ("name", "method", "backup_after_sync", "data_source", "last_uploaded")
+        default_columns = fields

@@ -101,6 +101,12 @@ class PollerViewSet(NetBoxModelViewSet):
     filterset_class = filtersets.PollerFilterSet
 
 
+class BackupPointViewSet(NetBoxModelViewSet):
+    queryset = models.BackupPoint.objects.select_related("data_source")
+    serializer_class = serializers.BackupPointSerializer
+    filterset_class = filtersets.BackupPointFilterSet
+
+
 class CommandViewSet(NetBoxModelViewSet):
     queryset = models.Command.objects.select_related("serializer").prefetch_related("tags")
     serializer_class = serializers.CommandSerializer

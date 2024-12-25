@@ -2,7 +2,7 @@ import base64
 import os
 import pickle
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Protocol, runtime_checkable
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -11,6 +11,15 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Field, JSONField
+
+from validity.utils.misc import partialcls
+
+
+@runtime_checkable
+class EncryptedValueProtocol(Protocol):
+    def decrypt(self) -> Any: ...
+
+    def serialize(self) -> str: ...
 
 
 @dataclass
@@ -64,16 +73,39 @@ class EncryptedObject(EncryptedString):
         return pickle.loads(self._fernet.decrypt(self.cipher))
 
 
+class NotEncryptedObject:
+    def __init__(self, obj) -> None:
+        self.obj = obj
+
+    def serialize(self):
+        return self.obj
+
+    def decrypt(self):
+        return self.obj
+
+
 class EncryptedDict(dict):
-    def __init__(self, iterable=()):
+    def __init__(self, iterable=(), do_not_encrypt=()):
+        self.do_not_encrypt = set(do_not_encrypt)
         super().__init__()
         if isinstance(iterable, dict):
             iterable = iterable.items()
         for k, v in iterable:
-            constructor = EncryptedObject.from_object
-            if isinstance(v, str) and len(v) > 3 and v.startswith("$") and v.endswith("$"):
-                constructor = EncryptedObject.deserialize
-            self[k] = constructor(v)
+            self[k] = v
+
+    def _encrypted_obj(self, key, value):
+        if isinstance(value, EncryptedValueProtocol):
+            return value
+        constructor = EncryptedObject.from_object
+        if key in self.do_not_encrypt:
+            constructor = NotEncryptedObject
+        elif isinstance(value, str) and len(value) > 3 and value.startswith("$") and value.endswith("$"):
+            constructor = EncryptedObject.deserialize
+        return constructor(value)
+
+    def __setitem__(self, key, value):
+        encrypted_obj = self._encrypted_obj(key, value)
+        super().__setitem__(key, encrypted_obj)
 
     @property
     def encrypted(self) -> dict:
@@ -86,13 +118,14 @@ class EncryptedDict(dict):
 
 class EncryptedFieldEncoder(DjangoJSONEncoder):
     def default(self, o: Any) -> Any:
-        if isinstance(o, EncryptedString):
+        if isinstance(o, EncryptedValueProtocol):
             return o.serialize()
         return super().default(o)
 
 
 class EncryptedDictField(JSONField):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, do_not_encrypt=(), **kwargs: Any) -> None:
+        self.do_not_encrypt = do_not_encrypt
         kwargs.setdefault("default", EncryptedDict)
         kwargs["encoder"] = EncryptedFieldEncoder
         super().__init__(*args, **kwargs)
@@ -102,24 +135,29 @@ class EncryptedDictField(JSONField):
         if kwargs.get("default") == EncryptedDict:
             del kwargs["default"]
         del kwargs["encoder"]
+        if self.do_not_encrypt != ():
+            kwargs["do_not_encrypt"] = self.do_not_encrypt
         return name, path, args, kwargs
+
+    def encrypted_dict(self, value):
+        return EncryptedDict(value, do_not_encrypt=self.do_not_encrypt)
 
     def from_db_value(self, value, expression, connection):
         value = super().from_db_value(value, expression, connection)
         if isinstance(value, dict):
-            return EncryptedDict(value)
+            return self.encrypted_dict(value)
 
     def get_prep_value(self, value: dict | None) -> dict | None:
         if isinstance(value, EncryptedDict):
             value = value.encrypted
         if isinstance(value, dict):
-            value = EncryptedDict(value).encrypted
+            value = self.encrypted_dict(value).encrypted
         return super().get_prep_value(value)
 
     def to_python(self, value):
         if value is None or isinstance(value, EncryptedDict):
             return value
-        return EncryptedDict(value)
+        return self.encrypted_dict(value)
 
     def formfield(self, **kwargs):
         from validity.forms.fields import EncryptedDictField as EncryptedDictFormField
@@ -127,7 +165,7 @@ class EncryptedDictField(JSONField):
         return Field.formfield(
             self,
             **{
-                "form_class": EncryptedDictFormField,
+                "form_class": partialcls(EncryptedDictFormField, do_not_encrypt=self.do_not_encrypt),
                 "encoder": self.encoder,
                 "decoder": self.decoder,
                 **kwargs,
@@ -135,4 +173,7 @@ class EncryptedDictField(JSONField):
         )
 
     def value_to_string(self, obj: Any) -> Any:
-        return super().value_to_string(obj).encrypted
+        obj = super().value_to_string(obj)
+        if isinstance(obj, EncryptedDict):
+            obj = obj.encrypted
+        return obj

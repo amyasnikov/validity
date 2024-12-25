@@ -43,4 +43,9 @@ urlpatterns = [
     path("commands/import/", views.CommandBulkImportView.as_view(), name="command_import"),
     path("commands/<int:pk>/", include(get_model_urls("validity", "command"))),
     path("scripts/results/<int:pk>/", views.ScriptResultView.as_view(), name="script_result"),
+    path("backup-points/", views.BackupPointListView.as_view(), name="backuppoint_list"),
+    path("backup-points/add/", views.BackupPointEditView.as_view(), name="backuppoint_add"),
+    path("backup-points/delete/", views.BackupPointBulkDeleteView.as_view(), name="backuppoint_bulk_delete"),
+    path("backup-points/import/", views.BackupPointBulkImportView.as_view(), name="backuppoint_import"),
+    path("backup-points/<int:pk>/", include(get_model_urls("validity", "backuppoint"))),
 ]
