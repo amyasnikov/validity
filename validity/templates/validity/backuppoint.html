@@ -17,8 +17,8 @@
               <td>{{ object.data_source | linkify }}</td>
             </tr>
             <tr>
-              <th scope="row">Do backup after Data Source sync</th>
-              <td>{{ object.backup_after_sync | checkmark }}</td>
+              <th scope="row">Enabled</th>
+              <td>{{ object.enabled | checkmark }}</td>
             </tr>
             <tr>
               <th scope="row">Backup Method</th>
@@ -39,8 +39,14 @@
                 </td>
             </tr>
             <tr>
+              <th scope="row">Last Status</th>
+              <td>
+                {{ object.last_status | placeholder }}
+                {% if object.last_error %} | {{ object.last_error }}{% endif %}
+              </td>
+            </tr>
               <th scope="row">Last Uploaded</th>
-              <td>{{ object.last_uploaded | date:"Y-m-d G:i:s" }}</td>
+              <td>{{ object.last_uploaded | date:"Y-m-d G:i:s" | filler:"<i>Never</i>"}}</td>
             </tr>
           </table>
         </div>

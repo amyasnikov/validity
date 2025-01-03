@@ -101,3 +101,11 @@ def isodatetime(value, spec="seconds"):
     value = localtime(value) if value.tzinfo else value
     text = f"{value.date().isoformat()} {value.time().isoformat(spec)}"
     return mark_safe(f'<span title="{naturaltime(value)}">{text}</span>')
+
+
+@register.filter
+def filler(value, fill_with="—"):
+    """
+    Like placeholder, but with arbitrary fill_with value
+    """
+    return value if value else mark_safe(fill_with)

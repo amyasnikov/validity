@@ -377,10 +377,11 @@ class PollerSerializer(NetBoxModelSerializer):
 NestedPollerSerializer = nested_factory(PollerSerializer, nb_version=config.netbox_version)
 
 
-class BackupPointSerializer(NetBoxModelSerializer):
+class BackupPointSerializer(SubformValidationMixin, NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:backuppoint-detail")
     data_source = NestedDataSourceSerializer()
-    parameters = EncryptedDictField()
+    upload_url = serializers.CharField(source="url")
+    parameters = EncryptedDictField(do_not_encrypt=models.BackupPoint._meta.get_field("parameters").do_not_encrypt)
 
     class Meta:
         model = models.BackupPoint
@@ -390,11 +391,13 @@ class BackupPointSerializer(NetBoxModelSerializer):
             "display",
             "name",
             "data_source",
-            "backup_after_sync",
+            "enabled",
             "method",
-            "url",
+            "upload_url",
             "ignore_rules",
             "parameters",
+            "last_error",
+            "last_status",
             "last_uploaded",
             "tags",
             "custom_fields",

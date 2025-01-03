@@ -50,7 +50,7 @@ validity_menu_items = (
 polling_menu_items = (
     model_menu_item("command", "Commands", [model_add_button, model_import_button]),
     model_menu_item("poller", "Pollers", [model_add_button, model_import_button]),
-    model_menu_item("backuppoint", "Backups", [model_add_button, model_import_button]),
+    model_menu_item("backuppoint", "Backup Points", [model_add_button, model_import_button]),
 )
 
 menu = plugins.PluginMenu(

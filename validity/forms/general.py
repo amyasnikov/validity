@@ -167,11 +167,11 @@ class CommandForm(SubformMixin, NetBoxModelForm):
 class BackupPointForm(SubformMixin, NetBoxModelForm):
     class Meta:
         model = models.BackupPoint
-        fields = ("name", "data_source", "backup_after_sync", "url", "method", "ignore_rules")
+        fields = ("name", "data_source", "enabled", "url", "method", "ignore_rules", "tags")
         widgets = {"method": HTMXSelect()}
 
     main_fieldsets = [
-        FieldSet("name", "data_source", "backup_after_sync", "url", "method", "ignore_rules", name=_("Backup Point")),
+        FieldSet("name", "data_source", "enabled", "url", "method", "ignore_rules", "tags", name=_("Backup Point")),
     ]
 
 

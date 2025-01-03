@@ -314,8 +314,9 @@ class BackupPointTable(NetBoxTable):
     name = Column(linkify=True)
     data_source = Column(linkify=True)
     method = ChoiceFieldColumn()
+    last_status = ChoiceFieldColumn()
 
     class Meta(NetBoxTable.Meta):
         model = models.BackupPoint
-        fields = ("name", "method", "backup_after_sync", "data_source", "last_uploaded")
+        fields = ("name", "method", "enabled", "data_source", "last_status", "last_uploaded")
         default_columns = fields

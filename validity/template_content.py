@@ -39,9 +39,7 @@ class DataSourceTenantExtension(PluginTemplateExtension):
         tenant_qs = Tenant.objects.restrict(self.context["request"].user, "view").filter(
             custom_field_data__data_source=instance.pk
         )
-        if not (qs_count := tenant_qs.count()):
-            return ""
-        related_models = [(qs_count, tenant_qs.model, "cf_data_source")]
+        related_models = [(tenant_qs.count(), tenant_qs.model, "cf_data_source")]
         return self.render(
             "validity/inc/related_objects.html",
             extra_context={"related_models": related_models},

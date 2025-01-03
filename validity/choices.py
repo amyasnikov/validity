@@ -132,3 +132,8 @@ class JSONAPIMethodChoices(TextChoices):
 class BackupMethodChoices(TextChoices, metaclass=ColoredChoiceMeta):
     git = "git", "blue"
     S3 = "S3", "Amazon S3", "yellow"
+
+
+class BackupStatusChoices(TextChoices, metaclass=ColoredChoiceMeta):
+    completed = "completed", "green"
+    failed = "failed", "red"

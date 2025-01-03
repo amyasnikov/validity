@@ -30,6 +30,10 @@ class VDataSource(DataSource):
     class Meta:
         proxy = True
 
+    def __init__(self, *args, permit_backup: bool = True, **kwargs):
+        self.permit_backup = permit_backup
+        super().__init__(*args, **kwargs)
+
     @property
     def bound_devices(self):
         from validity.models.device import VDevice
@@ -78,7 +82,7 @@ class VDataSource(DataSource):
             DataSource.objects.filter(pk=self.pk).update(status=self.status, last_synced=self.last_synced)
             post_sync.send(sender=self.__class__, instance=self)
 
-    def partial_sync(self, device_filter: Q, batch_size: int = 1000) -> set[str]:
+    def partial_sync(self, device_filter: Q, batch_size: int = 1000, do_backup: bool = True) -> set[str]:
         def update_batch(batch):
             for datafile in self.datafiles.filter(path__in=batch).iterator():
                 if datafile.refresh_from_disk(local_path):
@@ -92,7 +96,8 @@ class VDataSource(DataSource):
             return df
 
         backend = self.get_backend()
-        fetch = backend.fetch(device_filter) if self.type == "device_polling" else backend.fetch()
+        do_backup = self.permit_backup and do_backup
+        fetch = backend.fetch(device_filter, do_backup) if self.type == "device_polling" else backend.fetch()
         with fetch as local_path, self._sync_status():
             all_new_paths = self._walk(local_path)
             updated_paths = set()
@@ -107,14 +112,14 @@ class VDataSource(DataSource):
             logger.debug("%s new files were created and %s existing files were updated during sync", created, updated)
             return all_new_paths
 
-    def sync(self, device_filter: Q | None = None):
+    def sync(self, device_filter: Q | None = None, do_backup: bool = True):
         if not device_filter or self.type != "device_polling":
             return super().sync()
-        self.partial_sync(device_filter)
+        self.partial_sync(device_filter, do_backup)
 
     def sync_in_migration(self, datafile_model: type):
         """
         This method performs sync and avoids problems with historical models which have reference to DataFile
         """
-        new_paths = self.partial_sync(Q())
+        new_paths = self.partial_sync(Q(), do_backup=False)
         datafile_model.objects.exclude(path__in=new_paths).delete()

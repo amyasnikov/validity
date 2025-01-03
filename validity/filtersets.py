@@ -141,9 +141,9 @@ class CommandFilterSet(SearchMixin, NetBoxModelFilterSet):
 
 
 class BackupPointFilterSet(SearchMixin, NetBoxModelFilterSet):
-    datasource_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
+    data_source_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
 
     class Meta:
         model = models.BackupPoint
-        fields = ("id", "name", "method", "datasource_id", "backup_after_sync", "last_uploaded")
+        fields = ("id", "name", "method", "data_source_id", "enabled", "last_uploaded", "last_status")
         search_fields = ("name",)

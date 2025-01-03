@@ -1,18 +1,11 @@
 import inspect
-from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from itertools import chain, islice
 from logging import Logger
-from typing import TYPE_CHECKING, Any, Callable, Collection, Iterable
+from typing import Callable, Collection, Iterable
 
-from core.exceptions import SyncError
-from django.db.models import Q
 from django.utils.functional import Promise
 from netbox.context import current_request
-
-
-if TYPE_CHECKING:
-    from validity.models import VDataSource
 
 
 @contextmanager
@@ -51,29 +44,6 @@ def reraise(
             if orig_error_param in inspect.signature(raise_).parameters:
                 kwargs[orig_error_param] = catched_err
         raise raise_(*args, **kwargs) from catched_err
-
-
-def datasource_sync(
-    datasources: Iterable["VDataSource"],
-    device_filter: Q | None = None,
-    threads: int = 10,
-    fail_handler: Callable[["VDataSource", Exception], Any] | None = None,
-):
-    """
-    Parrallel sync of multiple Data Sources
-    """
-
-    def sync_func(datasource):
-        try:
-            datasource.sync(device_filter)
-        except SyncError as e:
-            if fail_handler:
-                fail_handler(datasource, e)
-            else:
-                raise
-
-    with ThreadPoolExecutor(max_workers=threads) as tp:
-        any(tp.map(sync_func, datasources))
 
 
 def batched(iterable: Iterable, n: int, container: type = list):

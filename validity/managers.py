@@ -81,7 +81,7 @@ class VDataFileQS(RestrictedQuerySet):
     pass
 
 
-class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
+class VDataSourceQS(SetAttributesMixin, CustomPrefetchMixin, RestrictedQuerySet):
     def annotate_config_path(self):
         return self.annotate(device_config_path=KeyTextTransform("device_config_path", "custom_field_data"))
 
@@ -90,6 +90,11 @@ class VDataSourceQS(CustomPrefetchMixin, RestrictedQuerySet):
 
     def annotate_paths(self):
         return self.annotate_config_path().annotate_command_path()
+
+    def prefetch_files(self):
+        from validity.models import VDataFile
+
+        return self.prefetch_related(Prefetch(VDataFile.objects.all()))
 
 
 class ComplianceReportQS(ValiditySettingsMixin, RestrictedQuerySet):

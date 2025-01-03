@@ -172,8 +172,8 @@ class EncryptedDictField(JSONField):
             },
         )
 
-    def value_to_string(self, obj: Any) -> Any:
-        obj = super().value_to_string(obj)
+    def value_from_object(self, obj: Any) -> Any:
+        obj = super().value_from_object(obj)
         if isinstance(obj, EncryptedDict):
             obj = obj.encrypted
         return obj
