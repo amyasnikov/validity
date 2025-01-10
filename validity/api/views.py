@@ -12,8 +12,9 @@ from rest_framework.views import APIView
 
 from validity import di, filtersets, models
 from validity.choices import SeverityChoices
-from validity.scripts import Launcher, RunTestsParams, ScriptParams
+from validity.scripts import BackUpParams, Launcher, RunTestsParams, ScriptParams
 from . import serializers
+from .helpers import model_perms
 
 
 class RunMixin:
@@ -66,7 +67,7 @@ class ComplianceTestViewSet(RunMixin, NetBoxModelViewSet):
         self.launcher = launcher
         super().__init__(**kwargs)
 
-    @action(detail=False, methods=["post"], url_path="run")
+    @action(detail=False, methods=["post"], permission_classes=[model_perms("validity.run_compliancetest")])
     def run(self, request):
         return super().run(request)
 
@@ -105,6 +106,18 @@ class BackupPointViewSet(NetBoxModelViewSet):
     queryset = models.BackupPoint.objects.select_related("data_source")
     serializer_class = serializers.BackupPointSerializer
     filterset_class = filtersets.BackupPointFilterSet
+
+    @di.inject
+    def __init__(self, launcher: Annotated[Launcher, "backup_launcher"], **kwargs: Any) -> None:
+        self.launcher = launcher
+        super().__init__(**kwargs)
+
+    @action(detail=True, methods=["post"], permission_classes=[model_perms("validity.backup_backuppoint")])
+    def backup(self, request, pk):
+        params = BackUpParams(request=request, backuppoint_id=pk)
+        job = self.launcher(params)
+        serializer = serializers.ScriptResultSerializer({"result": job}, context={"request": request})
+        return Response(serializer.data)
 
 
 class CommandViewSet(NetBoxModelViewSet):

@@ -38,7 +38,7 @@ class PollingBackend(DataBackend):
         .annotate_datasource_id()
         .order_by("poller_id")
     )
-    backup_qs = BackupPoint.objects.filter(enabled=True)
+    backup_qs = BackupPoint.objects.filter(backup_after_sync=True)
     metainfo_file = Path("polling_info.yaml")
 
     @property

@@ -1,31 +1,41 @@
 from dataclasses import dataclass, field
 from itertools import chain, cycle, groupby, repeat
-from typing import Callable, Iterable
+from typing import Any, Callable, Collection, Iterable, Protocol
 
+from core.models import Job
 from dimi import Singleton
 from django.db.models import Q, QuerySet
 
 from validity import di
 from validity.models import BackupPoint, ComplianceSelector, VDataSource, VDevice
 from validity.utils.bulk import bulk_backup, datasource_sync
-from validity.utils.misc import batched
+from validity.utils.logger import Logger
+from validity.utils.misc import batched, md_link
 from ..data_models import FullRunTestsParams, SplitResult
 from ..exceptions import AbortScript
-from ..logger import Logger
-from .base import TerminateMixin
+from ..keeper import JobKeeper
+
+
+class BackupFn(Protocol):
+    def __call__(
+        self, backup_points: Collection[BackupPoint], *, fail_handler: Callable[["BackupPoint", Exception], Any]
+    ) -> None: ...
 
 
 @di.dependency(scope=Singleton)
 @dataclass(repr=False)
-class SplitWorker(TerminateMixin):
-    log_factory: Callable[[], Logger] = Logger
+class SplitWorker:
+    jobkeeper_factory: Callable[[Job], JobKeeper] = JobKeeper
     datasource_sync_fn: Callable[[Iterable[VDataSource], Q], None] = datasource_sync
+    backup_fn: BackupFn = bulk_backup
     device_batch_size: int = 2000
     datasource_queryset: QuerySet[VDataSource] = field(
         default_factory=VDataSource.objects.set_attribute("permit_backup", False).all
     )
     device_queryset: QuerySet[VDevice] = field(default_factory=VDevice.objects.all)
-    backup_queryset: QuerySet[BackupPoint] = field(default_factory=BackupPoint.objects.filter(enabled=True).all)
+    backup_queryset: QuerySet[BackupPoint] = field(
+        default_factory=BackupPoint.objects.filter(backup_after_sync=True).all
+    )
 
     def datasources_to_sync(self, overriding_datasource: int | None, device_filter: Q) -> QuerySet[VDataSource]:
         if overriding_datasource:
@@ -53,8 +63,11 @@ class SplitWorker(TerminateMixin):
         return datasources
 
     def backup_datasources(self, datasources: QuerySet[VDataSource], logger: Logger) -> None:
+        def fail_handler(backup_point, error):
+            logger.failure(f"Cannot back up {md_link(backup_point)}. {error}")
+
         backup_points = list(self.backup_queryset.filter(data_source__in=datasources))
-        bulk_backup(backup_points)
+        self.backup_fn(backup_points, fail_handler=fail_handler)
         if backup_points:
             bp_names = ", ".join(bp.name for bp in backup_points)
             logger.info(f"Data Sources have been backed up to the following Backup Points: {bp_names}")
@@ -114,13 +127,11 @@ class SplitWorker(TerminateMixin):
 
     def __call__(self, params: FullRunTestsParams) -> SplitResult:
         job = params.get_job()
-        with self.terminate_job_on_error(job):
-            job.start()
+        with self.jobkeeper_factory(job) as keeper:
             job.object_type.model_class().objects.delete_old()
-            logger = self.log_factory()
             device_filter = params.get_device_filter()
             if params.sync_datasources:
-                datasources = self.sync_datasources(params.overriding_datasource, device_filter, logger)
-                self.backup_datasources(datasources, logger)
-            slices = self.distribute_work(params, logger, device_filter)
-            return SplitResult(log=logger.messages, slices=slices)
+                datasources = self.sync_datasources(params.overriding_datasource, device_filter, keeper.logger)
+                self.backup_datasources(datasources, keeper.logger)
+            slices = self.distribute_work(params, keeper.logger, device_filter)
+            return SplitResult(log=keeper.logger.messages, slices=slices)

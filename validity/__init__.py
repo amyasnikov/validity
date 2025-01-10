@@ -29,16 +29,16 @@ class NetBoxValidityConfig(PluginConfig):
     # custom field
     netbox_version = NetboxVersion(VERSION)
 
-    def _setup_queue(self):
-        queue_name = di["validity_settings"].runtests_queue
+    def _setup_queues(self):
         django_settings = di["django_settings"]
-        if queue_name not in django_settings.RQ_QUEUES:
-            django_settings.RQ_QUEUES[queue_name] = django_settings.RQ_PARAMS
+        for _, queue_name in di["validity_settings"].custom_queues:
+            if queue_name not in django_settings.RQ_QUEUES:
+                django_settings.RQ_QUEUES[queue_name] = django_settings.RQ_PARAMS
 
     def ready(self):
         from validity import dependencies, signals
 
-        self._setup_queue()
+        self._setup_queues()
         return super().ready()
 
 

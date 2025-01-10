@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any, Callable, Collection, Iterable
 from core.exceptions import SyncError
 from django.db.models import Q
 
+from validity.integrations.errors import IntegrationError
+
 
 if TYPE_CHECKING:
     from validity.models import BackupPoint, VDataSource
@@ -32,7 +34,24 @@ def datasource_sync(
         any(tp.map(sync_func, datasources))
 
 
-def bulk_backup(backup_points: Collection["BackupPoint"], threads: int = 5) -> None:
+def bulk_backup(
+    backup_points: Collection["BackupPoint"],
+    threads: int = 5,
+    fail_handler: Callable[["BackupPoint", Exception], Any] | None = None,
+) -> None:
+    """
+    Parallel backup of multiple backup points
+    """
+
+    from validity.models import BackupPoint
+
+    def backup(point):
+        try:
+            point.do_backup()
+        except IntegrationError as e:
+            if fail_handler:
+                fail_handler(point, e)
+
     with ThreadPoolExecutor(max_workers=threads) as tp:
-        any(tp.map(BackupPoint.do_backup, backup_points))
+        any(tp.map(backup, backup_points))
     BackupPoint.objects.bulk_update(backup_points, fields=["last_uploaded", "last_error", "last_status"])

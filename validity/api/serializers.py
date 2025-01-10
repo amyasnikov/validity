@@ -391,7 +391,7 @@ class BackupPointSerializer(SubformValidationMixin, NetBoxModelSerializer):
             "display",
             "name",
             "data_source",
-            "enabled",
+            "backup_after_sync",
             "method",
             "upload_url",
             "ignore_rules",

@@ -1,3 +1,4 @@
+import logging
 from fnmatch import fnmatchcase
 from typing import Annotated, Any
 
@@ -11,10 +12,12 @@ from validity import di
 from validity.choices import BackupMethodChoices, BackupStatusChoices
 from validity.data_backup import BackupBackend
 from validity.fields import EncryptedDict, EncryptedDictField
-from validity.integrations.errors import IntegrationError
 from validity.subforms import GitBackupForm, S3BackupForm
 from .base import BaseModel, SubformMixin
 from .data import VDataSource
+
+
+logger = logging.getLogger(__name__)
 
 
 class BackupPoint(SubformMixin, BaseModel):
@@ -22,8 +25,8 @@ class BackupPoint(SubformMixin, BaseModel):
     data_source = models.ForeignKey(
         VDataSource, verbose_name=_("Data Source"), on_delete=models.CASCADE, related_name="backup_points"
     )
-    enabled = models.BooleanField(
-        _("Enabled"), help_text=_("Perform a backup every time the linked Data Source is being synced"), default=True
+    backup_after_sync = models.BooleanField(
+        _("Back Up After Sync"), help_text=_("Back up every time the linked Data Source is being synced"), default=True
     )
     method = models.CharField(_("Backup Method"), choices=BackupMethodChoices.choices, max_length=20)
     # TODO: add link to the docs specifying possible URLs
@@ -40,16 +43,18 @@ class BackupPoint(SubformMixin, BaseModel):
     last_status = models.CharField(_("Last Status"), editable=False, blank=True, choices=BackupStatusChoices.choices)
     last_error = models.CharField(_("Last Error"), editable=False, blank=True)
 
-    clone_fields = ("data_source", "url", "enabled", "method", "ignore_rules", "parameters")
+    clone_fields = ("data_source", "url", "backup_after_sync", "method", "ignore_rules", "parameters")
     subform_type_field = "method"
     subform_json_field = "parameters"
     subforms = {"git": GitBackupForm, "S3": S3BackupForm}
-    always_ignore = {"polling_info.yaml"}
 
     class Meta:
         verbose_name = _("Backup Point")
         verbose_name_plural = _("Backup Points")
         ordering = ("name",)
+        permissions = [
+            ("backup", "Can back up Data Source contents"),
+        ]
 
     @di.inject
     def __init__(self, *args: Any, backup_backend: Annotated[BackupBackend, ...], **kwargs: Any) -> None:
@@ -87,15 +92,14 @@ class BackupPoint(SubformMixin, BaseModel):
             self._backup_backend(self)
             self.last_status = BackupStatusChoices.completed
             self.last_error = ""
-        except IntegrationError as e:
-            self.last_error = str(e)
+        except Exception as e:
+            self.last_error = repr(e)
             self.last_status = BackupStatusChoices.failed
+            raise
         finally:
             self.last_uploaded = timezone.now()
 
     def ignore_file(self, path: str) -> bool:
-        if path in self.always_ignore:
-            return True
         for rule in self.ignore_rules.splitlines():
             if fnmatchcase(path, rule):
                 return True

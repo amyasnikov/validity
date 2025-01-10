@@ -5,6 +5,7 @@ from typing import Sequence
 from django.core.exceptions import ValidationError
 from django.db.models import ManyToManyField
 from netbox.api.serializers import WritableNestedSerializer
+from rest_framework.permissions import BasePermission
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import HyperlinkedIdentityField, JSONField, ModelSerializer
 
@@ -50,6 +51,18 @@ def proxy_factory(
     if fields:
         meta = meta_factory(serializer_class.Meta, fields=fields)
     return type(serializer_class.__name__, (serializer_class,), {"url": url, "Meta": meta})
+
+
+def model_perms(*permissions: str) -> type[BasePermission]:
+    """
+    Returns permission class suitable for a list of django model permissions
+    """
+
+    class Permission(BasePermission):
+        def has_permission(self, request, view):
+            return request.user.is_authenticated and request.user.has_perms([permissions])
+
+    return Permission
 
 
 class EncryptedDictField(JSONField):

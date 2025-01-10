@@ -10,8 +10,8 @@ from validity import di
 from validity.compliance.eval.eval_defaults import DEFAULT_NAMESET
 from validity.compliance.exceptions import EvalError, SerializationError
 from validity.models import ComplianceSelector, ComplianceTest, ComplianceTestResult, NameSet, VDataSource, VDevice
+from validity.utils.logger import Logger
 from ..data_models import ExecutionResult, FullRunTestsParams, TestResultRatio
-from ..logger import Logger
 from ..parent_jobs import JobExtractor
 
 
@@ -21,11 +21,11 @@ class TestExecutor:
     """
 
     def __init__(
-        self, worker_id: int, explanation_verbosity: int, report_id: int, extra_globals: dict[str, Any] | None = None
+        self, logger: Logger, explanation_verbosity: int, report_id: int, extra_globals: dict[str, Any] | None = None
     ) -> None:
         self.explanation_verbosity = explanation_verbosity
         self.report_id = report_id
-        self.log = Logger(script_id=f"Worker {worker_id}")
+        self.log = logger
         self.results_count = 0
         self.results_passed = 0
         self._nameset_functions = {}
@@ -135,27 +135,27 @@ class ApplyWorker:
     Provides a function to execute specified tests, save the results to DB and return ExecutionResult
     """
 
-    test_executor_factory: Callable[[int, int, int], TestExecutor] = partial(
+    test_executor_factory: Callable[[Logger, int, int], TestExecutor] = partial(
         TestExecutor, extra_globals=DEFAULT_NAMESET
     )
-    logger_factory: Callable[[str], Logger] = Logger
+    logger: Annotated[Logger, ...]
     device_test_gen: type[DeviceTestIterator] = DeviceTestIterator
     result_batch_size: Annotated[int, "validity_settings.result_batch_size"]
     job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
     testresult_queryset: QuerySet[ComplianceTestResult] = field(default_factory=ComplianceTestResult.objects.all)
 
     def __call__(self, *, params: FullRunTestsParams, worker_id: int) -> ExecutionResult:
-        try:
-            executor = self.test_executor_factory(worker_id, params.explanation_verbosity, params.report_id)
-            test_results = self.get_test_results(params, worker_id, executor)
-            self.save_results_to_db(test_results)
-            return ExecutionResult(
-                TestResultRatio(executor.results_passed, executor.results_count), executor.log.messages
-            )
-        except Exception as err:
-            logger = self.logger_factory(f"Worker {worker_id}")
-            logger.log_exception(err)
-            return ExecutionResult(test_stat=TestResultRatio(0, 0), log=logger.messages, errored=True)
+        with self.logger.script_id(f"Worker #{worker_id}"):
+            try:
+                executor = self.test_executor_factory(self.logger, params.explanation_verbosity, params.object_id)
+                test_results = self.get_test_results(params, worker_id, executor)
+                self.save_results_to_db(test_results)
+                return ExecutionResult(
+                    TestResultRatio(executor.results_passed, executor.results_count), executor.log.messages
+                )
+            except Exception as err:
+                self.logger.log_exception(err)
+                return ExecutionResult(test_stat=TestResultRatio(0, 0), log=self.logger.messages, errored=True)
 
     def get_test_results(
         self, params: FullRunTestsParams, worker_id: int, executor: TestExecutor

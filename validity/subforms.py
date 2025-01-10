@@ -147,7 +147,9 @@ class GitBackupForm(BaseSubform):
 
 class S3BackupForm(BaseSubform):
     aws_access_key_id = forms.CharField(label=_("AWS access key ID"))
-    aws_secret_access_key = forms.CharField(label=_("AWS secret access key. Will be encrypted before saving"))
+    aws_secret_access_key = forms.CharField(
+        label=_("AWS secret access key"), help_text=_("Will be encrypted before saving")
+    )
     archive = forms.BooleanField(required=False, help_text=_("Compress the repo into zip archive before uploading"))
 
     sensitive_fields = {"aws_secret_access_key"}

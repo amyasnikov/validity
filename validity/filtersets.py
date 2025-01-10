@@ -145,5 +145,5 @@ class BackupPointFilterSet(SearchMixin, NetBoxModelFilterSet):
 
     class Meta:
         model = models.BackupPoint
-        fields = ("id", "name", "method", "data_source_id", "enabled", "last_uploaded", "last_status")
+        fields = ("id", "name", "method", "data_source_id", "backup_after_sync", "last_uploaded", "last_status")
         search_fields = ("name",)

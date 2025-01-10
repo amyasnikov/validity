@@ -222,4 +222,4 @@ class BackupPointImportForm(SubFormMixin, NetBoxModelImportForm):
 
     class Meta:
         model = models.BackupPoint
-        fields = ("name", "data_source", "enabled", "url", "method", "ignore_rules", "parameters")
+        fields = ("name", "data_source", "backup_after_sync", "url", "method", "ignore_rules", "parameters")

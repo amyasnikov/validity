@@ -18,6 +18,8 @@ register = template.Library()
 
 @register.filter
 def colored_choice(obj: Model, field: str) -> str:
+    if not (raw_value := getattr(obj, field)):
+        return raw_value
     value = getattr(obj, f"get_{field}_display")
     color = getattr(obj, f"get_{field}_color")
     return mark_safe(f'<span class="badge {bg()}-{color()}">{value()}</span>')

@@ -13,14 +13,14 @@ from django.urls import reverse
 from extras.events import flush_events
 
 from validity import di
-from validity.models import ComplianceReport
+from validity.models import ComplianceReport, ComplianceTestResult
 from validity.netbox_changes import QUEUE_CREATE_ACTION, enqueue_event
-from ..data_models import FullRunTestsParams, Message, RequestInfo, TestResultRatio
+from validity.utils.logger import Logger, Message
+from ..data_models import FullRunTestsParams, RequestInfo, TestResultRatio
 from ..exceptions import AbortScript
+from ..keeper import JobKeeper
 from ..launch import Launcher
-from ..logger import Logger
 from ..parent_jobs import JobExtractor
-from .base import TerminateMixin
 
 
 def enqueue(report: ComplianceReport, request: RequestInfo):
@@ -31,13 +31,14 @@ def enqueue(report: ComplianceReport, request: RequestInfo):
 
 @di.dependency(scope=Singleton)
 @dataclass(repr=False, kw_only=True)
-class CombineWorker(TerminateMixin):
-    log_factory: Callable[[], Logger] = Logger
+class CombineWorker:
+    jobkeeper_factory: Callable[[Job], JobKeeper] = JobKeeper
     job_extractor_factory: Callable[[], JobExtractor] = JobExtractor
     enqueue_func: Callable[[ComplianceReport, RequestInfo], None] = enqueue
     report_queryset: QuerySet[ComplianceReport] = field(
         default_factory=ComplianceReport.objects.annotate_result_stats().count_devices_and_tests
     )
+    testresult_queryset: QuerySet[ComplianceTestResult] = field(default_factory=ComplianceTestResult.objects.all)
 
     def fire_report_webhook(self, report_id: int, request: RequestInfo) -> None:
         report = self.report_queryset.get(pk=report_id)
@@ -78,15 +79,22 @@ class CombineWorker(TerminateMixin):
         if error_logs:
             raise AbortScript("ApplyWorkerError", status=JobStatusChoices.STATUS_ERRORED, logs=error_logs)
 
+    def get_job_keeper(self, job: Job) -> JobKeeper:
+        def error_callback(keeper):
+            keeper.logger.info("Database changes have been reverted")
+            self.testresult_queryset.filter(report_id=keeper.job.object_id).raw_delete()
+
+        keeper = self.jobkeeper_factory(job)
+        keeper.error_callbacks = [error_callback]
+        return keeper
+
     def __call__(self, params: FullRunTestsParams) -> Any:
         netbox_job = params.get_job()
-        with self.terminate_job_on_error(netbox_job):
+        with self.get_job_keeper(netbox_job) as keeper:
             job_extractor = self.job_extractor_factory()
             self.abort_if_apply_errors(job_extractor)
-            self.fire_report_webhook(params.report_id, params.request)
+            self.fire_report_webhook(params.object_id, params.request)
             self.schedule_next_job(params, netbox_job)
-            logs = self.compose_logs(self.log_factory(), job_extractor, params.report_id)
+            keeper.logger.messages = self.compose_logs(keeper.logger, job_extractor, params.object_id)
             test_stats = self.count_test_stats(job_extractor)
-            self.terminate_job(
-                netbox_job, JobStatusChoices.STATUS_COMPLETED, logs=logs, output={"statistics": test_stats.serialized}
-            )
+            keeper.terminate_job(JobStatusChoices.STATUS_COMPLETED, output={"statistics": test_stats.serialized})

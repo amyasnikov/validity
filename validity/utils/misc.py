@@ -4,6 +4,7 @@ from itertools import chain, islice
 from logging import Logger
 from typing import Callable, Collection, Iterable
 
+from django.db.models import Model
 from django.utils.functional import Promise
 from netbox.context import current_request
 
@@ -91,3 +92,11 @@ class LazyIterator(Promise):
 
     def __iter__(self):
         yield from chain.from_iterable(part() if callable(part) else part for part in self._parts)
+
+
+def md_link(model: Model) -> str:
+    """
+    Turns django model instance into markdown link
+    """
+    url = model.get_absolute_url()
+    return f"[{model}]({url})"

@@ -318,5 +318,5 @@ class BackupPointTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = models.BackupPoint
-        fields = ("name", "method", "enabled", "data_source", "last_status", "last_uploaded")
+        fields = ("name", "method", "backup_after_sync", "data_source", "last_status", "last_uploaded")
         default_columns = fields

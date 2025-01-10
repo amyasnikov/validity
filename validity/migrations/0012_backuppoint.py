@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('last_updated', models.DateTimeField(auto_now=True, null=True)),
                 ('custom_field_data', models.JSONField(blank=True, default=dict, encoder=utilities.json.CustomFieldJSONEncoder)),
                 ('name', models.CharField(max_length=255, unique=True)),
-                ('enabled', models.BooleanField()),
+                ('backup_after_sync', models.BooleanField()),
                 ('method', models.CharField(max_length=20)),
                 ('url', models.CharField(max_length=255, validators=[django.core.validators.URLValidator(schemes=['http', 'https'])])),
                 ('ignore_rules', models.TextField(blank=True)),

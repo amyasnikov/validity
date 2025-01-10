@@ -1,6 +1,14 @@
 {% extends 'generic/object.html' %}
 {% load helpers %}
 {% load validity %}
+
+{% block extra_controls %}
+<form action="." method="post">
+  {% csrf_token %}
+  <input class="btn btn-pink" type="submit" value="Back Up">
+</form>
+{% endblock %}
+
 {% block content %}
   <div class="row mb-3">
     <div class="col col-md-5">
@@ -17,8 +25,8 @@
               <td>{{ object.data_source | linkify }}</td>
             </tr>
             <tr>
-              <th scope="row">Enabled</th>
-              <td>{{ object.enabled | checkmark }}</td>
+              <th scope="row">Back Up After Sync</th>
+              <td>{{ object.backup_after_sync | checkmark }}</td>
             </tr>
             <tr>
               <th scope="row">Backup Method</th>
@@ -41,7 +49,7 @@
             <tr>
               <th scope="row">Last Status</th>
               <td>
-                {{ object.last_status | placeholder }}
+                {{ object | colored_choice:"last_status" | placeholder }}
                 {% if object.last_error %} | {{ object.last_error }}{% endif %}
               </td>
             </tr>

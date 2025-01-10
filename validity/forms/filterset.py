@@ -201,7 +201,9 @@ class BackupPointFilterForm(NetBoxModelFilterSetForm):
     data_source_id = DynamicModelMultipleChoiceField(
         label=_("Data Source"), queryset=DataSource.objects.all(), required=False
     )
-    enabled = NullBooleanField(label=_("Enabled"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES))
+    backup_after_sync = NullBooleanField(
+        label=_("Back Up After Sync"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES)
+    )
     method = PlaceholderChoiceField(required=False, label=_("Backup Method"), choices=BackupMethodChoices.choices)
     last_status = PlaceholderChoiceField(required=False, label=_("Last Status"), choices=BackupStatusChoices.choices)
     last_uploaded__lte = DateTimeField(required=False, widget=DateTimePicker(), label=_("Last Uploaded Before"))
