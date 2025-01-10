@@ -11,8 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from netbox.config import ConfigItem
 from netbox.data_backends import DataBackend
 
-from validity.models import BackupPoint, VDevice
-from validity.utils.bulk import bulk_backup
+from validity.models import VDevice
 from .pollers.result import DescriptiveError, PollingInfo
 
 
@@ -38,7 +37,6 @@ class PollingBackend(DataBackend):
         .annotate_datasource_id()
         .order_by("poller_id")
     )
-    backup_qs = BackupPoint.objects.filter(backup_after_sync=True)
     metainfo_file = Path("polling_info.yaml")
 
     @property
@@ -73,12 +71,8 @@ class PollingBackend(DataBackend):
                 result_generators.append(poller.get_backend().poll(device_group))
         return result_generators, no_poller_errors
 
-    def backup_datasource(self):
-        backup_points = self.backup_qs.filter(data_source__pk=self.datasource_id)
-        bulk_backup(backup_points)
-
     @contextmanager
-    def fetch(self, device_filter: Q | None = None, do_backup: bool = True):
+    def fetch(self, device_filter: Q | None = None):
         with TemporaryDirectory() as dir_name:
             devices = self.bound_devices_qs(device_filter or Q())
             result_generators, errors = self.start_polling(devices)
@@ -89,8 +83,6 @@ class PollingBackend(DataBackend):
             polling_info = PollingInfo(devices_polled=devices.count(), errors=errors, partial_sync=bool(device_filter))
             self.write_metainfo(dir_name, polling_info)
             yield dir_name
-            if do_backup:
-                self.backup_datasource()
 
 
 backends = [PollingBackend]
