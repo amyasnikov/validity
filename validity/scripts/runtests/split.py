@@ -54,10 +54,7 @@ class SplitWorker:
         datasources = self.datasources_to_sync(overriding_datasource, device_filter)
         if datasources.exists():
             self.datasource_sync_fn(datasources, device_filter)
-            logger.info(
-                "The following Data Sources have been synced: "
-                + ", ".join(sorted(f'"{ds.name}"' for ds in datasources))
-            )
+            logger.info("The following Data Sources have been synced: " + ", ".join(md_link(ds) for ds in datasources))
         else:
             logger.warning("No bound Data Sources found. Sync skipped")
         return datasources
@@ -69,8 +66,8 @@ class SplitWorker:
         backup_points = list(self.backup_queryset.filter(data_source__in=datasources))
         self.backup_fn(backup_points, fail_handler=fail_handler)
         if backup_points:
-            bp_names = ", ".join(bp.name for bp in backup_points)
-            logger.info(f"Data Sources have been backed up to the following Backup Points: {bp_names}")
+            bp_names = ", ".join(md_link(bp) for bp in backup_points)
+            logger.info(f"Data Sources have been backed up using the following Backup Points: {bp_names}")
 
     def _work_slices(
         self, selector_qs: QuerySet[ComplianceSelector], specific_devices: list[int], devices_per_worker: int
