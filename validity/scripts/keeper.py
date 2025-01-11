@@ -16,8 +16,9 @@ class JobKeeper:
     """
 
     job: Job
-    error_callbacks: list[Callable[[Job], None]] = field(default_factory=list)
+    error_callback: Callable[["JobKeeper", Exception], None] = lambda *_: None  # noqa: E731
     logger: Logger = field(default_factory=lambda: di["Logger"])
+    auto_terminate: bool = True
 
     def __enter__(self):
         self.job.start()
@@ -26,16 +27,11 @@ class JobKeeper:
     def __exit__(self, exc_type, exc, tb):
         if exc_type:
             self.terminate_errored_job(exc)
-        elif self.job.status == JobStatusChoices.STATUS_RUNNING:
+        elif self.job.status == JobStatusChoices.STATUS_RUNNING and self.auto_terminate:
             self.terminate_job()
         self.logger.flush()
 
-    def _exec_callbacks(self):
-        for callback in self.error_callbacks:
-            callback(self)
-
     def terminate_errored_job(self, error: Exception) -> None:
-        self._exec_callbacks()
         if isinstance(error, AbortScript):
             self.logger.messages.extend(error.logs)
             self.logger.failure(str(error))
@@ -43,6 +39,7 @@ class JobKeeper:
         else:
             self.logger.log_exception(error)
             status = JobStatusChoices.STATUS_ERRORED
+        self.error_callback(self, error)
         self.terminate_job(status=status, error=repr(error))
 
     def terminate_job(

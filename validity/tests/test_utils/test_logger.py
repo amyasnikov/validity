@@ -1,6 +1,6 @@
 import pytest
 
-from validity.scripts.logger import Logger
+from validity.utils.logger import Logger
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def test_logger(error_with_traceback):
             "status": "failure",
             "message": (
                 "Unhandled error occured: `<class 'ValueError'>: error`\n```\n  "
-                'File "/plugin/validity/validity/tests/test_scripts/test_logger.py", '
+                f'File "{__file__}", '
                 """line 10, in error_with_traceback\n    raise ValueError("error")\n\n```"""
             ),
         },

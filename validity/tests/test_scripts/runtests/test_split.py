@@ -10,6 +10,7 @@ from factories import DataSourceFactory, DeviceFactory, RunTestsJobFactory, Sele
 
 from validity.scripts.data_models import Message, SplitResult
 from validity.scripts.runtests.split import SplitWorker
+from validity.utils.logger import Logger
 
 
 @pytest.fixture
@@ -50,9 +51,7 @@ def split_worker():
 def test_distribute_work(split_worker, selectors, worker_num, runtests_params, expected_result, devices):
     runtests_params.workers_num = worker_num
     runtests_params.selectors = [s.pk for s in selectors]
-    result = split_worker.distribute_work(
-        runtests_params, split_worker.log_factory(), runtests_params.get_device_filter()
-    )
+    result = split_worker.distribute_work(runtests_params, Logger(), runtests_params.get_device_filter())
     assert result == expected_result
 
 
@@ -103,13 +102,11 @@ def test_call(selectors, devices, runtests_params, monkeypatch):
                 status="info",
                 message="Running the tests for *2 devices*",
                 time=datetime.datetime(2000, 1, 1, 0, 0),
-                script_id=None,
             ),
             Message(
                 status="info",
                 message="Distributing the work among 2 workers. Each worker handles 1 device(s) in average",
                 time=datetime.datetime(2000, 1, 1, 0, 0),
-                script_id=None,
             ),
         ],
         slices=[{1: [1]}, {2: [2]}],

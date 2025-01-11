@@ -218,18 +218,16 @@ class TestRunTests:
         assert resp.status_code == HTTPStatus.OK
 
     @pytest.mark.parametrize(
-        "form_data, status_code, worker_count",
+        "form_data, status_code, has_workers",
         [
-            ({}, HTTPStatus.FOUND, 1),
-            ({}, HTTPStatus.OK, 0),
-            ({"devices": [1, 2]}, HTTPStatus.OK, 1),  # devices do not exist
+            ({}, HTTPStatus.FOUND, True),
+            ({}, HTTPStatus.OK, False),
+            ({"devices": [1, 2]}, HTTPStatus.OK, True),  # devices do not exist
         ],
     )
-    def test_post(self, admin_client, di, form_data, status_code, worker_count):
-        launcher = Mock(**{"rq_queue.name": "queue_1", "return_value.pk": 1})
-        with di.override(
-            {dependencies.runtests_launcher: lambda: launcher, dependencies.runtests_worker_count: lambda: worker_count}
-        ):
+    def test_post(self, admin_client, di, form_data, status_code, has_workers):
+        launcher = Mock(**{"has_workers": has_workers, "return_value.pk": 1})
+        with di.override({dependencies.runtests_launcher: lambda: launcher}):
             result = admin_client.post(self.url, form_data)
             assert result.status_code == status_code
             if status_code == HTTPStatus.FOUND:  # if form is valid

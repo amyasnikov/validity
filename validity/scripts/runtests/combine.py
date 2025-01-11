@@ -80,12 +80,12 @@ class CombineWorker:
             raise AbortScript("ApplyWorkerError", status=JobStatusChoices.STATUS_ERRORED, logs=error_logs)
 
     def get_job_keeper(self, job: Job) -> JobKeeper:
-        def error_callback(keeper):
+        def error_callback(keeper, error):
             keeper.logger.info("Database changes have been reverted")
             self.testresult_queryset.filter(report_id=keeper.job.object_id).raw_delete()
 
         keeper = self.jobkeeper_factory(job)
-        keeper.error_callbacks = [error_callback]
+        keeper.error_callback = error_callback
         return keeper
 
     def __call__(self, params: FullRunTestsParams) -> Any:

@@ -9,6 +9,7 @@ from validity.scripts.data_models import ExecutionResult, Message
 from validity.scripts.data_models import TestResultRatio as ResultRatio
 from validity.scripts.exceptions import AbortScript
 from validity.scripts.runtests.combine import CombineWorker
+from validity.utils.logger import Logger
 
 
 @pytest.fixture
@@ -38,9 +39,8 @@ def job_extractor(messages):
 # but according to netbox4.0 strange behaviour reverse() finally causes it
 @pytest.mark.django_db
 def test_compose_logs(worker, messages, job_extractor):
-    logger = worker.log_factory()
     time = messages[0].time
-    logs = worker.compose_logs(logger, job_extractor, report_id=10)
+    logs = worker.compose_logs(Logger(), job_extractor, report_id=10)
     assert len(logs) == 6
     assert logs[:5] == messages
     last_msg = replace(logs[-1], time=time)

@@ -11,6 +11,7 @@ from validity.scripts.data_models import ExecutionResult
 from validity.scripts.data_models import TestResultRatio as ResultRatio
 from validity.scripts.runtests.apply import ApplyWorker, DeviceTestIterator
 from validity.scripts.runtests.apply import TestExecutor as TExecutor
+from validity.utils.logger import Logger
 
 
 NS_1 = """
@@ -48,7 +49,7 @@ NS_3 = "some wrong syntax"
 )
 @pytest.mark.django_db
 def test_nameset_functions(nameset_texts, extracted_fn_names, warning_calls):
-    script = TExecutor(1, 2, 10)
+    script = TExecutor(Logger(), 2, 10)
     namesets = [NameSetDBFactory(definitions=d) for d in nameset_texts]
     functions = script.nameset_functions(namesets)
     assert extracted_fn_names == functions.keys()
@@ -73,7 +74,7 @@ __all__ = ['func']
 )
 @pytest.mark.django_db
 def test_builtins_are_available_in_nameset(definitions):
-    script = TExecutor(10, 20, 30, extra_globals=DEFAULT_NAMESET)
+    script = TExecutor(Logger(), 20, 30, extra_globals=DEFAULT_NAMESET)
     namesets = [NameSetDBFactory(definitions=definitions)]
     functions = script.nameset_functions(namesets)
     functions["func"]()
@@ -89,7 +90,7 @@ def test_run_tests_for_device():
     tests[0].run.return_value = True, []
     tests[1].run.return_value = False, [("some", "explanation")]
     tests[2].run.side_effect = EvalError("some test error")
-    executor = TExecutor(10, explanation_verbosity=2, report_id=30)
+    executor = TExecutor(Logger(), explanation_verbosity=2, report_id=30)
     results = [
         {
             "passed": r.passed,
@@ -132,6 +133,7 @@ def apply_worker():
     job_extractor_factory = Mock()
     job_extractor_factory.return_value.parent.job.result.slices = [None, {1: [1, 2, 3]}]
     return ApplyWorker(
+        logger=Logger(),
         testresult_queryset=Mock(),
         test_executor_factory=Mock(return_value=executor),
         result_batch_size=100,
@@ -160,8 +162,7 @@ def test_applyworker_success(full_runtests_params, apply_worker):
 
 
 @dataclass
-class MockLogger:
-    script_id: str
+class MockLogger(Logger):
     messages: list = field(default_factory=list, init=False)
 
     def log_exception(self, m):
@@ -171,6 +172,6 @@ class MockLogger:
 @pytest.mark.django_db
 def test_applyworker_exception(full_runtests_params, apply_worker):
     apply_worker.test_executor_factory = Mock(side_effect=ValueError("some error"))
-    apply_worker.logger_factory = MockLogger
+    apply_worker.logger = MockLogger()
     result = apply_worker(params=full_runtests_params, worker_id=1)
     assert result == ExecutionResult(test_stat=ResultRatio(passed=0, total=0), log=["some error"], errored=True)

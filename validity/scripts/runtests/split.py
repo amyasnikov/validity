@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from functools import partial
 from itertools import chain, cycle, groupby, repeat
 from typing import Any, Callable, Collection, Iterable, Protocol
 
@@ -25,7 +26,7 @@ class BackupFn(Protocol):
 @di.dependency(scope=Singleton)
 @dataclass(repr=False)
 class SplitWorker:
-    jobkeeper_factory: Callable[[Job], JobKeeper] = JobKeeper
+    jobkeeper_factory: Callable[[Job], JobKeeper] = partial(JobKeeper, auto_terminate=False)
     datasource_sync_fn: Callable[[Iterable[VDataSource], Q], None] = datasource_sync
     backup_fn: BackupFn = bulk_backup
     device_batch_size: int = 2000

@@ -1,5 +1,4 @@
 import uuid
-from dataclasses import asdict
 from unittest.mock import Mock
 
 import pytest
@@ -13,8 +12,8 @@ from validity.scripts.launch import Launcher
 
 
 class ConcreteScriptParams(ScriptParams):
-    def with_job_info(self, job: Job):
-        return FullParams(**asdict(self) | {"job": job})
+    def _full_cls(self):
+        return FullParams
 
 
 class FullParams:
@@ -28,7 +27,13 @@ class FullParams:
 @pytest.fixture
 def launcher(db):
     report = ComplianceReport.objects.create()
-    return Launcher(job_name="test_launcher", job_object_factory=lambda: report, rq_queue=Mock(), tasks=[])
+    return Launcher(
+        job_name="test_launcher",
+        job_object_factory=lambda _: report,
+        rq_queue=Mock(),
+        tasks=[],
+        worker_count_fn=lambda _: 3,
+    )
 
 
 @pytest.fixture
@@ -45,7 +50,7 @@ def test_launcher(launcher, params, schedule_at):
     params.schedule_at = schedule_at
     launcher.tasks = [Task(task_func, job_timeout=60)]
     job = launcher(params)
-    assert isinstance(job, Job) and job.object == launcher.job_object_factory()
+    assert isinstance(job, Job) and job.object == launcher.job_object_factory(None)
     enqueue_fn = getattr(launcher.rq_queue, "enqueue_at" if schedule_at else "enqueue")
     enqueue_fn.assert_called_once()
     enqueue_kwargs = enqueue_fn.call_args.kwargs
