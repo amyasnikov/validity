@@ -25,13 +25,13 @@ class GitClient(ABC):
     ) -> None: ...
 
     @abstractmethod
-    def stage_all(self, repo_path: str) -> None: ...
+    def stage_all(self, local_path: str) -> None: ...
 
     @abstractmethod
     def unstage_all(self, local_path: str) -> None: ...
 
     @abstractmethod
-    def commit(self, repo_path: str, username: str, email: str, message: str) -> str:
+    def commit(self, local_path: str, username: str, email: str, message: str) -> str:
         """
         Returns SHA1 hash of the new commit
         """
@@ -67,11 +67,11 @@ class DulwichGitClient(GitClient):
         with reraise(Exception, IntegrationError):
             porcelain.clone(remote_url, local_path, checkout=checkout, **optional_args)
 
-    def stage_all(self, repo_path: str) -> None:
-        repo = Repo(repo_path)
+    def stage_all(self, local_path: str) -> None:
+        repo = Repo(local_path)
         ignore_mgr = IgnoreFilterManager.from_repo(repo)
-        unstaged_files = (fn.decode() for fn in get_unstaged_changes(repo.open_index(), repo_path))
-        untracked_files = porcelain.get_untracked_paths(repo_path, repo_path, repo.open_index())
+        unstaged_files = (fn.decode() for fn in get_unstaged_changes(repo.open_index(), local_path))
+        untracked_files = porcelain.get_untracked_paths(local_path, local_path, repo.open_index())
         files = (file for file in chain(unstaged_files, untracked_files) if not ignore_mgr.is_ignored(file))
         repo.stage(files)
 
@@ -80,9 +80,9 @@ class DulwichGitClient(GitClient):
         staged_files = chain.from_iterable(porcelain.status(local_path).staged.values())
         repo.unstage(filename.decode() for filename in staged_files)
 
-    def commit(self, repo_path: str, username: str, email: str, message: str) -> str:
+    def commit(self, local_path: str, username: str, email: str, message: str) -> str:
         author = f"{username} <{email}>".encode()
-        commit_hash = porcelain.commit(repo=repo_path, author=author, committer=author, message=message.encode())
+        commit_hash = porcelain.commit(repo=local_path, author=author, committer=author, message=message.encode())
         return commit_hash.decode()
 
     def push(

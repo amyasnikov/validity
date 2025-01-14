@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from validity import di
 from validity.choices import BackupMethodChoices, BackupStatusChoices
 from validity.data_backup import BackupBackend
-from validity.fields import EncryptedDict, EncryptedDictField
+from validity.fields import EncryptedDictField
 from validity.subforms import GitBackupForm, S3BackupForm
 from .base import BaseModel, SubformMixin
 from .data import VDataSource
@@ -79,9 +79,7 @@ class BackupPoint(SubformMixin, BaseModel):
         return BackupStatusChoices.colors.get(self.last_status)
 
     def serialize_object(self, exclude=None):
-        if not isinstance(self.parameters, EncryptedDict):
-            do_not_encrypt = self._meta.get_field("parameters").do_not_encrypt
-            self.parameters = EncryptedDict(self.parameters, do_not_encrypt=do_not_encrypt)
+        self.parameters = self._meta.get_field("parameters").to_python(self.parameters)
         return super().serialize_object(exclude)
 
     def do_backup(self) -> None:

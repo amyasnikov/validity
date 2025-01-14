@@ -39,7 +39,7 @@ class GitBackuper(Backuper):
 
     def _get_repo(self, url: str, parameters: GitParams, datasource_dir: Path) -> RemoteGitRepo:
         return RemoteGitRepo(
-            local_path=datasource_dir,
+            local_path=str(datasource_dir),
             remote_url=url,
             active_branch=parameters.branch,
             username=parameters.username,

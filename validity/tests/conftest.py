@@ -4,6 +4,7 @@ import pytest
 from core.models import DataSource
 from dcim.models import Device, DeviceType, Manufacturer
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 from extras.models import CustomField
 from graphene_django.utils.testing import graphql_query
 from tenancy.models import Tenant
@@ -88,3 +89,11 @@ def gql_query(admin_client):
 @pytest.fixture
 def di():
     return validity.di
+
+
+@pytest.fixture
+def timezone_now(monkeypatch):
+    def _now(tz):
+        monkeypatch.setattr(timezone, "now", lambda: tz)
+
+    return _now

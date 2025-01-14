@@ -3,7 +3,15 @@ from contextlib import nullcontext
 
 import pytest
 from django.core.exceptions import ValidationError
-from factories import CommandFactory, CompTestDSFactory, NameSetDSFactory, SelectorFactory, SerializerDSFactory
+from factories import (
+    BackupPointFactory,
+    CommandFactory,
+    CompTestDSFactory,
+    DataSourceFactory,
+    NameSetDSFactory,
+    SelectorFactory,
+    SerializerDSFactory,
+)
 
 from validity.models import Poller
 
@@ -130,3 +138,20 @@ class TestPoller:
         ctx = nullcontext() if is_valid else pytest.raises(ValidationError)
         with ctx:
             Poller.validate_commands(connection_type="CLI", commands=commands, command_types={})
+
+
+class TestBackupPoint(BaseTestClean):
+    factory = BackupPointFactory
+    right_kwargs = [{"method": "S3", "parameters": {"archive": True}, "url": "http://e.com/buck/archive.zip"}, {}]
+    wrong_kwargs = [
+        {"method": "S3", "parameters": {"archive": True}, "url": "http://e.com/buck/folder"},
+    ]
+
+    @pytest.mark.django_db
+    def test_device_polling_only(self):
+        bp = BackupPointFactory(data_source__type="git")
+        with pytest.raises(ValidationError):
+            bp.clean()
+
+        bp.data_source = DataSourceFactory(type="device_polling")
+        bp.clean()

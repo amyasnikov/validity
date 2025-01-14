@@ -60,7 +60,7 @@ def model_perms(*permissions: str) -> type[BasePermission]:
 
     class Permission(BasePermission):
         def has_permission(self, request, view):
-            return request.user.is_authenticated and request.user.has_perms([permissions])
+            return request.user.is_authenticated and request.user.has_perms(permissions)
 
     return Permission
 
