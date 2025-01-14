@@ -5,6 +5,7 @@ import pytest
 from core.models import Job
 from django.utils import timezone
 from factories import UserFactory
+from rq.queue import Queue
 
 from validity.models import ComplianceReport
 from validity.scripts.data_models import RequestInfo, ScriptParams, Task
@@ -71,3 +72,8 @@ def test_multi_tasks(launcher, params):
     launcher(params)
     assert launcher.rq_queue.enqueue.call_count == 4
     assert launcher.rq_queue.enqueue.call_args.kwargs["depends_on"] == [launcher.rq_queue.enqueue.return_value] * 3
+
+
+def test_factory_getqueue(launcher_factory):
+    queue = launcher_factory.get_queue("default")
+    assert isinstance(queue, Queue)

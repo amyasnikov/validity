@@ -63,11 +63,13 @@ class SplitWorker:
     def backup_datasources(self, datasources: QuerySet[VDataSource], logger: Logger) -> None:
         def fail_handler(backup_point, error):
             logger.failure(f"Cannot back up {md_link(backup_point)}. {error}")
+            failed_bp.add(backup_point)
 
-        backup_points = list(self.backup_queryset.filter(data_source__in=datasources))
+        failed_bp = set()
+        backup_points = set(self.backup_queryset.filter(data_source__in=datasources))
         self.backup_fn(backup_points, fail_handler=fail_handler)
-        if backup_points:
-            bp_names = ", ".join(md_link(bp) for bp in backup_points)
+        bp_names = ", ".join(md_link(bp) for bp in backup_points - failed_bp)
+        if bp_names:
             logger.info(f"Data Sources have been backed up using the following Backup Points: {bp_names}")
 
     def _work_slices(

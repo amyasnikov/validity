@@ -11,6 +11,7 @@ from tenancy.models import Tenant
 
 import validity
 import validity.scripts
+from validity import dependencies
 from validity.models import Poller, Serializer
 from validity.utils.orm import CustomFieldBuilder
 
@@ -97,3 +98,8 @@ def timezone_now(monkeypatch):
         monkeypatch.setattr(timezone, "now", lambda: tz)
 
     return _now
+
+
+@pytest.fixture
+def launcher_factory(di):
+    return di[dependencies.launcher_factory]

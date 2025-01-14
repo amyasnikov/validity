@@ -50,7 +50,7 @@ class Logger:
         self.messages = []
         self._script_id = None
 
-    def __enter__(self) -> None:
+    def __enter__(self) -> "Logger":
         return self
 
     def __exit__(self, ty, exc, val):
@@ -82,5 +82,5 @@ class Logger:
         self.failure(f"Unhandled error occured: `{exc_type}: {exc_value}`\n```\n{stacktrace}\n```")
 
     def flush(self):
-        self.script_id = None
+        self._script_id = None
         self.messages = []

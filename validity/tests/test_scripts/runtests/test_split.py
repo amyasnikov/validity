@@ -6,8 +6,18 @@ import pytest
 from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils import timezone
-from factories import DataSourceFactory, DeviceFactory, RunTestsJobFactory, SelectorFactory, TenantFactory
+from factories import (
+    BackupPointFactory,
+    DataSourceFactory,
+    DeviceFactory,
+    RunTestsJobFactory,
+    SelectorFactory,
+    TenantFactory,
+)
 
+from validity.data_backup import BackupBackend
+from validity.integrations.errors import IntegrationError
+from validity.models import VDataSource
 from validity.scripts.data_models import Message, SplitResult
 from validity.scripts.runtests.split import SplitWorker
 from validity.utils.logger import Logger
@@ -77,6 +87,34 @@ def test_sync_datasources(create_custom_fields, overriding_datasource):
     expected_result = [overriding_datasource] if overriding_datasource else [ds1, ds2]
     assert list(datasources) == expected_result
     logger.info.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_backup_datasources_success():
+    backup_fn = Mock()
+    bp1 = BackupPointFactory(backup_after_sync=True, name="bp1")
+    worker = SplitWorker(backup_fn=backup_fn)
+    worker.backup_datasources(VDataSource.objects.all(), Logger())
+    backup_fn.assert_called_once()
+    assert backup_fn.call_args[0][0] == {bp1}
+
+
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+def test_backup_datasources_fail(timezone_now, di):
+    timezone_now(datetime.datetime(2000, 1, 2, 3, 4, tzinfo=datetime.timezone.utc))
+    bp = BackupPointFactory(backup_after_sync=True, name="bp1")
+    worker = SplitWorker()
+    backend = Mock(side_effect=IntegrationError("ERR123"))
+    with di.override({BackupBackend: lambda: backend}):
+        worker.backup_datasources(VDataSource.objects.all(), logger := Logger())
+    backend.assert_called_once_with(bp)
+    assert logger.messages == [
+        Message(
+            status="failure",
+            message="Cannot back up [bp1](/plugins/validity/backup-points/1/). ERR123",
+            time=datetime.datetime(2000, 1, 2, 3, 4, tzinfo=datetime.timezone.utc),
+        )
+    ]
 
 
 @pytest.mark.parametrize("device_num", [2])

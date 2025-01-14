@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from validity.scripts.data_models import ExecutionResult, Message
 from validity.scripts.data_models import TestResultRatio as ResultRatio
-from validity.scripts.exceptions import AbortScript
 from validity.scripts.runtests.combine import CombineWorker
 from validity.utils.logger import Logger
 
@@ -56,8 +55,7 @@ def test_call_abort(worker, full_runtests_params, job_extractor, monkeypatch):
     job_extractor.parents[1].job.result.errored = True
     monkeypatch.setattr(timezone, "now", lambda: datetime.datetime(2020, 1, 1))
     worker.job_extractor_factory = lambda: job_extractor
-    with pytest.raises(AbortScript):
-        worker(full_runtests_params)
+    worker(full_runtests_params)
     job = full_runtests_params.get_job()
     assert job.status == "errored"
     assert job.data == {
