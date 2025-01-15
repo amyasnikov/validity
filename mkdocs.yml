@@ -19,12 +19,14 @@ nav:
     - Results & Reports: entities/results_and_reports.md
     - Pollers: entities/pollers.md
     - Commands: entities/commands.md
+    - Backup Points: entities/backuppoints.md
     - Scripts: entities/scripts.md
   - Features & Tips:
     - How to write the Tests: features/howto_write_tests.md
     - How to work with Device State: features/state.md
     - Dynamic Pairs: features/dynamic_pairs.md
     - Webhooks: features/webhooks.md
+    - Config backup: features/config_backup.md
 
 markdown_extensions:
   - pymdownx.highlight:

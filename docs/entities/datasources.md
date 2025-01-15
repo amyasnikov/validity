@@ -5,7 +5,7 @@ Data Source can be used in the following ways:
 
 * Store configuration or state data for all or particular devices
 * Be referenced by another entity containing any text information. By this moment, these entities are **Tests**, **Name Sets** and **Serializers**.
-* Data Source called **Validity Polling** is used to poll network devices and collect gathered information
+* Data Source called **Validity Polling** (with type **device_polling**) is used to poll network devices and collect gathered information
 
 ## Custom Fields
 
