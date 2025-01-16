@@ -171,9 +171,9 @@ class BackupPointForm(SubformMixin, NetBoxModelForm):
         widgets = {"method": HTMXSelect()}
 
     main_fieldsets = [
-        FieldSet(
-            "name", "data_source", "backup_after_sync", "url", "method", "ignore_rules", "tags", name=_("Backup Point")
-        ),
+        FieldSet("name", "backup_after_sync", "tags", name=_("Backup Point")),
+        FieldSet("data_source", "ignore_rules", name=_("Source")),
+        FieldSet("url", "method", name=_("Destination")),
     ]
 
 
