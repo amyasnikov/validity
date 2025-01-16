@@ -17,10 +17,14 @@ class IntegerChoiceField(ChoiceField):
 
 
 class EncryptedDictField(JSONField):
+    def __init__(self, *, do_not_encrypt=(), **kwargs: Any) -> None:
+        self.do_not_encrypt = do_not_encrypt
+        super().__init__(**kwargs)
+
     def to_python(self, value: Any) -> Any:
         value = super().to_python(value)
-        if isinstance(value, dict):
-            value = EncryptedDict(value)
+        if isinstance(value, dict) and not isinstance(value, EncryptedDict):
+            value = EncryptedDict(value, do_not_encrypt=self.do_not_encrypt)
         return value
 
 

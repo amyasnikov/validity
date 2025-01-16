@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import TYPE_CHECKING, Annotated, Collection
+from typing import TYPE_CHECKING, Annotated, Any, Collection
 
 from dcim.models import Device
 from django.core.validators import RegexValidator
@@ -99,6 +99,11 @@ class Poller(BaseModel):
     class Meta:
         ordering = ("name",)
 
+    @di.inject
+    def __init__(self, *args: Any, poller_factory: Annotated["PollerFactory", ...], **kwargs: Any) -> None:
+        self._poller_factory = poller_factory
+        super().__init__(*args, **kwargs)
+
     def __str__(self) -> str:
         return self.name
 
@@ -122,9 +127,8 @@ class Poller(BaseModel):
         """
         return next((cmd for cmd in self.commands.all() if cmd.retrieves_config), None)
 
-    @di.inject
-    def get_backend(self, poller_factory: Annotated["PollerFactory", ...]):
-        return poller_factory(self.connection_type, self.credentials, self.commands.all())
+    def get_backend(self):
+        return self._poller_factory(self.connection_type, self.credentials, self.commands.all())
 
     @staticmethod
     def validate_commands(commands: Collection[Command], command_types: dict[str, list[str]], connection_type: str):

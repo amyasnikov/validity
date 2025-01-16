@@ -1,10 +1,13 @@
+from typing import Annotated, Any
+
 from dcim.models import Device
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from validity import di
 from validity.choices import ExtractionMethodChoices
-from validity.compliance.serialization import serialize
+from validity.compliance.serialization import SerializationBackend
 from validity.subforms import (
     RouterOSSerializerForm,
     TEXTFSMSerializerForm,
@@ -24,7 +27,6 @@ class Serializer(SubformMixin, DataSourceMixin, BaseModel):
     clone_fields = ("template", "extraction_method", "data_source", "data_file")
     text_db_field_name = "template"
     requires_template = {"TTP", "TEXTFSM"}
-    _serialize = serialize
     subform_json_field = "parameters"
     subform_type_field = "extraction_method"
     subforms = {
@@ -38,6 +40,11 @@ class Serializer(SubformMixin, DataSourceMixin, BaseModel):
     class Meta:
         ordering = ("name",)
         default_permissions = ()
+
+    @di.inject
+    def __init__(self, *args: Any, backend: Annotated[SerializationBackend, ...], **kwargs: Any) -> None:
+        self._backend = backend
+        super().__init__(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name
@@ -75,4 +82,4 @@ class Serializer(SubformMixin, DataSourceMixin, BaseModel):
         return self.effective_text_field()
 
     def serialize(self, data: str) -> dict:
-        return self._serialize(self, data)
+        return self._backend(self, data)

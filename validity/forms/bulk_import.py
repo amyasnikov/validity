@@ -10,15 +10,15 @@ from utilities.forms.fields import CSVChoiceField, CSVModelChoiceField, CSVModel
 
 from validity import choices, di, models
 from validity.api.helpers import SubformValidationMixin
-from ..utils.misc import LazyIterator
+from validity.utils.misc import LazyIterator
 from .mixins import PollerCleanMixin
 
 
 class SubFormMixin(SubformValidationMixin):
     def clean(self):
         validated_data = {k: v for k, v in self.cleaned_data.items() if not k.startswith("_")}
-        self.validate(validated_data)
-        return self.cleaned_data
+        attrs = self.validate(validated_data)
+        return self.cleaned_data | attrs
 
 
 class DataSourceMixin(Form):
@@ -207,3 +207,19 @@ class PollerImportForm(PollerCleanMixin, NetBoxModelImportForm):
     class Meta:
         model = models.Poller
         fields = ("name", "connection_type", "commands", "public_credentials", "private_credentials")
+
+
+class BackupPointImportForm(SubFormMixin, NetBoxModelImportForm):
+    data_source = CSVModelChoiceField(
+        queryset=DataSource.objects.all(), to_field_name="name", help_text=_("Data Source")
+    )
+    parameters = JSONField(
+        help_text=_(
+            "JSON-encoded backup parameters depending on Method value. See REST API to check for specific keys/values"
+        )
+    )
+    method = CSVChoiceField(choices=choices.BackupMethodChoices.choices, help_text=_("Backup Method"))
+
+    class Meta:
+        model = models.BackupPoint
+        fields = ("name", "data_source", "backup_after_sync", "url", "method", "ignore_rules", "parameters")

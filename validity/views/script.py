@@ -1,13 +1,10 @@
 from typing import Annotated, Any
 
 from core.models import Job
-from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.forms import Form
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import render
-from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 from django.views.generic.edit import FormView
 from netbox.views.generic import ObjectView
 from netbox.views.generic.mixins import TableMixin
@@ -15,39 +12,23 @@ from netbox.views.generic.mixins import TableMixin
 from validity import di
 from validity.forms import RunTestsForm
 from validity.netbox_changes import htmx_partial
-from validity.scripts.data_models import RunTestsParams, ScriptParams
-from validity.scripts.launch import Launcher
+from validity.scripts import Launcher, RunTestsParams, ScriptParams
 from validity.tables import ScriptResultTable
+from .base import LauncherMixin
 
 
-class RunScriptView(PermissionRequiredMixin, FormView):
+class RunScriptView(LauncherMixin, PermissionRequiredMixin, FormView):
     template_name = "validity/scripts/run.html"
-    redirect_viewname = "plugins:validity:script_result"
     params_class: type[ScriptParams]
     empty_form_values = ("", None)
-
-    # these params must be injected into __init__
-    launcher: Launcher
-    worker_count: int
 
     def get_params(self, form: Form):
         form_data = {field: value for field, value in form.cleaned_data.items() if value not in self.empty_form_values}
         return self.params_class(request=self.request, **form_data)
 
-    def get_success_url(self, job_id: int) -> str:
-        return reverse(self.redirect_viewname, kwargs={"pk": job_id})
-
     def form_valid(self, form: Form) -> HttpResponse:
-        if self.worker_count == 0:
-            messages.error(
-                self.request,
-                _('Unable to run script: no running RQ worker found for the queue "{}"').format(
-                    self.launcher.rq_queue.name
-                ),
-            )
-            return self.render_to_response(self.get_context_data())
-        job = self.launcher(self.get_params(form))
-        return HttpResponseRedirect(self.get_success_url(job.pk))
+        params = self.get_params(form)
+        return self.launch_or_render_error(params)
 
 
 class RunTestsView(RunScriptView):
@@ -56,19 +37,13 @@ class RunTestsView(RunScriptView):
     permission_required = "validity.run_compliancetest"
 
     @di.inject
-    def __init__(
-        self,
-        launcher: Annotated[Launcher, "runtests_launcher"],
-        worker_count: Annotated[int, "runtests_worker_count"],
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, launcher: Annotated[Launcher, "runtests_launcher"], **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.launcher = launcher
-        self.worker_count = worker_count
 
 
 class ScriptResultView(PermissionRequiredMixin, TableMixin, ObjectView):
-    queryset = Job.objects.filter(object_type__model="compliancereport", object_type__app_label="validity")
+    queryset = Job.objects.filter(object_type__app_label="validity")
     table_class = ScriptResultTable
     template_name = "validity/scripts/result.html"
     htmx_template_name = "validity/scripts/result_htmx.html"

@@ -1,3 +1,4 @@
+from .backup import BackupPoint
 from .data import VDataFile, VDataSource
 from .device import VDevice
 from .nameset import NameSet

@@ -1,14 +1,35 @@
+import datetime
 import logging
 import traceback as tb
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from functools import partialmethod
 from typing import Literal
 
+from django.utils import timezone
 from extras.choices import LogLevelChoices
 
-from .data_models import Message
+
+logger = logging.getLogger("validity")
 
 
-logger = logging.getLogger("validity.scripts")
+@dataclass(slots=True, frozen=True)
+class Message:
+    """
+    Log message suitable for scripts
+    """
+
+    status: Literal["debug", "info", "failure", "warning", "success", "default"]
+    message: str
+    time: datetime.datetime = field(default_factory=lambda: timezone.now())
+    script_id: str | None = None
+
+    @property
+    def serialized(self) -> dict:
+        msg = self.message
+        if self.script_id:
+            msg = f"{self.script_id}, {msg}"
+        return {"status": self.status, "message": msg, "time": self.time.isoformat()}
 
 
 class Logger:
@@ -25,12 +46,26 @@ class Logger:
         "failure": logging.ERROR,
     }
 
-    def __init__(self, script_id: str | None = None) -> None:
+    def __init__(self) -> None:
         self.messages = []
-        self.script_id = script_id
+        self._script_id = None
+
+    def __enter__(self) -> "Logger":
+        return self
+
+    def __exit__(self, ty, exc, val):
+        self.flush()
+
+    @contextmanager
+    def script_id(self, script_id: str):
+        try:
+            self._script_id = script_id
+            yield self
+        finally:
+            self.flush()
 
     def _log(self, message: str, level: Literal["debug", "info", "failure", "warning", "success", "default"]):
-        msg = Message(level, message, script_id=self.script_id)
+        msg = Message(level, message, script_id=self._script_id)
         self.messages.append(msg)
         logger.log(self.SYSTEM_LEVELS[level], message)
 
@@ -45,3 +80,7 @@ class Logger:
         exc_type = exc_type or type(exc_value)
         stacktrace = "".join(tb.format_tb(exc_traceback))
         self.failure(f"Unhandled error occured: `{exc_type}: {exc_value}`\n```\n{stacktrace}\n```")
+
+    def flush(self):
+        self._script_id = None
+        self.messages = []

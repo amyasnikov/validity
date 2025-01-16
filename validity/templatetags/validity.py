@@ -18,6 +18,8 @@ register = template.Library()
 
 @register.filter
 def colored_choice(obj: Model, field: str) -> str:
+    if not (raw_value := getattr(obj, field)):
+        return raw_value
     value = getattr(obj, f"get_{field}_display")
     color = getattr(obj, f"get_{field}_color")
     return mark_safe(f'<span class="badge {bg()}-{color()}">{value()}</span>')
@@ -95,9 +97,17 @@ def render_fieldset(form, fieldset):
     return {"group": name, "fields": items, "form": form}
 
 
-@register.filter()
+@register.filter
 def isodatetime(value, spec="seconds"):
     # backport of the native isodatetime in 4.0
     value = localtime(value) if value.tzinfo else value
     text = f"{value.date().isoformat()} {value.time().isoformat(spec)}"
     return mark_safe(f'<span title="{naturaltime(value)}">{text}</span>')
+
+
+@register.filter
+def filler(value, fill_with="—"):
+    """
+    Like placeholder, but with arbitrary fill_with value
+    """
+    return value if value else mark_safe(fill_with)

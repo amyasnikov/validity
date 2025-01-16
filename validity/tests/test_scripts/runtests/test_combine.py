@@ -7,8 +7,8 @@ from django.utils import timezone
 
 from validity.scripts.data_models import ExecutionResult, Message
 from validity.scripts.data_models import TestResultRatio as ResultRatio
-from validity.scripts.exceptions import AbortScript
 from validity.scripts.runtests.combine import CombineWorker
+from validity.utils.logger import Logger
 
 
 @pytest.fixture
@@ -38,9 +38,8 @@ def job_extractor(messages):
 # but according to netbox4.0 strange behaviour reverse() finally causes it
 @pytest.mark.django_db
 def test_compose_logs(worker, messages, job_extractor):
-    logger = worker.log_factory()
     time = messages[0].time
-    logs = worker.compose_logs(logger, job_extractor, report_id=10)
+    logs = worker.compose_logs(Logger(), job_extractor, report_id=10)
     assert len(logs) == 6
     assert logs[:5] == messages
     last_msg = replace(logs[-1], time=time)
@@ -56,8 +55,7 @@ def test_call_abort(worker, full_runtests_params, job_extractor, monkeypatch):
     job_extractor.parents[1].job.result.errored = True
     monkeypatch.setattr(timezone, "now", lambda: datetime.datetime(2020, 1, 1))
     worker.job_extractor_factory = lambda: job_extractor
-    with pytest.raises(AbortScript):
-        worker(full_runtests_params)
+    worker(full_runtests_params)
     job = full_runtests_params.get_job()
     assert job.status == "errored"
     assert job.data == {

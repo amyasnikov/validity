@@ -1,15 +1,19 @@
 from typing import Any, Dict
 
+from django.contrib import messages
 from django.db.models import Model
 from django.forms import Form
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as __
 from django_filters import FilterSet
 from django_filters.views import FilterView
 from django_tables2 import SingleTableMixin, Table
 from utilities.views import ObjectPermissionRequiredMixin as _ObjectPermissionRequiredMixin
 from utilities.views import ViewTab
 
-from validity import filtersets, forms, models, tables
+from validity import filtersets, forms, models, scripts, tables
 from validity.utils.misc import partialcls
 
 
@@ -116,3 +120,25 @@ class TestResultBaseView(ObjectPermissionRequiredMixin, SingleTableMixin, Filter
             "read_only": self.read_only,
             "result_relation": self.result_relation,
         }
+
+
+class LauncherMixin:
+    redirect_viewname = "plugins:validity:script_result"
+
+    # this param must be injected into __init__
+    launcher: scripts.Launcher
+
+    def get_success_url(self, job_id: int) -> str:
+        return reverse(self.redirect_viewname, kwargs={"pk": job_id})
+
+    def launch_or_render_error(self, params: scripts.ScriptParams, **kwargs):
+        if not self.launcher.has_workers:
+            messages.error(
+                self.request,
+                __('Unable to run script: no running RQ worker found for the queue "{}"').format(
+                    self.launcher.rq_queue.name
+                ),
+            )
+            return self.get(self.request, **kwargs)
+        job = self.launcher(params)
+        return HttpResponseRedirect(self.get_success_url(job.pk))

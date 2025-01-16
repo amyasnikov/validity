@@ -27,6 +27,7 @@ class PollingBackend(DataBackend):
         "datasource_id": forms.IntegerField(
             label=_("Data Source ID"),
             widget=forms.TextInput(attrs={"class": "form-control"}),
+            help_text=_("Must match the primary key of the data source"),
         )
     }
 
@@ -38,11 +39,15 @@ class PollingBackend(DataBackend):
     )
     metainfo_file = Path("polling_info.yaml")
 
+    @property
+    def datasource_id(self):
+        ds_id = self.params.get("datasource_id")
+        assert ds_id, 'Data Source parameters must contain "datasource_id"'
+        return ds_id
+
     def bound_devices_qs(self, device_filter: Q):
-        datasource_id = self.params.get("datasource_id")
-        assert datasource_id, 'Data Source parameters must contain "datasource_id"'
         return (
-            self.devices_qs.filter(data_source_id=datasource_id)
+            self.devices_qs.filter(data_source_id=self.datasource_id)
             .filter(device_filter)
             .set_attribute("prefer_ipv4", ConfigItem("PREFER_IPV4")())
         )

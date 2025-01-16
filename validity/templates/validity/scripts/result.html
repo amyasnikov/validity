@@ -1,5 +1,6 @@
 {% extends 'extras/script_result.html' %}
 {% load validity %}
+{% load helpers %}
 {% block title %}Script Execution Result{% endblock title %}
 
 {% block header %}
@@ -7,7 +8,15 @@
   <div class="container-fluid mt-2">
     <nav class="breadcrumb-container" aria-label="breadcrumb">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url job.object.run_view %}">Run</a></li>
+        {% with obj_pluralname=job.object|meta:"verbose_name_plural" obj_listview=job.object|viewname:"list" %}
+        <li class="breadcrumb-item"><a href="{% url obj_listview %}">{{ obj_pluralname }}</a></li>
+        {% if job.object.run_view %}
+        <li class="breadcrumb-item"><a href="{% url job.object.run_view %}">{{ job.name }}</a></li>
+        {% else %}
+        <li class="breadcrumb-item"><a href="{{ job.object.get_absolute_url }}">{{ job.object }}</a></li>
+        <li class="breadcrumb-item">{{ job.name }}</li>
+        {% endif %}
+        {% endwith %}
         <li class="breadcrumb-item">{{ job.created|isodatetime }}</li>
       </ol>
     </nav>

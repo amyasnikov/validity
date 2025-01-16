@@ -5,6 +5,7 @@ from typing import Sequence
 from django.core.exceptions import ValidationError
 from django.db.models import ManyToManyField
 from netbox.api.serializers import WritableNestedSerializer
+from rest_framework.permissions import BasePermission
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import HyperlinkedIdentityField, JSONField, ModelSerializer
 
@@ -52,12 +53,30 @@ def proxy_factory(
     return type(serializer_class.__name__, (serializer_class,), {"url": url, "Meta": meta})
 
 
+def model_perms(*permissions: str) -> type[BasePermission]:
+    """
+    Returns permission class suitable for a list of django model permissions
+    """
+
+    class Permission(BasePermission):
+        def has_permission(self, request, view):
+            return request.user.is_authenticated and request.user.has_perms(permissions)
+
+    return Permission
+
+
 class EncryptedDictField(JSONField):
+    def __init__(self, **kwargs):
+        self.do_not_encrypt = kwargs.pop("do_not_encrypt", ())
+        super().__init__(**kwargs)
+
     def to_representation(self, value):
+        if not isinstance(value, EncryptedDict):
+            value = EncryptedDict(value, do_not_encrypt=self.do_not_encrypt)
         return value.encrypted
 
     def to_internal_value(self, data):
-        return EncryptedDict(super().to_internal_value(data))
+        return EncryptedDict(super().to_internal_value(data), do_not_encrypt=self.do_not_encrypt)
 
 
 class ListQPMixin:
@@ -103,16 +122,18 @@ class SubformValidationMixin:
                 setattr(instance, field, field_value)
         if not instance.subform_type:
             return
-        subform = instance.subform_cls(instance.subform_json)
+        subform = instance.get_subform()
         if not subform.is_valid():
             errors = [
                 ": ".join((field, err[0])) if field != "__all__" else err for field, err in subform.errors.items()
             ]
             raise ValidationError({instance.subform_json_field: errors})
+        instance.subform_json = attrs[instance.subform_json_field] = subform.cleaned_data
+        return attrs
 
     def validate(self, attrs):
         if isinstance(attrs, dict):
-            self._validate(attrs)
+            attrs = self._validate(attrs)
         return attrs
 
 
