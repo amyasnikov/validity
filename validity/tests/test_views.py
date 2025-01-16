@@ -8,6 +8,7 @@ import pytest
 from base import ViewTest
 from django.utils.functional import classproperty
 from factories import (
+    BackupPointFactory,
     CommandFactory,
     CompTestDBFactory,
     CompTestResultFactory,
@@ -15,12 +16,14 @@ from factories import (
     DataSourceFactory,
     DeviceFactory,
     DeviceTypeFactory,
+    DSBackupJobFactory,
     LocationFactory,
     ManufacturerFactory,
     NameSetDBFactory,
     NameSetDSFactory,
     PlatformFactory,
     PollerFactory,
+    PollingDSFactory,
     ReportFactory,
     RunTestsJobFactory,
     SelectorFactory,
@@ -193,6 +196,33 @@ class TestCommand(ViewTest):
     }
 
 
+class TestBackupPoint(ViewTest):
+    factory_class = BackupPointFactory
+    model_class = models.BackupPoint
+    post_body = {
+        "name": "bp",
+        "data_source": PollingDSFactory,
+        "backup_after_sync": True,
+        "method": "S3",
+        "url": "http://ex.com/qwer",
+        "aws_access_key_id": "123",
+        "aws_secret_access_key": "456",
+        "archive": True,
+    }
+
+    @pytest.mark.parametrize("has_workers, status_code", [(True, HTTPStatus.FOUND), (False, HTTPStatus.OK)])
+    @pytest.mark.django_db
+    def test_backup_button(self, di, has_workers, status_code, admin_client):
+        bp = BackupPointFactory()
+        launcher = Mock(has_workers=has_workers, return_value=DSBackupJobFactory())
+        with di.override({dependencies.backup_launcher: lambda: launcher}):
+            resp = admin_client.post(bp.get_absolute_url())
+            assert resp.status_code == status_code
+            if resp.status_code == HTTPStatus.FOUND:
+                launcher.assert_called_once()
+                assert launcher.call_args.args[0].backuppoint_id == bp.pk
+
+
 def test_datasource_with_extensions(admin_client, create_custom_fields):
     data_source = DataSourceFactory(type="device_polling")
     resp = admin_client.get(data_source.get_absolute_url())
@@ -218,18 +248,16 @@ class TestRunTests:
         assert resp.status_code == HTTPStatus.OK
 
     @pytest.mark.parametrize(
-        "form_data, status_code, worker_count",
+        "form_data, status_code, has_workers",
         [
-            ({}, HTTPStatus.FOUND, 1),
-            ({}, HTTPStatus.OK, 0),
-            ({"devices": [1, 2]}, HTTPStatus.OK, 1),  # devices do not exist
+            ({}, HTTPStatus.FOUND, True),
+            ({}, HTTPStatus.OK, False),
+            ({"devices": [1, 2]}, HTTPStatus.OK, True),  # devices do not exist
         ],
     )
-    def test_post(self, admin_client, di, form_data, status_code, worker_count):
-        launcher = Mock(**{"rq_queue.name": "queue_1", "return_value.pk": 1})
-        with di.override(
-            {dependencies.runtests_launcher: lambda: launcher, dependencies.runtests_worker_count: lambda: worker_count}
-        ):
+    def test_post(self, admin_client, di, form_data, status_code, has_workers):
+        launcher = Mock(**{"has_workers": has_workers, "return_value.pk": 1})
+        with di.override({dependencies.runtests_launcher: lambda: launcher}):
             result = admin_client.post(self.url, form_data)
             assert result.status_code == status_code
             if status_code == HTTPStatus.FOUND:  # if form is valid
@@ -237,8 +265,9 @@ class TestRunTests:
                 assert isinstance(launcher.call_args.args[0], RunTestsParams)
 
 
-def test_testresult(admin_client):
-    job = RunTestsJobFactory()
+@pytest.mark.parametrize("job_factory", [RunTestsJobFactory, DSBackupJobFactory])
+def test_scriptresult(admin_client, job_factory):
+    job = job_factory()
     resp = admin_client.get(f"/plugins/validity/scripts/results/{job.pk}/")
     assert resp.status_code == HTTPStatus.OK
 
@@ -315,3 +344,13 @@ class TestPollerImportView(BulkImportViewTest):
         'p1,netmiko,"c1,c2",{"cred1": "va1"},{"cred2": "val2"}'
     )
     extra_factories = [partial(CommandFactory, label="c1"), partial(CommandFactory, label="c2")]
+
+
+class TestBackupPointImportView(BulkImportViewTest):
+    factory_class = BackupPointFactory
+    model_class = models.BackupPoint
+    post_data = (
+        "name;data_source;backup_after_sync;method;url;parameters\n"
+        'bp1;ds1;true;git;http://ex.com/qwe;{"username": "a", "password": "b"}'
+    )
+    extra_factories = [partial(DataSourceFactory, name="ds1", type="device_polling")]

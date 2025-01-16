@@ -1,4 +1,5 @@
 from .bulk_import import (
+    BackupPointImportForm,
     CommandImportForm,
     ComplianceSelectorImportForm,
     ComplianceTestImportForm,
@@ -7,6 +8,7 @@ from .bulk_import import (
     SerializerImportForm,
 )
 from .filterset import (
+    BackupPointFilterForm,
     CommandFilterForm,
     ComplianceReportFilerForm,
     ComplianceSelectorFilterForm,
@@ -22,6 +24,7 @@ from .filterset import (
     TestResultFilterForm,
 )
 from .general import (
+    BackupPointForm,
     CommandForm,
     ComplianceSelectorForm,
     ComplianceTestForm,

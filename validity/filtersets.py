@@ -138,3 +138,12 @@ class CommandFilterSet(SearchMixin, NetBoxModelFilterSet):
         model = models.Command
         fields = ("id", "name", "label", "type", "retrieves_config", "serializer_id", "poller_id")
         search_fields = ("name", "label")
+
+
+class BackupPointFilterSet(SearchMixin, NetBoxModelFilterSet):
+    data_source_id = ModelMultipleChoiceFilter(field_name="data_source", queryset=models.VDataSource.objects.all())
+
+    class Meta:
+        model = models.BackupPoint
+        fields = ("id", "name", "method", "data_source_id", "backup_after_sync", "last_uploaded", "last_status")
+        search_fields = ("name",)

@@ -1,4 +1,12 @@
+from .backup import (
+    BackupPointBulkDeleteView,
+    BackupPointDeleteView,
+    BackupPointEditView,
+    BackupPointListView,
+    BackupPointView,
+)
 from .bulk_import import (
+    BackupPointBulkImportView,
     CommandBulkImportView,
     ComplianceSelectorBulkImportView,
     ComplianceTestBulkImportView,

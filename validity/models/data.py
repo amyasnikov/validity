@@ -30,6 +30,10 @@ class VDataSource(DataSource):
     class Meta:
         proxy = True
 
+    def __init__(self, *args, permit_backup: bool = True, **kwargs):
+        self.permit_backup = permit_backup
+        super().__init__(*args, **kwargs)
+
     @property
     def bound_devices(self):
         from validity.models.device import VDevice
@@ -112,9 +116,19 @@ class VDataSource(DataSource):
             return super().sync()
         self.partial_sync(device_filter)
 
+    @contextmanager
+    def _backup_allowed(self, is_allowed: bool):
+        prev_value = self.permit_backup
+        self.permit_backup = is_allowed
+        try:
+            yield
+        finally:
+            self.permit_backup = prev_value
+
     def sync_in_migration(self, datafile_model: type):
         """
         This method performs sync and avoids problems with historical models which have reference to DataFile
         """
-        new_paths = self.partial_sync(Q())
-        datafile_model.objects.exclude(path__in=new_paths).delete()
+        with self._backup_allowed(False):
+            new_paths = self.partial_sync(Q())
+            datafile_model.objects.exclude(path__in=new_paths).delete()

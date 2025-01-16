@@ -13,6 +13,7 @@ from tenancy.models import Tenant
 
 from validity import models
 from validity.compliance.state import StateItem
+from validity.fields.encrypted import EncryptedDict
 
 
 DJANGO_MAJOR_VERSION = django.VERSION[:2]
@@ -26,6 +27,10 @@ class DataSourceFactory(DjangoModelFactory):
 
     class Meta:
         model = models.VDataSource
+
+
+class PollingDSFactory(DataSourceFactory):
+    type = "device_polling"
 
 
 class DataFileFactory(DjangoModelFactory):
@@ -236,6 +241,18 @@ class PollerFactory(DjangoModelFactory):
         model = models.Poller
 
 
+class BackupPointFactory(DjangoModelFactory):
+    name = factory.sequence(lambda n: f"bp-{n}")
+    data_source = factory.SubFactory(PollingDSFactory)
+    backup_after_sync = False
+    method = "git"
+    url = "https://site.com/project"
+    parameters = EncryptedDict({"username": "a", "password": "b"})
+
+    class Meta:
+        model = models.BackupPoint
+
+
 class UserFactory(DjangoModelFactory):
     email = "su@admin.com"
     username = "su"
@@ -252,6 +269,18 @@ class UserFactory(DjangoModelFactory):
 class RunTestsJobFactory(DjangoModelFactory):
     name = "RunTests"
     object = factory.SubFactory(ReportFactory)
+    object_id = factory.SelfAttribute("object.pk")
+    object_type = factory.LazyAttribute(lambda obj: ContentType.objects.get_for_model(type(obj.object)))
+    user = factory.SubFactory(UserFactory)
+    job_id = factory.LazyFunction(uuid.uuid4)
+
+    class Meta:
+        model = Job
+
+
+class DSBackupJobFactory(DjangoModelFactory):
+    name = "DataSourcebackup"
+    object = factory.SubFactory(BackupPointFactory)
     object_id = factory.SelfAttribute("object.pk")
     object_type = factory.LazyAttribute(lambda obj: ContentType.objects.get_for_model(type(obj.object)))
     user = factory.SubFactory(UserFactory)

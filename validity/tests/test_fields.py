@@ -22,3 +22,10 @@ def test_encrypted_dict(plain_value, setup_private_key):
     assert enc_dict.keys() == enc_dict.encrypted.keys() == plain_value.keys()
     assert all(val.startswith("$") and val.endswith("$") and val.count("$") == 3 for val in enc_dict.encrypted.values())
     assert EncryptedDict(enc_dict.encrypted).decrypted == plain_value
+
+
+def test_do_not_encrypt(setup_private_key):
+    val = {"p1": "v1", "p2": "v2", "p3": "v3", "p4": "v4"}
+    enc_dict = EncryptedDict(val, do_not_encrypt=("p1", "p2"))
+    assert enc_dict.encrypted["p1"] == "v1"
+    assert enc_dict.encrypted["p3"].startswith("$")

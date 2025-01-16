@@ -15,6 +15,7 @@ Validity is the [NetBox](https://netboxlabs.com/oss/netbox/) plugin to write "au
 
 * **Configuration compliance**. You can make sure your devices are provisioned properly, and their config follows the rules you have defined via tests.
 * **Pre- / post-configuration checks**. You can make sure your network is in the expected state before or/and after configuration changes have been made. You can use Validity API to include these checks into your automation pipelines.
+* **Config Backup**. Save your device configs to **Git** or **AWS S3**
 
 **Validity usage workflow:**
 
@@ -40,7 +41,6 @@ Validity completely separates compliance test code from all the other things lik
 * Truly vendor-agnostic. You can easily integrate any vendor config format using [TTP](https://github.com/dmulyalin/ttp) or a bunch of other [serialization options](https://validity.readthedocs.io/en/latest/entities/serializers/)
 * Writing compliance tests using Python expressions and [JQ](https://stedolan.github.io/jq/manual/)
 * Gathering configuration or state info directly from the devices via **SSH**, **Telnet**, **Netconf** or **REST API**.
-* Flexible selector system to apply the tests only to a specific subset of devices
 * Concept of **dynamic pairs**. With dynamic pair you can compare 2 different devices between each other (e.g. compare the configuration of 2 MC-LAG members).
 * **Test result explanation**. When some test fails, you can get the **explanation** of the calculation process step by step. It helps to identify the cause of the failure.
 * **ORM access** inside the test. You have full access to the **device** properties. For instance, you may leverage [Configuration Contexts](https://docs.netbox.dev/en/stable/features/context-data/) NetBox feature to store your desired configuration and compare it with the config collected from the device.

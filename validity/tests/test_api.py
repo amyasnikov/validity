@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import pytest
 from base import ApiGetTest, ApiPostGetTest
 from factories import (
+    BackupPointFactory,
     CommandFactory,
     CompTestDBFactory,
     CompTestResultFactory,
@@ -11,9 +12,11 @@ from factories import (
     DataSourceFactory,
     DeviceFactory,
     DeviceTypeFactory,
+    DSBackupJobFactory,
     LocationFactory,
     ManufacturerFactory,
     PlatformFactory,
+    PollingDSFactory,
     ReportFactory,
     RunTestsJobFactory,
     SelectorFactory,
@@ -26,6 +29,7 @@ from factories import (
 
 from validity import dependencies
 from validity.models import VDevice
+from validity.scripts import Launcher
 
 
 class TestDBNameSet(ApiPostGetTest):
@@ -171,6 +175,29 @@ class TestPoller(ApiPostGetTest):
         "private_credentials": {"password": "1234"},
         "commands": [CommandFactory, CommandFactory],
     }
+
+
+class TestBackupPoint(ApiPostGetTest):
+    entity = "backup-points"
+    post_body = {
+        "name": "bp",
+        "data_source": PollingDSFactory,
+        "backup_after_sync": False,
+        "method": "git",
+        "upload_url": "http://ex.com/qwer",
+        "parameters": {"username": "abc", "password": "123"},
+    }
+
+    @pytest.mark.django_db
+    def test_backup(self, admin_client, di):
+        bp = BackupPointFactory()
+        url = self.url(bp.pk) + "backup/"
+        launcher = Mock(spec=Launcher, return_value=DSBackupJobFactory())
+        with di.override({dependencies.backup_launcher: lambda: launcher}):
+            resp = admin_client.post(url)
+            assert resp.status_code == HTTPStatus.OK
+            assert resp.json()["result"]["id"] == launcher.return_value.pk
+            launcher.assert_called_once()
 
 
 @pytest.mark.parametrize("params", [{}, {"fields": ["name", "value"]}, {"name": ["config", "bad_cmd"]}])

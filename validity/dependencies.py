@@ -1,15 +1,23 @@
 from typing import Annotated
 
-from dimi.scopes import Singleton
+from dimi.scopes import Context, Singleton
 from django.conf import LazySettings, settings
-from django_rq.queues import DjangoRQ, get_redis_connection
-from redis import Redis
-from rq import Queue, Worker
-from rq.job import Job
 
 from validity import di
+from validity.compliance.serialization import (
+    SerializationBackend,
+    serialize_ros,
+    serialize_textfsm,
+    serialize_ttp,
+    serialize_xml,
+    serialize_yaml,
+)
+from validity.data_backup import BackupBackend, GitBackuper, S3Backuper
+from validity.integrations.git import DulwichGitClient
+from validity.integrations.s3 import BotoS3Client
 from validity.pollers import NetmikoPoller, RequestsPoller, ScrapliNetconfPoller
 from validity.settings import PollerInfo, ValiditySettings
+from validity.utils.logger import Logger
 from validity.utils.misc import null_request
 
 
@@ -18,9 +26,43 @@ def django_settings():
     return settings
 
 
-@di.dependency(scope=Singleton)
-def validity_settings(django_settings: Annotated[LazySettings, django_settings]):
+@di.dependency(scope=Singleton, add_return_alias=True)
+def validity_settings(django_settings: Annotated[LazySettings, django_settings]) -> ValiditySettings:
     return ValiditySettings.model_validate(django_settings.PLUGINS_CONFIG.get("validity", {}))
+
+
+@di.dependency(scope=Context, add_return_alias=True)
+def scripts_logger() -> Logger:
+    return Logger()
+
+
+@di.dependency(scope=Singleton, add_return_alias=True)
+def backup_backend(vsettings: Annotated[ValiditySettings, ...], logger: Annotated[Logger, ...]) -> BackupBackend:
+    return BackupBackend(
+        backupers={
+            "git": GitBackuper(
+                message="",
+                author_username=vsettings.integrations.git.author,
+                author_email=vsettings.integrations.git.email,
+                git_client=DulwichGitClient(),
+                logger=logger,
+            ),
+            "S3": S3Backuper(s3_client=BotoS3Client(max_threads=vsettings.integrations.s3.threads), logger=logger),
+        }
+    )
+
+
+@di.dependency(scope=Singleton, add_return_alias=True)
+def serialization_backend() -> SerializationBackend:
+    return SerializationBackend(
+        extraction_methods={
+            "YAML": serialize_yaml,
+            "ROUTEROS": serialize_ros,
+            "TTP": serialize_ttp,
+            "TEXTFSM": serialize_textfsm,
+            "XML": serialize_xml,
+        }
+    )
 
 
 @di.dependency(scope=Singleton)
@@ -41,43 +83,12 @@ def pollers_info(custom_pollers: Annotated[list[PollerInfo], "validity_settings.
 
 
 import validity.pollers.factory  # noqa
-from validity.scripts import ApplyWorker, CombineWorker, Launcher, SplitWorker, Task  # noqa
+from validity.scripts import ApplyWorker, CombineWorker, Launcher, SplitWorker, Task, LauncherFactory, perform_backup  # noqa
 
 
 @di.dependency
-def runtests_queue_config(
-    settings: Annotated[LazySettings, django_settings], vsettings: Annotated[ValiditySettings, validity_settings]
-) -> dict:
-    return settings.RQ_QUEUES.get(vsettings.runtests_queue, settings.RQ_PARAMS)
-
-
-@di.dependency
-def runtests_redis_connection(queue_config: Annotated[dict, runtests_queue_config]) -> Redis:
-    return get_redis_connection(queue_config)
-
-
-@di.dependency
-def runtests_queue(
-    vsettings: Annotated[ValiditySettings, validity_settings],
-    config: Annotated[dict, runtests_queue_config],
-    connection: Annotated[Redis, runtests_redis_connection],
-) -> Queue:
-    is_async = config.get("ASYNC", True)
-    default_timeout = config.get("DEFAULT_TIMEOUT")
-    return DjangoRQ(
-        vsettings.runtests_queue,
-        default_timeout=default_timeout,
-        connection=connection,
-        is_async=is_async,
-        job_class=Job,
-    )
-
-
-@di.dependency
-def runtests_worker_count(
-    connection: Annotated[Redis, runtests_redis_connection], queue: Annotated[Queue, runtests_queue]
-) -> int:
-    return Worker.count(connection=connection, queue=queue)
+def launcher_factory(settings: Annotated[LazySettings, django_settings]) -> LauncherFactory:
+    return LauncherFactory(settings.RQ_PARAMS)
 
 
 @di.dependency(scope=Singleton)
@@ -86,14 +97,14 @@ def runtests_launcher(
     split_worker: Annotated[SplitWorker, ...],
     apply_worker: Annotated[ApplyWorker, ...],
     combine_worker: Annotated[CombineWorker, ...],
-    queue: Annotated[Queue, runtests_queue],
-):
+    factory: Annotated[LauncherFactory, launcher_factory],
+) -> Launcher:
     from validity.models import ComplianceReport
 
-    return Launcher(
-        job_name="RunTests",
-        job_object_factory=null_request()(ComplianceReport.objects.create),
-        rq_queue=queue,
+    return factory.get_launcher(
+        "RunTests",
+        job_object_factory=lambda _: null_request()(ComplianceReport.objects.create)(),
+        queue_name=vsettings.custom_queues.runtests,
         tasks=[
             Task(split_worker, job_timeout=vsettings.script_timeouts.runtests_split),
             Task(
@@ -103,4 +114,19 @@ def runtests_launcher(
             ),
             Task(combine_worker, job_timeout=vsettings.script_timeouts.runtests_combine),
         ],
+    )
+
+
+@di.dependency(scope=Singleton)
+def backup_launcher(
+    vsettings: Annotated[ValiditySettings, validity_settings],
+    factory: Annotated[LauncherFactory, launcher_factory],
+) -> Launcher:
+    from validity.models import BackupPoint
+
+    return factory.get_launcher(
+        "DataSourceBackup",
+        job_object_factory=lambda params: BackupPoint.objects.get(pk=params.backuppoint_id),
+        queue_name=vsettings.custom_queues.backup,
+        tasks=[Task(perform_backup, job_timeout=vsettings.script_timeouts.backup)],
     )

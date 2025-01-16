@@ -43,3 +43,9 @@ class PollerIndex(SearchIndex):
 class CommandIndex(SearchIndex):
     model = models.Command
     fields = (("name", 100), ("label", 110))
+
+
+@register_search
+class BackupPointSearch(SearchIndex):
+    model = models.BackupPoint
+    fields = (("name", 100),)

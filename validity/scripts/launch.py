@@ -1,44 +1,76 @@
-import datetime
 import uuid
 from dataclasses import dataclass
 from functools import partial
-from typing import Callable
+from typing import Any, Callable
 
 from core.choices import JobStatusChoices
 from core.models import Job
-from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model
-from rq import Queue
+from django_rq.queues import DjangoRQ, get_redis_connection
+from redis import Redis
+from rq import Queue, Worker
+from rq.job import Job as RQJob
 
 from .data_models import FullScriptParams, ScriptParams, Task
 
 
 @dataclass
+class LauncherFactory:
+    django_rq_config: dict[str, Any]
+
+    def get_connection(self) -> Redis:
+        return get_redis_connection(self.django_rq_config)
+
+    def get_queue(self, queue_name: str) -> Queue:
+        is_async = self.django_rq_config.get("ASYNC", True)
+        default_timeout = self.django_rq_config.get("DEFAULT_TIMEOUT")
+        return DjangoRQ(
+            queue_name,
+            default_timeout=default_timeout,
+            connection=self.get_connection(),
+            is_async=is_async,
+            job_class=RQJob,
+        )
+
+    def worker_count_fn(self) -> Callable[[Queue], int]:
+        return lambda queue: Worker.count(self.get_connection(), queue)
+
+    def get_launcher(
+        self, job_name: str, job_object_factory: Callable[[ScriptParams], Model], tasks: list[Task], queue_name: str
+    ) -> "Launcher":
+        queue = self.get_queue(queue_name)
+        return Launcher(job_name, job_object_factory, tasks, rq_queue=queue, worker_count_fn=self.worker_count_fn())
+
+
+@dataclass
 class Launcher:
     job_name: str
-    job_object_factory: Callable[[], Model]
-    rq_queue: Queue
+    job_object_factory: Callable[[ScriptParams], Model]
     tasks: list[Task]
+    rq_queue: Queue
+    worker_count_fn: Callable[[Queue], int]
 
-    def create_netbox_job(
-        self, schedule_at: datetime.datetime | None, interval: int | None, user: AbstractBaseUser
-    ) -> Job:
-        status = JobStatusChoices.STATUS_SCHEDULED if schedule_at else JobStatusChoices.STATUS_PENDING
-        obj = self.job_object_factory()
+    @property
+    def has_workers(self) -> bool:
+        return self.worker_count_fn(self.rq_queue) > 0
+
+    def _create_netbox_job(self, params: ScriptParams) -> Job:
+        status = JobStatusChoices.STATUS_SCHEDULED if params.schedule_at else JobStatusChoices.STATUS_PENDING
+        obj = self.job_object_factory(params)
         content_type = ContentType.objects.get_for_model(type(obj))
         return Job.objects.create(
             object_type=content_type,
             object_id=obj.pk,
             name=self.job_name,
             status=status,
-            scheduled=schedule_at,
-            interval=interval,
-            user=user,
+            scheduled=params.schedule_at,
+            interval=params.schedule_interval,
+            user=params.request.get_user(),
             job_id=uuid.uuid4(),
         )
 
-    def enqueue(self, params: FullScriptParams, rq_job_id: uuid.UUID) -> None:
+    def _enqueue(self, params: FullScriptParams, rq_job_id: uuid.UUID) -> None:
         prev_job = None
         for task_idx, task in enumerate(self.tasks):
             enqueue_fn = (
@@ -56,7 +88,7 @@ class Launcher:
             )
 
     def __call__(self, params: ScriptParams) -> Job:
-        nb_job = self.create_netbox_job(params.schedule_at, params.schedule_interval, params.request.get_user())
+        nb_job = self._create_netbox_job(params)
         full_params = params.with_job_info(nb_job)
-        self.enqueue(full_params, nb_job.job_id)
+        self._enqueue(full_params, nb_job.job_id)
         return nb_job

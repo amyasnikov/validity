@@ -1,0 +1,68 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load validity %}
+
+{% block extra_controls %}
+<form action="." method="post">
+  {% csrf_token %}
+  <input class="btn btn-pink" type="submit" value="Back Up">
+</form>
+{% endblock %}
+
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-5">
+      <div class="card">
+        <h5 class="card-header">Backup Point</h5>
+        <div class="card-body">
+          <table class="table table-hover attr-table">
+            <tr>
+              <th scope="row">Name</th>
+              <td>{{ object.name }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Data Source</th>
+              <td>{{ object.data_source | linkify }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Back Up After Sync</th>
+              <td>{{ object.backup_after_sync | checkmark }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Backup Method</th>
+              <td>{{ object | colored_choice:"method" }}</td>
+            </tr>
+            <tr>
+              <th scope="row">URL</th>
+              <td><a href="{{ object.url }}">{{ object.url }}</a></td>
+            </tr>
+            <tr>
+              <th scope="row">Ignore rules</th>
+                <td>
+                  {% if object.ignore_rules %}
+                  <pre>{{ object.ignore_rules }}</pre>
+                  {% else %}
+                  {{ ''|placeholder }}
+                  {% endif %}
+                </td>
+            </tr>
+            <tr>
+              <th scope="row">Last Status</th>
+              <td>
+                {{ object | colored_choice:"last_status" | placeholder }}
+                {% if object.last_error %} | {{ object.last_error }}{% endif %}
+              </td>
+            </tr>
+              <th scope="row">Last Uploaded</th>
+              <td>{{ object.last_uploaded | date:"Y-m-d G:i:s" | filler:"<i>Never</i>"}}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      {% include 'inc/panels/tags.html' %}
+    </div>
+    <div class="col col-md-7">
+      {% include 'validity/inc/parameters.html' with title='Parameters' form=object.get_subform only %}
+    </div>
+  </div>
+{% endblock content %}
