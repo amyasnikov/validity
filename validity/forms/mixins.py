@@ -3,9 +3,9 @@ from typing import Annotated, Literal, Sequence
 
 from utilities.forms import get_field_value
 from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.rendering import FieldSet
 
 from validity import di, models
-from validity.netbox_changes import FieldSet
 
 
 class AddM2MPlaceholderFormMixin:

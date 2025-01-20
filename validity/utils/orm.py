@@ -6,8 +6,6 @@ from typing import Generic, Iterable, Iterator, TypeVar
 
 from django.db.models import Model, QuerySet
 
-from validity.netbox_changes import CF_OBJ_TYPE, content_types
-
 
 M = TypeVar("M", bound=Model)
 N = TypeVar("N", bound=Model)
@@ -211,7 +209,7 @@ class CustomFieldBuilder:
     def create(self, *, bind_to, object_type=None, **cf_params):
         db = self.db_alias or self.cf_model.objects.db
         if object_type is not None:
-            cf_params[CF_OBJ_TYPE] = object_type
+            cf_params["related_object_type"] = object_type
         custom_field = self.cf_model.objects.using(db).create(**cf_params)
-        content_types(custom_field).set(self.content_type_model.objects.get_for_model(model).pk for model in bind_to)
+        custom_field.object_types.set(self.content_type_model.objects.get_for_model(model).pk for model in bind_to)
         return custom_field

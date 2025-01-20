@@ -9,6 +9,7 @@ from netbox.forms.mixins import SavedFiltersMixin
 from tenancy.models import Tenant
 from utilities.forms import BOOLEAN_WITH_BLANK_CHOICES, FilterForm
 from utilities.forms.fields import DynamicModelMultipleChoiceField
+from utilities.forms.rendering import FieldSet
 from utilities.forms.widgets import DateTimePicker
 
 from validity import di, models
@@ -22,7 +23,6 @@ from validity.choices import (
     ExtractionMethodChoices,
     SeverityChoices,
 )
-from validity.netbox_changes import FieldSet
 from validity.utils.misc import LazyIterator
 from .fields import PlaceholderChoiceField
 from .mixins import AddM2MPlaceholderFormMixin, ExcludeMixin

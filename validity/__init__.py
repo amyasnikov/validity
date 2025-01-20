@@ -1,15 +1,10 @@
 import logging
 
 from dimi import Container
+from netbox.plugins import PluginConfig
 from netbox.settings import VERSION
 
 from validity.utils.version import NetboxVersion
-
-
-if VERSION.startswith("3."):
-    from extras.plugins import PluginConfig
-else:
-    from netbox.plugins import PluginConfig
 
 
 logger = logging.getLogger(__name__)

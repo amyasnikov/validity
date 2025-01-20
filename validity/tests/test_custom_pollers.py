@@ -5,7 +5,6 @@ from unittest.mock import Mock
 import pytest
 from factories import CommandFactory, PollerFactory
 
-from validity import config
 from validity.dependencies import validity_settings
 from validity.forms import PollerForm
 from validity.models.polling import Command
@@ -45,7 +44,6 @@ def test_custom_poller_api(custom_poller, admin_client):
     assert resp.json()["connection_type"] == "cupo"
 
 
-@pytest.mark.skipif(condition=config.version < "4", reason="netbox < 4.0")
 def test_custom_poller_form(custom_poller):
     form = PollerForm()
     form_choices = {choice[0] for choice in form["connection_type"].field.choices}

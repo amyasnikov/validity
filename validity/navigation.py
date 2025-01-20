@@ -1,4 +1,5 @@
-from validity.netbox_changes import ButtonColorChoices, plugins
+from netbox import plugins
+from netbox.choices import ButtonColorChoices
 
 
 def model_add_button(entity):

@@ -8,11 +8,11 @@ from extras.models import Tag
 from netbox.forms import NetBoxModelForm
 from tenancy.models import Tenant
 from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField
+from utilities.forms.rendering import FieldSet
 from utilities.forms.widgets import HTMXSelect
 
 from validity import di, models
 from validity.choices import ExplanationVerbosityChoices
-from validity.netbox_changes import FieldSet
 from validity.utils.misc import LazyIterator
 from .fields import DynamicModelChoicePropertyField, DynamicModelMultipleChoicePropertyField
 from .mixins import PollerCleanMixin, SubformMixin
