@@ -1,9 +1,9 @@
 import yaml
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from netbox.plugins import PluginTemplateExtension
 from tenancy.models import Tenant
 
-from validity.netbox_changes import PluginTemplateExtension
 from validity.pollers.result import PollingInfo
 
 

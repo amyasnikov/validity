@@ -1,84 +1,70 @@
 from typing import Annotated
 
-from core.api.nested_serializers import (
-    NestedDataFileSerializer as _NestedDataFileSerializer,
-)
-from core.api.nested_serializers import (
-    NestedDataSourceSerializer as _NestedDataSourceSerializer,
-)
-from core.api.serializers import JobSerializer
+from core.api.serializers import DataFileSerializer, DataSourceSerializer, JobSerializer
 from core.models import DataSource
-from dcim.api.nested_serializers import (
-    NestedDeviceSerializer as _NestedDeviceSerializer,
-)
-from dcim.api.nested_serializers import (
-    NestedDeviceTypeSerializer,
-    NestedLocationSerializer,
-    NestedManufacturerSerializer,
-    NestedPlatformSerializer,
-    NestedSiteSerializer,
+from dcim.api.serializers import (
+    DeviceSerializer,
+    DeviceTypeSerializer,
+    LocationSerializer,
+    ManufacturerSerializer,
+    PlatformSerializer,
+    SiteSerializer,
 )
 from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Site
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from extras.api.nested_serializers import NestedTagSerializer
+from extras.api.serializers import TagSerializer
 from extras.models import Tag
 from netbox.api.fields import SerializedPKRelatedField
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 from rest_framework.reverse import reverse
+from tenancy.api.serializers import TenantSerializer
 from tenancy.models import Tenant
 
-from validity import config, di, models
+from validity import di, models
 from validity.choices import ExplanationVerbosityChoices
-from validity.netbox_changes import NestedTenantSerializer
 from .helpers import (
     EncryptedDictField,
     FieldsMixin,
     ListQPMixin,
     PrimaryKeyField,
     SubformValidationMixin,
-    nested_factory,
     proxy_factory,
 )
 
 
-NestedDeviceSerializer = proxy_factory(
-    _NestedDeviceSerializer, view_name="dcim-api:device-detail", fields=["id", "url", "display", "name"]
-)
-NestedDataSourceSerializer = proxy_factory(
-    _NestedDataSourceSerializer, view_name="core-api:datasource-detail", fields=["id", "url", "display", "name"]
-)
-NestedDataFileSerializer = proxy_factory(
-    _NestedDataFileSerializer, view_name="core-api:datafile-detail", fields=["id", "url", "display", "path"]
-)
+NestedDeviceSerializer = proxy_factory(DeviceSerializer, view_name="dcim-api:device-detail")
+NestedDataSourceSerializer = proxy_factory(DataSourceSerializer, view_name="core-api:datasource-detail")
+NestedDataFileSerializer = proxy_factory(DataFileSerializer, view_name="core-api:datafile-detail")
 
 
 class ComplianceSelectorSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:complianceselector-detail")
     tag_filter = SerializedPKRelatedField(
-        serializer=NestedTagSerializer,
+        serializer=TagSerializer,
         many=True,
+        nested=True,
         required=False,
         queryset=Tag.objects.all(),
     )
     manufacturer_filter = SerializedPKRelatedField(
-        serializer=NestedManufacturerSerializer, many=True, required=False, queryset=Manufacturer.objects.all()
+        serializer=ManufacturerSerializer, many=True, nested=True, required=False, queryset=Manufacturer.objects.all()
     )
     type_filter = SerializedPKRelatedField(
-        serializer=NestedDeviceTypeSerializer, many=True, required=False, queryset=DeviceType.objects.all()
+        serializer=DeviceTypeSerializer, many=True, nested=True, required=False, queryset=DeviceType.objects.all()
     )
     platform_filter = SerializedPKRelatedField(
-        serializer=NestedPlatformSerializer, many=True, required=False, queryset=Platform.objects.all()
+        serializer=PlatformSerializer, many=True, nested=True, required=False, queryset=Platform.objects.all()
     )
     location_filter = SerializedPKRelatedField(
-        serializer=NestedLocationSerializer, many=True, required=False, queryset=Location.objects.all()
+        serializer=LocationSerializer, many=True, nested=True, required=False, queryset=Location.objects.all()
     )
     site_filter = SerializedPKRelatedField(
-        serializer=NestedSiteSerializer, many=True, required=False, queryset=Site.objects.all()
+        serializer=SiteSerializer, many=True, nested=True, required=False, queryset=Site.objects.all()
     )
     tenant_filter = SerializedPKRelatedField(
-        serializer=NestedTenantSerializer, many=True, required=False, queryset=Tenant.objects.all()
+        serializer=TenantSerializer, many=True, nested=True, required=False, queryset=Tenant.objects.all()
     )
 
     class Meta:
@@ -108,13 +94,11 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
         brief_fields = ("id", "url", "display", "name")
 
 
-NestedComplianceSelectorSerializer = nested_factory(ComplianceSelectorSerializer, nb_version=config.netbox_version)
-
-
 class ComplianceTestSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:compliancetest-detail")
     selectors = SerializedPKRelatedField(
-        serializer=NestedComplianceSelectorSerializer,
+        serializer=ComplianceSelectorSerializer,
+        nested=True,
         many=True,
         required=False,
         queryset=models.ComplianceSelector.objects.all(),
@@ -144,9 +128,6 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
             "last_updated",
         )
         brief_fields = ("id", "url", "display", "name", "severity")
-
-
-NestedComplianceTestSerializer = nested_factory(ComplianceTestSerializer, nb_version=config.netbox_version)
 
 
 class ComplianceReportSerializer(NetBoxModelSerializer):
@@ -191,15 +172,12 @@ class ComplianceReportSerializer(NetBoxModelSerializer):
         return results_url + f"?report_id={obj.pk}"
 
 
-NestedComplianceReportSerializer = nested_factory(ComplianceReportSerializer, nb_version=config.netbox_version)
-
-
 class ComplianceTestResultSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:compliancetestresult-detail")
-    test = NestedComplianceTestSerializer()
+    test = ComplianceTestSerializer(nested=True)
     device = NestedDeviceSerializer()
     dynamic_pair = NestedDeviceSerializer(allow_null=True)
-    report = NestedComplianceReportSerializer()
+    report = ComplianceReportSerializer(nested=True)
 
     class Meta:
         model = models.ComplianceTestResult
@@ -218,9 +196,6 @@ class ComplianceTestResultSerializer(NetBoxModelSerializer):
             "last_updated",
         )
         brief_fields = ("id", "url", "display", "passed")
-
-
-NestedComplianceTestResultSerializer = nested_factory(ComplianceTestResultSerializer, nb_version=config.netbox_version)
 
 
 class SerializerSerializer(SubformValidationMixin, NetBoxModelSerializer):
@@ -249,9 +224,6 @@ class SerializerSerializer(SubformValidationMixin, NetBoxModelSerializer):
             "last_updated",
         )
         brief_fields = ("id", "url", "display", "name")
-
-
-NestedSerializerSerializer = nested_factory(SerializerSerializer, nb_version=config.netbox_version)
 
 
 class NameSetSerializer(NetBoxModelSerializer):
@@ -293,28 +265,26 @@ class NameSetSerializer(NetBoxModelSerializer):
         return super().run_validation(data)
 
 
-NestedNameSetSerializer = nested_factory(NameSetSerializer, nb_version=config.netbox_version)
-
-
-class DeviceReportSerializer(NestedDeviceSerializer):
+class DeviceReportSerializer(DeviceSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="dcim-api:device-detail")
     compliance_passed = serializers.BooleanField()
     results_passed = serializers.IntegerField()
     results_count = serializers.IntegerField()
     results = SerializedPKRelatedField(
-        serializer=NestedComplianceTestResultSerializer, many=True, required=False, read_only=True
+        serializer=ComplianceTestResultSerializer, many=True, nested=True, required=False, read_only=True
     )
 
-    class Meta(NestedDeviceSerializer.Meta):
-        fields = NestedDeviceSerializer.Meta.fields + [
+    class Meta(DeviceSerializer.Meta):
+        fields = DeviceSerializer.Meta.brief_fields + (
             "compliance_passed",
             "results_passed",
             "results_count",
             "results",
-        ]
+        )
 
 
 class CommandSerializer(SubformValidationMixin, NetBoxModelSerializer):
-    serializer = NestedSerializerSerializer(required=False)
+    serializer = SerializerSerializer(required=False, nested=True)
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:command-detail")
 
     class Meta:
@@ -337,15 +307,13 @@ class CommandSerializer(SubformValidationMixin, NetBoxModelSerializer):
         brief_fields = ("id", "url", "display", "name")
 
 
-NestedCommandSerializer = nested_factory(CommandSerializer, nb_version=config.netbox_version)
-
-
 class PollerSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:validity-api:poller-detail")
     private_credentials = EncryptedDictField()
     commands = SerializedPKRelatedField(
-        serializer=NestedCommandSerializer,
+        serializer=CommandSerializer,
         many=True,
+        nested=True,
         queryset=models.Command.objects.all(),
         allow_empty=False,
     )
@@ -372,9 +340,6 @@ class PollerSerializer(NetBoxModelSerializer):
     def validate(self, data, command_types: Annotated[dict[str, list[str]], "PollerChoices.command_types"]):
         models.Poller.validate_commands(data["commands"], command_types, data["connection_type"])
         return super().validate(data)
-
-
-NestedPollerSerializer = nested_factory(PollerSerializer, nb_version=config.netbox_version)
 
 
 class BackupPointSerializer(SubformValidationMixin, NetBoxModelSerializer):
@@ -408,10 +373,10 @@ class BackupPointSerializer(SubformValidationMixin, NetBoxModelSerializer):
 
 class SerializedStateItemSerializer(FieldsMixin, serializers.Serializer):
     name = serializers.CharField(read_only=True)
-    serializer = NestedSerializerSerializer(read_only=True)
+    serializer = SerializerSerializer(read_only=True, nested=True)
     data_source = NestedDataSourceSerializer(read_only=True, source="data_file.source")
     data_file = NestedDataFileSerializer(read_only=True)
-    command = NestedCommandSerializer(read_only=True)
+    command = CommandSerializer(read_only=True, nested=True)
     last_updated = serializers.DateTimeField(allow_null=True, source="data_file.last_updated", read_only=True)
     error = serializers.CharField(read_only=True)
     value = serializers.SerializerMethodField(source="serialized", method_name="get_serialized")

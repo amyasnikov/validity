@@ -8,10 +8,10 @@ from django.shortcuts import render
 from django.views.generic.edit import FormView
 from netbox.views.generic import ObjectView
 from netbox.views.generic.mixins import TableMixin
+from utilities.htmx import htmx_partial
 
 from validity import di
 from validity.forms import RunTestsForm
-from validity.netbox_changes import htmx_partial
 from validity.scripts import Launcher, RunTestsParams, ScriptParams
 from validity.tables import ScriptResultTable
 from .base import LauncherMixin

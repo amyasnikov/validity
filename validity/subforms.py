@@ -12,7 +12,6 @@ from django.utils.translation import gettext_lazy as _
 
 from validity.choices import JSONAPIMethodChoices
 from validity.fields.encrypted import EncryptedDict
-from validity.netbox_changes import BootstrapMixin
 from validity.utils.json import jq
 from validity.utils.misc import reraise
 
@@ -37,7 +36,7 @@ class SensitiveMixin:
             yield field.label, self._sensitive_value(field)
 
 
-class BaseSubform(SensitiveMixin, BootstrapMixin, forms.Form):
+class BaseSubform(SensitiveMixin, forms.Form):
     def __init__(self, data=None, *args, **kwargs):
         if isinstance(data, EncryptedDict):
             data = data.encrypted

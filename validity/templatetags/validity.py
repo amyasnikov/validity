@@ -1,16 +1,12 @@
 from typing import Any
 
 from django import template
-from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models import Model
 from django.http.request import HttpRequest
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from utilities.templatetags.builtins.filters import linkify, placeholder
-
-from validity import config
 
 
 register = template.Library()
@@ -22,7 +18,7 @@ def colored_choice(obj: Model, field: str) -> str:
         return raw_value
     value = getattr(obj, f"get_{field}_display")
     color = getattr(obj, f"get_{field}_color")
-    return mark_safe(f'<span class="badge {bg()}-{color()}">{value()}</span>')
+    return mark_safe(f'<span class="badge text-bg-{color()}">{value()}</span>')
 
 
 @register.filter
@@ -53,7 +49,7 @@ def colorful_percentage(percent: float) -> str:
             break
         badge_color = color
     percent = round(percent, 1)
-    return format_html('<span class="badge rounded-pill {}-{}">{}%</span>', bg(), badge_color, percent)
+    return format_html('<span class="badge rounded-pill text-bg-{}">{}%</span>', badge_color, percent)
 
 
 @register.simple_tag
@@ -83,26 +79,6 @@ def report_stats(obj, severity):
     passed = getattr(obj, f"{severity}_passed")
     percentage = getattr(obj, f"{severity}_percentage")
     return mark_safe(f"{passed}/{count} ") + colorful_percentage(percentage)
-
-
-@register.simple_tag
-def bg():
-    return "bg" if config.netbox_version < "4.0.0" else "text-bg"
-
-
-@register.inclusion_tag("validity/inc/fieldset.html")
-def render_fieldset(form, fieldset):
-    # backport of the native render_fieldset appeared in 4.0
-    name, items = fieldset if config.netbox_version < "4.0.0" else (fieldset.name, fieldset.items)
-    return {"group": name, "fields": items, "form": form}
-
-
-@register.filter
-def isodatetime(value, spec="seconds"):
-    # backport of the native isodatetime in 4.0
-    value = localtime(value) if value.tzinfo else value
-    text = f"{value.date().isoformat()} {value.time().isoformat(spec)}"
-    return mark_safe(f'<span title="{naturaltime(value)}">{text}</span>')
 
 
 @register.filter

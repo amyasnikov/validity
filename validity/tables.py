@@ -13,9 +13,10 @@ from django_tables2 import Column, RequestConfig, Table, TemplateColumn
 from netbox.tables import BaseTable, BooleanColumn, ChoiceFieldColumn, ManyToManyColumn, NetBoxTable
 from netbox.tables.columns import ActionsColumn, LinkedCountColumn, MarkdownColumn
 from utilities.paginator import EnhancedPaginator
+from utilities.templatetags.builtins.filters import isodatetime
 
 from validity import models
-from validity.templatetags.validity import colorful_percentage, isodatetime
+from validity.templatetags.validity import colorful_percentage
 
 
 class SelectorTable(NetBoxTable):
