@@ -15,11 +15,11 @@
             </tr>
             <tr>
               <th scope="row">Dynamic Pairs</th>
-              <td><code>{{ object | colored_choice:"dynamic_pairs" }}</code></td>
+              <td>{{ object | colored_choice:"dynamic_pairs" }}</td>
             </tr>
             <tr>
               <th scope="row">Dynamic Pair Tag Prefix</th>
-              <td><code>{{ object.dp_tag_prefix | placeholder }}</code></td>
+              <td>{{ object.dp_tag_prefix | placeholder }}</td>
             </tr>
           </table>
         </div>
@@ -37,39 +37,43 @@
             </tr>
             <tr>
               <th scope="row">Device Name Filter</th>
-              <td><code>{{ object.name_filter | placeholder }}</code></td>
+              <td>{{ object.name_filter | placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Device Type Filter</th>
-              <td><code>{{ object.type_filter.all | linkify_list }}</code></td>
+              <td>{{ object.type_filter.all | linkify_list }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Device Role Filter</th>
+              <td>{{ object.role_filter.all | linkify_list }}</td>
             </tr>
             <tr>
               <th scope="row">Location Filter</th>
-              <td><code>{{ object.location_filter.all | linkify_list }}</code></td>
+              <td>{{ object.location_filter.all | linkify_list }}</td>
             </tr>
             <tr>
               <th scope="row">Manufacturer Filter</th>
-              <td><code>{{ object.manufacturer_filter.all | linkify_list }}</code></td>
+              <td>{{ object.manufacturer_filter.all | linkify_list }}</td>
             </tr>
             <tr>
               <th scope="row">Platform Filter</th>
-              <td><code>{{ object.platform_filter.all | linkify_list }}</code></td>
+              <td>{{ object.platform_filter.all | linkify_list }}</td>
             </tr>
             <tr>
               <th scope="row">Site Filter</th>
-              <td><code>{{ object.site_filter.all | linkify_list }}</code></td>
+              <td>{{ object.site_filter.all | linkify_list }}</td>
             </tr>
             <tr>
               <th scope="row">Status Filter</th>
-              <td><code>{{ object | colored_choice:"status_filter" | placeholder }}</code></td>
+              <td>{{ object | colored_choice:"status_filter" | placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Tag Filter</th>
-              <td><code>{{ object.tag_filter.all | linkify_list }}</code></td>
+              <td>{{ object.tag_filter.all | linkify_list }}</td>
             </tr>
             <tr>
               <th scope="row">Tenant Filter</th>
-              <td><code>{{ object.tenant_filter.all | linkify_list }}</code></td>
+              <td>{{ object.tenant_filter.all | linkify_list }}</td>
             </tr>
           </table>
         </div>

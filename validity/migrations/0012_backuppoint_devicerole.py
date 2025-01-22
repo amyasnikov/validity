@@ -43,4 +43,9 @@ class Migration(migrations.Migration):
             },
             bases=(validity.models.base.SubformMixin, validity.models.base.URLMixin, models.Model),
         ),
+        migrations.AddField(
+            model_name='complianceselector',
+            name='role_filter',
+            field=models.ManyToManyField(blank=True, related_name='+', to='dcim.devicerole'),
+        ),
     ]

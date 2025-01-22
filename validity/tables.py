@@ -26,6 +26,7 @@ class SelectorTable(NetBoxTable):
     tag_filter = BooleanColumn(accessor="tag_filter__all")
     manufacturer_filter = BooleanColumn(accessor="manufacturer_filter__all")
     type_filter = BooleanColumn(accessor="type_filter__all")
+    role_filter = BooleanColumn(accessor="role_filter__all")
     platform_filter = BooleanColumn(accessor="platform_filter__all")
     status_filter = BooleanColumn(empty_values=())
     location_filter = BooleanColumn(accessor="location_filter__all")
@@ -42,6 +43,7 @@ class SelectorTable(NetBoxTable):
             "tag_filter",
             "manufacturer_filter",
             "type_filter",
+            "role_filter",
             "platform_filter",
             "status_filter",
             "location_filter",

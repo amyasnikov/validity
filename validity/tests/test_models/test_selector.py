@@ -4,6 +4,7 @@ import pytest
 from django.db.models import Q
 from factories import (
     DeviceFactory,
+    DeviceRoleFactory,
     DeviceTypeFactory,
     LocationFactory,
     ManufacturerFactory,
@@ -28,13 +29,14 @@ from validity.models import VDevice, selector
             "(AND: ('device_type__manufacturer', <Manufacturer: manufacturer-0>))",
         ),
         ("type_filter", [DeviceTypeFactory], "AND", "(AND: ('device_type', <DeviceType: model-0>))"),
+        ("role_filter", [DeviceRoleFactory], "AND", "(AND: ('role', <DeviceRole: role-0>))"),
         ("platform_filter", [PlatformFactory], "OR", "(AND: ('platform', <Platform: platform-0>))"),
         ("status_filter", "ACTIVE", "OR", "(AND: ('status', 'ACTIVE'))"),
         ("location_filter", [LocationFactory], "AND", "(AND: ('location', <Location: location-0>))"),
         ("site_filter", [SiteFactory], "AND", "(AND: ('site', <Site: site-0>))"),
     ],
 )
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
 def test_filter(attr, attr_value, filter_operation, expected_filter):
     model = SelectorFactory()
     if isinstance(attr_value, list):
