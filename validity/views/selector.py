@@ -7,7 +7,7 @@ from .base import TableMixin
 
 
 class ComplianceSelectorListView(generic.ObjectListView):
-    queryset = models.ComplianceSelector.objects.all()
+    queryset = models.ComplianceSelector.objects.prefetch_filters()
     table = tables.SelectorTable
     filterset = filtersets.ComplianceSelectorFilterSet
     filterset_form = forms.ComplianceSelectorFilterForm
@@ -15,16 +15,7 @@ class ComplianceSelectorListView(generic.ObjectListView):
 
 @register_model_view(models.ComplianceSelector)
 class ComplianceSelectorView(TableMixin, generic.ObjectView):
-    queryset = models.ComplianceSelector.objects.prefetch_related(
-        "tag_filter",
-        "manufacturer_filter",
-        "type_filter",
-        "platform_filter",
-        "location_filter",
-        "site_filter",
-        "tenant_filter",
-        "tags",
-    )
+    queryset = models.ComplianceSelector.objects.prefetch_filters().prefetch_related("tags")
     filterset = DeviceFilterSet
     object_table_field = "devices"
     table = tables.DynamicPairsTable

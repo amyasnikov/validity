@@ -3,6 +3,7 @@ from typing import Annotated
 from core.api.serializers import DataFileSerializer, DataSourceSerializer, JobSerializer
 from core.models import DataSource
 from dcim.api.serializers import (
+    DeviceRoleSerializer,
     DeviceSerializer,
     DeviceTypeSerializer,
     LocationSerializer,
@@ -54,6 +55,9 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
     type_filter = SerializedPKRelatedField(
         serializer=DeviceTypeSerializer, many=True, nested=True, required=False, queryset=DeviceType.objects.all()
     )
+    role_filter = SerializedPKRelatedField(
+        serializer=DeviceRoleSerializer, many=True, nested=True, required=False, queryset=DeviceType.objects.all()
+    )
     platform_filter = SerializedPKRelatedField(
         serializer=PlatformSerializer, many=True, nested=True, required=False, queryset=Platform.objects.all()
     )
@@ -79,6 +83,7 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
             "tag_filter",
             "manufacturer_filter",
             "type_filter",
+            "role_filter",
             "platform_filter",
             "status_filter",
             "location_filter",

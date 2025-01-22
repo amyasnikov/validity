@@ -52,6 +52,7 @@ def test_prefetch_filters(monkeypatch):
         "tag_filter",
         "manufacturer_filter",
         "type_filter",
+        "role_filter",
         "platform_filter",
         "location_filter",
         "site_filter",

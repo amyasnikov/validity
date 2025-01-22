@@ -4,7 +4,7 @@ from functools import reduce
 from typing import Generator
 
 from dcim.choices import DeviceStatusChoices
-from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -33,6 +33,7 @@ class ComplianceSelector(BaseModel):
         Manufacturer, verbose_name=_("Manufacturer Filter"), blank=True, related_name="+"
     )
     type_filter = models.ManyToManyField(DeviceType, verbose_name=_("Device Type Filter"), blank=True, related_name="+")
+    role_filter = models.ManyToManyField(DeviceRole, verbose_name=_("Device Role Filter"), blank=True, related_name="+")
     platform_filter = models.ManyToManyField(Platform, verbose_name=_("Platform Filter"), blank=True, related_name="+")
     status_filter = models.CharField(max_length=50, choices=DeviceStatusChoices, blank=True)
     location_filter = models.ManyToManyField(Location, verbose_name=_("Location Filter"), blank=True, related_name="+")
@@ -51,6 +52,7 @@ class ComplianceSelector(BaseModel):
         "tag_filter",
         "manufacturer_filter",
         "type_filter",
+        "role_filter",
         "platform_filter",
         "status_filter",
         "location_filter",
@@ -64,6 +66,7 @@ class ComplianceSelector(BaseModel):
         "tag_filter": "tags",
         "manufacturer_filter": "device_type__manufacturer",
         "type_filter": "device_type",
+        "role_filter": "role",
         "platform_filter": "platform",
         "status_filter": "status",
         "location_filter": "location",
