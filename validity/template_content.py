@@ -8,6 +8,7 @@ from validity.pollers.result import PollingInfo
 
 
 class PollingInfoExtension(PluginTemplateExtension):
+    models = ["core.datasource"]
     model = "core.datasource"
 
     def get_polling_info(self, data_file) -> str:
@@ -32,6 +33,7 @@ class PollingInfoExtension(PluginTemplateExtension):
 
 
 class DataSourceTenantExtension(PluginTemplateExtension):
+    models = ["core.datasource"]
     model = "core.datasource"
 
     def right_page(self):
@@ -47,6 +49,7 @@ class DataSourceTenantExtension(PluginTemplateExtension):
 
 
 class ComplianceTestExtension(PluginTemplateExtension):
+    models = ["validity.compliancetest"]
     model = "validity.compliancetest"
 
     def list_buttons(self):

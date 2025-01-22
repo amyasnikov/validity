@@ -7,6 +7,7 @@ from core.exceptions import SyncError
 from core.models import DataFile, DataSource
 from core.signals import post_sync, pre_sync
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 
 from validity.j2_env import Environment
@@ -22,6 +23,9 @@ class VDataFile(DataFile):
 
     class Meta:
         proxy = True
+
+    def get_absolute_url(self):
+        return reverse("core:datafile", args=[self.pk])
 
 
 class VDataSource(DataSource):
@@ -132,3 +136,6 @@ class VDataSource(DataSource):
         with self._backup_allowed(False):
             new_paths = self.partial_sync(Q())
             datafile_model.objects.exclude(path__in=new_paths).delete()
+
+    def get_absolute_url(self):
+        return reverse("core:datasource", args=[self.pk])

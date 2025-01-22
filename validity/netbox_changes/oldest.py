@@ -1,4 +1,4 @@
-# NetBox 3.7
+# NetBox 4.0
 from pydoc import locate as __locate
 
 
