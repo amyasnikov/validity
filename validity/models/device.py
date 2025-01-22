@@ -2,6 +2,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Optional
 
 from dcim.models import Device
+from django.urls import reverse
 
 from validity.compliance.serialization import Serializable
 from validity.compliance.state import State
@@ -82,3 +83,6 @@ class VDevice(Device):
             return self.primary_ip4
         else:
             return None
+
+    def get_absolute_url(self):
+        return reverse("dcim:device", args=[self.pk])

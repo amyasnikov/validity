@@ -19,7 +19,7 @@ class NetBoxValidityConfig(PluginConfig):
     version = "3.0.5"
     base_url = "validity"
     django_apps = ["django_bootstrap5"]
-    min_version = "3.7.0"
+    min_version = "4.0.0"
 
     # custom field
     netbox_version = NetboxVersion(VERSION)
