@@ -1,6 +1,6 @@
 from core.models import DataFile, DataSource
 from dcim.choices import DeviceStatusChoices
-from dcim.models import DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.forms import Form
 from django.utils.translation import gettext_lazy as _
 from extras.models import Tag
@@ -122,6 +122,12 @@ class ComplianceSelectorImportForm(NetBoxModelImportForm):
         help_text=_("Device Type slugs separated by commas, encased with double quotes"),
         required=False,
     )
+    role_filter = CSVModelMultipleChoiceField(
+        queryset=DeviceRole.objects.all(),
+        to_field_name="slug",
+        help_text=_("Device Role slugs separated by commas, encased with double quotes"),
+        required=False,
+    )
     platform_filter = CSVModelMultipleChoiceField(
         queryset=Platform.objects.all(),
         to_field_name="slug",
@@ -160,6 +166,7 @@ class ComplianceSelectorImportForm(NetBoxModelImportForm):
             "tag_filter",
             "manufacturer_filter",
             "type_filter",
+            "role_filter",
             "platform_filter",
             "status_filter",
             "location_filter",
