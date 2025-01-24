@@ -139,7 +139,7 @@ ipv6:
 ```
 
 ### XML
-This method translates input XML-formatted text into Python dict using [xmltodict](https://github.com/martinblech/xmltodict) library. It is mainly used together with [Netconf commands](./commands.md#typenetconf).
+This method translates input XML-formatted text into Python dict using [xmltodict](https://github.com/martinblech/xmltodict) library. It is mainly used together with [Netconf commands](./commands.md#type-netconf).
 
 **Input data:**
 ```xml

@@ -7,7 +7,7 @@ Validity is the [NetBox](https://netboxlabs.com/oss/netbox/) plugin. So, before 
 
 | **Python** | **NetBox**      |
 |------------|-----------------|
-| >=3.10     | 3.7 &#124; 4.0 &#124; 4.1 |
+| >=3.10     | 4.0 &#124; 4.1 &#124; 4.2 |
 
 ## Installation steps
 Once you have installed NetBox, you should follow these steps

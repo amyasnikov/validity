@@ -1,6 +1,9 @@
 site_name: Validity
 repo_url: https://github.com/amyasnikov/validity/
-theme: material
+theme:
+  name: material
+  icon:
+    logo: material/checkbox-marked-circle-outline
 nav:
   - Intro: index.md
   - Installation:
@@ -26,7 +29,8 @@ nav:
     - How to work with Device State: features/state.md
     - Dynamic Pairs: features/dynamic_pairs.md
     - Webhooks: features/webhooks.md
-    - Config backup: features/config_backup.md
+    - Custom Pollers: features/custom_pollers.md
+    - Config Backup: features/config_backup.md
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -34,6 +38,7 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - admonition
+  - pymdownx.details
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences

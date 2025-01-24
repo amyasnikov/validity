@@ -64,3 +64,10 @@ There are 3 ways to bind a Poller to Device:
 * Set the Poller at **Device Type** level. Go to Device Type page at set the Poller via custom fields. This action applies this Poller to all the devices with this Device Type and overwrites the value from Manufacturer.
 
 * Set the Poller at the individual **Device** level. Go to Device page at set the Poller via custom fields. This action applies this Poller to one specific Device only and overwrites the values from Device Type and Manufacturer.
+
+
+# Custom Pollers
+
+You can easily write your own polling backend, connect it to Validity and then use for polling.
+
+Read more about this feature in the [Custom Pollers](../features/custom_pollers.md) article.

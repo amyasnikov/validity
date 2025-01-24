@@ -23,12 +23,16 @@ from validity.models import Command
 
 
 class ScrapliPoller(CustomPoller):
+    # this class/function will be supplied with poller parameters
     driver_factory = Scrapli
-    host_param_name = 'host'  #  Scrapli expects "host" param containing ip address of the device
-    driver_connect_method = 'open'  # This driver method (if defined) will be called to open the connection.
-    driver_disconnect_method = 'close' # This driver method (if defined) will be called to gracefully close the connection.
+    # Scrapli class expects "host" param containing ip address of the device
+    host_param_name = 'host'
+    # This driver method (if defined) will be called to open the connection.
+    driver_connect_method = 'open'
+    # This driver method (if defined) will be called to gracefully close the connection.
+    driver_disconnect_method = 'close'
 
-    def poll_one_command(self, driver, command) -> str:
+    def poll_one_command(self, driver: Scrapli, command: Command) -> str:
         """
         Arguments:
             driver - object returned by calling driver_factory, usually represents connection to a particular device
@@ -64,9 +68,29 @@ PLUGIN_SETTINGS = {
 }
 ```
 
+??? info
+    The same setting may be defined via dict as well
+    ```python
+    # configuration.py
+
+    from my_awesome_poller import ScrapliPoller
+
+    PLUGIN_SETTINGS = {
+        'validity': {
+            'custom_pollers' : [
+                'class': ScrapliPoller,
+                'name':'scrapli',
+                'color':'pink',
+                'command_types'=['CLI'],
+            ]
+        }
+    }
+    ```
+
+
 PollerInfo parameters:
 
-* **klass** - class inherited from `CustomPoller`
+* **klass/class** - class inherited from `CustomPoller`
 * **name** - system name of the poller, must contain lowercase letters only
 * **verbose_name** - optional verbose name of the poller. Will be used in NetBox GUI
 * **color** - badge color used for "Connection Type" field in the GUI
