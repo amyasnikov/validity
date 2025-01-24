@@ -19,6 +19,7 @@ If this param is `True`, backup will be performed each time respective Data Sour
 Defines protocol for uploading the Data Source.
 
 Available options are:
+
 * Git (over http(s))
 * Amazon S3 (or any other S3-compatible service)
 

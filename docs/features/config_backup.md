@@ -6,9 +6,9 @@ Validity supports device configurations backups to remote **Git** or **S3** serv
 
 1. Follow the steps described in the [Quickstart: Polling](../quickstart_polling.md) article to set up all the entities required for device polling.
 
-2. Polling is done when the Data Source is synced. In most cases it will be the default **Validity Polling** Data Source, but you are free to create your own one with the type *device_polling*.
+2. Polling is done when the Data Source is synced. In most cases it will be the default **Validity&nbsp;Polling** Data Source, but you are free to create your own one with the type *device_polling*.
 
-3. Create a [Backup Point](../entities/backuppoints.md) which describes a place where the Data Source with the configs have to be uploaded.
+3. Create a [Backup Point](../entities/backuppoints.md) which describes a place where the Data Source with the configs has to be uploaded.
 
 Example using pynetbox:
 
@@ -34,7 +34,7 @@ There are several options to trigger the backup process:
 
 * Press "Back Up" button on the Backup Point page.
 
-* Specify `Backup After Sync: True` in the Backup Point settings. This will trigger the backup process each time the respective data source is being synced (no matter via button, API or somehow else).
+* Specify `Backup After Sync: True` in the Backup Point settings. This will trigger the backup process each time the respective data source sync occurs (no matter via GUI button, API or somehow else).
 
 * Execute [RunTests](../entities/scripts.md#run-tests) script with `Sync Data Sources: True` option (`Backup After Sync: True` is required as well).
 
@@ -43,13 +43,13 @@ There are several options to trigger the backup process:
 
 There are several options to provision periodic configuration backup process (e.g. daily, each 6 hours, etc):
 
-1. Provision [RunTests](../entities/scripts.md#run-tests) script to execute on a regular basis using **Interval** script parameter. This will run everything at once:
-    * poll the devices (perform data source sync)
-    * execute compliance tests
-    * back up the data source
+* Provision [RunTests](../entities/scripts.md#run-tests) script to start regularly using **Interval** script parameter. This will run everything at once:
+    1. poll the devices (perform data source sync)
+    2. execute compliance tests
+    3. back up the data source
 
 
-2. If you don't want to run the tests via scheduler and want backup only, you can create tiny [custom script](https://netboxlabs.com/docs/netbox/en/stable/customization/custom-scripts/) inside your NetBox and configure it to run periodically.
+* If you don't want to run the tests via scheduler and want backup only, you can create tiny NetBox [Custom Script](https://netboxlabs.com/docs/netbox/en/stable/customization/custom-scripts/) inside your NetBox and configure it to run periodically.
 
 ```python
 from core.models import DataSource
@@ -65,4 +65,5 @@ class SyncDataSource(Script):
 
 Execution of this script triggers the sync of the DataSource (and hence the backup process for bound Backup points with `Backup After Sync: True`).
 
-3. Wait till periodic Data Source sync is implemented in the core NetBox. There is an [issue](https://github.com/netbox-community/netbox/issues/18287) for it, upvotes are appreciated.
+
+* Wait till periodic Data Source sync is implemented in the core NetBox. There is an [issue](https://github.com/netbox-community/netbox/issues/18287) for it, upvotes are appreciated.
