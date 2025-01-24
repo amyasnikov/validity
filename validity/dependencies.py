@@ -1,3 +1,4 @@
+import warnings
 from typing import Annotated
 
 from dimi.scopes import Context, Singleton
@@ -28,7 +29,14 @@ def django_settings():
 
 @di.dependency(scope=Singleton, add_return_alias=True)
 def validity_settings(django_settings: Annotated[LazySettings, django_settings]) -> ValiditySettings:
-    return ValiditySettings.model_validate(django_settings.PLUGINS_CONFIG.get("validity", {}))
+    settings = django_settings.PLUGINS_CONFIG.get("validity", {})
+    if settings.get("runtests_queue"):
+        warnings.warn(
+            '"runtests_queue" Validity setting is deprecated, use "custom_queues.runtests" instead.',
+            FutureWarning,
+            stacklevel=1,
+        )
+    return ValiditySettings.model_validate(settings)
 
 
 @di.dependency(scope=Context, add_return_alias=True)
