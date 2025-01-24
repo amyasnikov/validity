@@ -64,6 +64,23 @@ PLUGIN_SETTINGS = {
 }
 ```
 
+??? info
+    The same setting may be defined via dict as well
+    ```python
+    # configuration.py
+
+    from my_awesome_poller import ScrapliPoller
+
+    PLUGIN_SETTINGS = {
+        'validity': {
+            'custom_pollers' : [
+                'class': ScrapliPoller, 'name':'scrapli', 'color':'pink', 'command_types'=['CLI']
+            ]
+        }
+    }
+    ```
+
+
 PollerInfo parameters:
 
 * **klass** - class inherited from `CustomPoller`
