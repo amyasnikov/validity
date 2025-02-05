@@ -166,10 +166,11 @@ def test_get_serialized_state(admin_client, item, monkeypatch):
     assert resp.status_code == HTTPStatus.OK
 
 
+@pytest.mark.parametrize("query_params", [{}, {"sort": "device"}, {"sort": "-device"}])
 @pytest.mark.django_db
-def test_report_devices(admin_client):
+def test_report_devices(admin_client, query_params):
     report = ReportFactory(passed_results=4, failed_results=2)
-    resp = admin_client.get(f"/plugins/validity/reports/{report.pk}/devices/")
+    resp = admin_client.get(f"/plugins/validity/reports/{report.pk}/devices/", query_params)
     assert resp.status_code == HTTPStatus.OK
 
 
