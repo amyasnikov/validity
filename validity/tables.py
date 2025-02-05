@@ -16,6 +16,7 @@ from utilities.paginator import EnhancedPaginator
 from utilities.templatetags.builtins.filters import isodatetime
 
 from validity import models
+from validity.netbox_changes import DEVICE_NAME_ORDER
 from validity.templatetags.validity import colorful_percentage
 
 
@@ -233,7 +234,11 @@ class DeviceReportM2MColumn(ManyToManyColumn):
 
 class ComplianceReportDeviceTable(BaseTable):
     device = TemplateColumn(
-        order_by=("_name",), template_code=DEVICE_LINK, linkify=True, accessor="name", attrs={"th": {"class": "col-2"}}
+        order_by=(DEVICE_NAME_ORDER),
+        template_code=DEVICE_LINK,
+        linkify=True,
+        accessor="name",
+        attrs={"th": {"class": "col-2"}},
     )
     compliance_passed = BooleanColumn(
         verbose_name=_("Compliance Passed"),
