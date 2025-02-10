@@ -1,5 +1,6 @@
 from netbox import plugins
 from netbox.choices import ButtonColorChoices
+from django.conf import settings
 
 
 def model_add_button(entity):
@@ -54,8 +55,13 @@ polling_menu_items = (
     model_menu_item("backuppoint", "Backup Points", [model_add_button, model_import_button]),
 )
 
-menu = plugins.PluginMenu(
-    label="Validity",
-    groups=(("main", validity_menu_items), ("polling", polling_menu_items)),
-    icon_class="mdi mdi-checkbox-marked-circle-outline",
-)
+plugin_settings = settings.PLUGINS_CONFIG.get('validity', {})
+
+if plugin_settings.get('top_level_menu'):
+    menu = plugins.PluginMenu(
+        label="Validity",
+        groups=(("main", validity_menu_items), ("polling", polling_menu_items)),
+        icon_class="mdi mdi-checkbox-marked-circle-outline",
+    )
+else:
+    menu_items = validity_menu_items + polling_menu_items
