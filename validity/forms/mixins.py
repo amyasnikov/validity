@@ -76,12 +76,8 @@ class SubformMixin:
             self.initial |= self.subform.data
 
     def save(self, commit=True):
-        json_field = {}
         if self.subform:
-            for name in self.fields:
-                if name in self.subform.fields:
-                    json_field[name] = self.cleaned_data[name]
-            self.instance.subform_json = json_field
+            self.instance.subform_json = self.subform.data_for_saving
         return super().save(commit)
 
     def clean(self):
