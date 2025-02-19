@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 from base import ViewTest
+from django.urls import reverse
 from django.utils.functional import classproperty
 from factories import (
     BackupPointFactory,
@@ -195,6 +196,27 @@ class TestCommand(ViewTest):
         "type": "CLI",
         "cli_command": "show run",
     }
+
+
+class TestCustomCommand(ViewTest):
+    factory_class = partial(CommandFactory, parameters={"a": {"b": {"c": "d"}}}, type="custom")
+    model_class = models.Command
+    post_body = {
+        "name": "CMD-2",
+        "label": "CMD_2",
+        "type": "custom",
+        "params": '{"p1": "v1"}',
+    }
+    get_suffixes: list[str] = ["", "add", "edit"]
+    post_suffixes: list[str] = ["edit", "delete", "add"]
+
+    @pytest.mark.django_db
+    def test_params_are_saved_properly(self, admin_client):
+        url = reverse("plugins:validity:command_add")
+        resp = admin_client.post(url, self.post_body)
+        assert resp.status_code == HTTPStatus.FOUND
+        command = models.Command.objects.get()
+        assert command.parameters == {"p1": "v1"}
 
 
 class TestBackupPoint(ViewTest):
