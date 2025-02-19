@@ -131,7 +131,7 @@ def _setup_migrations(use_test_migrations):
         settings.MIGRATION_MODULES = UseTestMigrations(
             lambda app: None
         )  # force creating the tables according to the models
-        call_command("migrate", interactive=False, database=connection.alias, run_syncdb=True)
+        call_command("migrate", interactive=False, database=connection.alias, run_syncdb=True, verbosity=0)
         settings.MIGRATION_MODULES = {}
 
 

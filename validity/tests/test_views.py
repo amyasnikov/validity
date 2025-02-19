@@ -202,8 +202,8 @@ class TestCustomCommand(ViewTest):
     factory_class = partial(CommandFactory, parameters={"a": {"b": {"c": "d"}}}, type="custom")
     model_class = models.Command
     post_body = {
-        "name": "CMD-2",
-        "label": "CMD_2",
+        "name": "cmd-2",
+        "label": "cmd_2",
         "type": "custom",
         "params": '{"p1": "v1"}',
     }
