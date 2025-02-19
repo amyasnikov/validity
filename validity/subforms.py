@@ -4,10 +4,12 @@ Subforms are needed to
     2. Validate JSON Field
 """
 
+import json
 import textwrap
 import xml.etree.ElementTree as ET
 
 from django import forms
+from django.forms.widgets import Textarea
 from django.utils.translation import gettext_lazy as _
 
 from validity.choices import JSONAPIMethodChoices
@@ -29,7 +31,7 @@ class SensitiveMixin:
     def _sensitive_value(cls, field):
         if field.name in cls.sensitive_fields:
             return cls.placeholder
-        return field.value()
+        return json.dumps(field.data) if isinstance(data := field.data, (dict, list)) else data
 
     def rendered_parameters(self):
         for field in self:
@@ -47,6 +49,39 @@ class BaseSubform(SensitiveMixin, forms.Form):
             allowed_fields = ", ".join(self.base_fields.keys())
             raise forms.ValidationError(_("Only these keys are allowed: %(fields)s"), params={"fields": allowed_fields})
         return self.cleaned_data
+
+    @property
+    def data_for_saving(self):
+        return self.cleaned_data
+
+
+class PlainSubform(BaseSubform):
+    """
+    Displays all the params inside one JSONField called "params"
+    params field MUST be defined in a sublcass
+    """
+
+    def __init__(self, data=None, *args, **kwargs):
+        if data is not None:
+            if data.keys() != {"params"}:
+                data = type(data)({"params": dict(data)})
+        super().__init__(data, *args, **kwargs)
+
+    def clean_params(self):
+        params = self.cleaned_data["params"]
+        if not isinstance(params, dict):
+            raise forms.ValidationError("Value must be JSON object")
+        return params
+
+    @property
+    def data_for_saving(self):
+        return self.cleaned_data["params"]
+
+    def rendered_parameters(self):
+        for key, value in self.data["params"].items():
+            if isinstance(value, (dict, list)):
+                value = json.dumps(value)
+            yield key, value
 
 
 # Command Subforms
@@ -85,11 +120,13 @@ class NetconfCommandForm(BaseSubform):
         return rpc
 
 
-class CustomCommandForm(BaseSubform):
-    params = forms.JSONField(label=_("Command Parameters"))
-
-    def clean(self):
-        return self.cleaned_data["params"]
+class CustomCommandForm(PlainSubform):
+    params = forms.JSONField(
+        label=_("Command Parameters"),
+        help_text=_("JSON-encoded params"),
+        widget=Textarea(attrs={"style": "font-family:monospace"}),
+        initial=dict,
+    )
 
 
 # Serializer Subforms

@@ -92,7 +92,7 @@ class SubformValidationMixin:
                 ": ".join((field, err[0])) if field != "__all__" else err for field, err in subform.errors.items()
             ]
             raise ValidationError({instance.subform_json_field: errors})
-        instance.subform_json = attrs[instance.subform_json_field] = subform.cleaned_data
+        instance.subform_json = attrs[instance.subform_json_field] = subform.data_for_saving
         return attrs
 
     def validate(self, attrs):
