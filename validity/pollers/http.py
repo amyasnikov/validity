@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import requests
+import requests_gssapi
 from dcim.models import Device
 from pydantic import BaseModel, Field
 
@@ -8,6 +9,7 @@ from validity.j2_env import Environment
 from validity.utils.json import transform_json
 from .base import ConsecutivePoller
 
+auth = requests_gssapi.HTTPSPNEGOAuth()
 
 if TYPE_CHECKING:
     from validity.models import Command, VDevice
@@ -45,7 +47,7 @@ class HttpDriver:
         request_kwargs["method"] = command.parameters["method"]
         if body := self.render_body(command.parameters["body"], command):
             request_kwargs["json"] = body
-        return requests.request(**request_kwargs).content.decode()
+        return requests.request(**request_kwargs, auth=auth).content.decode()
 
 
 class RequestsPoller(ConsecutivePoller):
