@@ -47,7 +47,8 @@ class HttpDriver:
         request_kwargs["method"] = command.parameters["method"]
         if body := self.render_body(command.parameters["body"], command):
             request_kwargs["json"] = body
-        return requests.request(**request_kwargs, auth=auth).content.decode()
+        request_kwargs["auth"] = auth
+        return requests.request(**request_kwargs).content.decode()
 
 
 class RequestsPoller(ConsecutivePoller):
