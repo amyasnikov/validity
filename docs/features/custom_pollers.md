@@ -16,6 +16,8 @@ To define your own Poller, two steps must be performed:
 
 Here is the minimal viable example of a custom poller class. It uses `scrapli` library to connect to devices via SSH.
 
+Place the following code anywhere within your [PYTHONPATH](https://docs.python.org/3.13/using/cmdline.html#envvar-PYTHONPATH)
+
 ```python
 from scrapli import Scrapli
 from validity.pollers import CustomPoller
@@ -23,13 +25,13 @@ from validity.models import Command
 
 
 class ScrapliPoller(CustomPoller):
-    # this class/function will be supplied with poller parameters
+    # this class/function is supplied with poller parameters
     driver_factory = Scrapli
     # Scrapli class expects "host" param containing ip address of the device
     host_param_name = 'host'
-    # This driver method (if defined) will be called to open the connection.
+    # This driver method (if defined) is called to open the connection.
     driver_connect_method = 'open'
-    # This driver method (if defined) will be called to gracefully close the connection.
+    # This driver method (if defined) is called to gracefully close the connection.
     driver_disconnect_method = 'close'
 
     def poll_one_command(self, driver: Scrapli, command: Command) -> str:
@@ -78,10 +80,12 @@ PLUGIN_SETTINGS = {
     PLUGIN_SETTINGS = {
         'validity': {
             'custom_pollers' : [
-                'class': ScrapliPoller,
-                'name':'scrapli',
-                'color':'pink',
-                'command_types'=['CLI'],
+                {
+                    'class': ScrapliPoller,
+                    'name':'scrapli',
+                    'color':'pink',
+                    'command_types'=['CLI'],
+                }
             ]
         }
     }
