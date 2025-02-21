@@ -2,6 +2,8 @@ site_name: Validity
 repo_url: https://github.com/amyasnikov/validity/
 theme:
   name: material
+  features:
+    - search.suggest
   icon:
     logo: material/checkbox-marked-circle-outline
 nav:
@@ -46,6 +48,7 @@ markdown_extensions:
   - toc
 plugins:
   - include-markdown
+  - search
 
 extra_css:
   - extra_styles.css
