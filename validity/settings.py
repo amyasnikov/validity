@@ -61,6 +61,7 @@ class ValiditySettings(BaseModel):
     script_timeouts: ScriptTimeouts = ScriptTimeouts()
     custom_pollers: list[PollerInfo] = []
     integrations: IntegrationSettings = IntegrationSettings()
+    top_level_menu: bool = True
 
     @model_validator(mode="before")
     @classmethod

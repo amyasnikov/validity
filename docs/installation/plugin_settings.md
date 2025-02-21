@@ -107,6 +107,15 @@ If the system creates a new Report and the overall reports count exceeds *store_
     Test Results bound to the Report will be deleted as well.
 
 
+### **top_level_menu**
+
+*Default:* `True`
+
+*Type:* `bool`
+
+By default Validity creates its own navigation (left sidebar) menu item called "Validity". If this setting is `False`, Validity navigation menu will be placed inside shared "Plugins" tab.
+
+
 ## Settings Example
 
 !!! note
