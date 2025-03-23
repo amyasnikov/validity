@@ -108,7 +108,7 @@ def parse_config(plain_config: str) -> dict:
     result = {}
     context_path = []
     prevlines = []
-    cfgfile = io.StringIO(plain_config)
+    cfgfile = io.StringIO(plain_config, newline=None)
     for line_num, line in enumerate(cfgfile, start=1):
         if line.startswith(("#", ":")) or line == "\n":
             continue
