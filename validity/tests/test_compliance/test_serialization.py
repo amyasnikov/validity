@@ -65,11 +65,25 @@ set www-ssl certificate=some_cert disabled=no
 set disable-ipv6=yes max-neighbor-entries=8192
 /interface ethernet
 set [ find default-name=ether1 ] comment="some comment"
+/interface bridge vlan
+add bridge=br1 tagged=qsfpplus1-1 untagged="sfp-sfpplus1,sfp-sfpplus2,sfp-\\
+    sfpplus3,sfp-sfpplus4"
 """
 
 ROUTEROS_SERIALIZED = {
     "interface": {
-        "ethernet": {"values": [{"comment": "some comment", "find_by": [{"key": "default-name", "value": "ether1"}]}]}
+        "ethernet": {"values": [{"comment": "some comment", "find_by": [{"key": "default-name", "value": "ether1"}]}]},
+        "bridge": {
+            "vlan": {
+                "values": [
+                    {
+                        "bridge": "br1",
+                        "tagged": "qsfpplus1-1",
+                        "untagged": "sfp-sfpplus1,sfp-sfpplus2,sfp-sfpplus3,sfp-sfpplus4",
+                    }
+                ]
+            }
+        },
     },
     "ip": {
         "pool": {
