@@ -56,7 +56,7 @@ class ParsedLine:
         drop_match = re.compile(r"\\\n +")
         new_line = []
         backslash_seq = []
-        for _, char in non_quoted_characters(line):
+        for char in line:
             if char == "\\" or char in {"\n", " "} and backslash_seq:
                 backslash_seq.append(char)
                 continue
