@@ -12,9 +12,9 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Setup build and twine
-        run: pip install twine==5.1.1 build==1.2.1
+        run: pip install pkginfo==1.12.1.2 twine==6.0.1 build==1.2.2
       - name: Build
         run: python -m build
       - name: Twine check
