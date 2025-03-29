@@ -1,20 +1,27 @@
 # Webhooks
 
-NetBox has a built-in feature called [Event Rules](https://netboxlabs.com/docs/netbox/en/stable/models/extras/eventrule/) and [Webhooks](https://netboxlabs.com/docs/netbox/en/stable/models/extras/webhook/). This feature allows a user to provision a webhook to a custom endpoint when some NetBox model is created/updated/deleted.
+NetBox provides built-in support for [Event Rules](https://netboxlabs.com/docs/netbox/en/stable/models/extras/eventrule/) and [Webhooks](https://netboxlabs.com/docs/netbox/en/stable/models/extras/webhook/). These features allow you to trigger an external HTTP request whenever a NetBox model is created, updated, or deleted.
 
-The webhook may be provisioned to capture Compliance Report creation. Using this approach you can notify some third party system (OSS/BSS/Monitoring/etc.) about the overall compliance state of your network.
+This is useful for integrating NetBox with external systems like OSS/BSS, monitoring tools, or automation platforms. For example, you can configure a webhook to notify an external service whenever a Compliance Report is generated.
 
-Let's create a webhook and an event rule using [pynetbox](https://github.com/netbox-community/pynetbox) library.
+## Creating a Webhook and Event Rule
 
-You may do the same thing using web GUI (`Other > Webhooks` menu)
+You can create a webhook and an event rule programmatically using the [pynetbox](https://github.com/netbox-community/pynetbox) library or via the NetBox web UI (`Other > Webhooks` menu).
+
+### Using `pynetbox`
+
+The following example demonstrates how to create a webhook and an event rule using `pynetbox`:
 
 ```python
 from pynetbox.core.api import Api
 
-token = 'get api token via web gui and place it here'
+# Replace with your API token retrieved from the NetBox UI
+token = 'your_api_token_here'
 
+# Initialize the NetBox API client
 nb = Api(url='http://127.0.0.1:8000', token=token)
 
+# Create a webhook that sends a POST request to the specified URL
 webhook = nb.extras.webhooks.create(
     name='sample_webhook',
     payload_url='http://localhost:9000/api/webhook/',
@@ -22,6 +29,7 @@ webhook = nb.extras.webhooks.create(
     ssl_verification=False,
 )
 
+# Create an event rule that triggers the webhook when a Compliance Report is created
 nb.extras.event_rules.create(
     name="sample_event",
     object_types=["validity.compliancereport"],
@@ -30,22 +38,15 @@ nb.extras.event_rules.create(
     action_object_type="extras.webhook",
     action_object=webhook.id
 )
-
 ```
 
-It's done. Now when Run Compliance Tests script finishes its work, it will trigger the webhook to the `http://localhost:9000/api/webhook/` handle.
+Once configured, when a Compliance Report is generated, the webhook will send an HTTP POST request to `http://localhost:9000/api/webhook/`.
 
+## Example Webhook Payload
 
-Here is the example contents of the webhook configured above:
+When triggered, the webhook sends a payload like the following:
 
-```console
-[1] Wed, 12 Apr 2023 19:36:37 GMT 127.0.0.1 "POST /api/webhook/ HTTP/1.1" 200 -
-Host: localhost:9000
-Accept-Encoding: identity
-Content-Type: application/json
-Content-Length: 772
-User-Agent: python-urllib3/1.26.15
-
+```json
 {
     "event": "created",
     "timestamp": "2023-04-12 19:36:37.739906+00:00",
@@ -60,36 +61,33 @@ User-Agent: python-urllib3/1.26.15
         "test_count": 3,
         "total_passed": 5,
         "total_count": 8,
-        "low_passed": 0,
-        "low_count": 0,
-        "middle_passed": 5,
-        "middle_count": 8,
-        "high_passed": 0,
-        "high_count": 0,
         "results_url": "/api/plugins/validity/test-results/?report_id=29",
-        "custom_fields": {},
-        "created": "2023-04-12T19:36:33.690567Z",
-        "last_updated": "2023-04-12T19:36:33.690588Z"
+        "created": "2023-04-12T19:36:33.690567Z"
     },
     "snapshots": {
         "prechange": null,
         "postchange": {
-            "created": "2023-04-12T19:36:33.690Z",
-            "last_updated": "2023-04-12T19:36:33.690Z",
-            "custom_fields": {}
+            "created": "2023-04-12T19:36:33.690Z"
         }
     }
 }
-Completed request #1
 ```
 
-As you see the "data" property is just a serialized Report instance. It contains some statistics and the link to the results associated with this report.
+The `data` field contains information about the Compliance Report, including statistics and a link to detailed results. Since results can be large, they are not included in the payload but can be retrieved using the `results_url`.
 
-Results itself are not included in the data because there may be plenty of results, so the body of the webhook may become too large.
+## Testing Your Webhook
 
-If you need it, you may download the results using the link provided in the webhook and possibly calculate your own statistics based on the raw results data.
+Before deploying your webhook in production, you should test it to verify the payload and behavior. You can use tools like:
 
-!!! info
-    Someone may ask why email notifications are not implemented. The answer is simple: NetBox itself has no email delivery subsystem, and it's just not a purpose of Validity: to build this subsystem from scratch
+- **[Beeceptor](https://beeceptor.com/)** – Set up a custom endpoint and inspect webhook requests in real time.
+- **[Pipedream RequestBin](https://pipedream.com/requestbin)** – Capture and debug webhook requests.
 
-    You always can set up some other system for sending emails triggered by an incoming webhook from NetBox.
+To test, configure your webhook with one of these services and trigger an event in NetBox. You’ll be able to inspect the request headers, body, and response status.
+
+## Why No Email Notifications?
+
+NetBox does not have a built-in email delivery system. If you need email alerts, you can set up an external service to send emails when a webhook is received.
+
+For example, you can use a simple serverless function or a webhook-to-email service to process webhook payloads and send notifications.
+
+By leveraging NetBox webhooks, you can integrate with external systems and automate workflows efficiently.
