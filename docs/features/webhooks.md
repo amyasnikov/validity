@@ -61,13 +61,22 @@ When triggered, the webhook sends a payload like the following:
         "test_count": 3,
         "total_passed": 5,
         "total_count": 8,
-        "results_url": "/api/plugins/validity/test-results/?report_id=29",
-        "created": "2023-04-12T19:36:33.690567Z"
+        "low_passed": 0,
+        "low_count": 0,
+        "middle_passed": 5,
+        "middle_count": 8,
+        "high_passed": 0,
+        "high_count": 0,
+        "custom_fields": {},
+        "created": "2023-04-12T19:36:33.690567Z",
+        "last_updated": "2023-04-12T19:36:33.690588Z"
     },
     "snapshots": {
         "prechange": null,
         "postchange": {
-            "created": "2023-04-12T19:36:33.690Z"
+            "created": "2023-04-12T19:36:33.690Z",
+            "last_updated": "2023-04-12T19:36:33.690Z",
+            "custom_fields": {}
         }
     }
 }
