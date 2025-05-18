@@ -9,18 +9,19 @@ services:
     ports:
       - "5679:5678"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_started
     env_file: .env
     environment:
       - POSTGRES_HOST=postgres
       - REDIS_CACHE_HOST=redis
       - REDIS_HOST=redis
     volumes:
-      - custom_scripts:/opt/netbox/netbox/scripts
       - ./configuration.py:/opt/netbox/netbox/netbox/configuration.py
       - ../validity:/plugin/validity/validity
-      - git_repos:/opt/git_repos/
     networks:
       - netboxnet
 
@@ -30,14 +31,17 @@ services:
     ports:
       - "8000:8000"
       - "5678:5678"
-    depends_on:
-      - postgres
-      - worker
-      - redis
+
 
   postgres:
     image: postgres:14-alpine
     env_file: .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 10s
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -52,8 +56,7 @@ services:
 
 volumes:
   pgdata:
-  git_repos:
-  custom_scripts:
+
 
 networks:
   netboxnet:
