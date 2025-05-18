@@ -66,7 +66,8 @@ class ComplianceTestResultQS(ValiditySettingsMixin, RestrictedQuerySet):
         return self.aggregate(device_count=Count("devices", distinct=True), test_count=Count("tests", distinct=True))
 
     def raw_delete(self):
-        return self._raw_delete(self.db)
+        del_count = self._raw_delete(self.db)
+        return del_count or 0
 
 
 def percentage(field1: str, field2: str) -> Case:
@@ -131,10 +132,10 @@ class ComplianceReportQS(ValiditySettingsMixin, RestrictedQuerySet):
         old_reports = list(self.order_by("-created").values_list("pk", flat=True)[self.v_settings.store_reports :])
         deleted_results = ComplianceTestResult.objects.filter(report__pk__in=old_reports).raw_delete()
         report_content_type = ContentType.objects.get_for_model(ComplianceReport)
-        deleted_jobs = Job.objects.filter(object_id__in=old_reports, object_type=report_content_type).delete()
+        deleted_jobs, _ = Job.objects.filter(object_id__in=old_reports, object_type=report_content_type).delete()
         deleted_reports, _ = self.filter(pk__in=old_reports).delete()
         return (
-            deleted_results + deleted_reports + deleted_reports,
+            deleted_results + deleted_reports + deleted_jobs,
             {
                 "validity.ComplianceTestResult": deleted_results,
                 "validity.ComplianceReport": deleted_reports,

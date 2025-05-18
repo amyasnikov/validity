@@ -7,7 +7,7 @@ from core.models import Job
 from dcim.filtersets import DeviceFilterSet
 from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
 from django.db.models import Q
-from django_filters import BooleanFilter, ChoiceFilter, ModelMultipleChoiceFilter
+from django_filters import BooleanFilter, CharFilter, ChoiceFilter, ModelMultipleChoiceFilter
 from extras.models import Tag
 from netbox.filtersets import ChangeLoggedModelFilterSet, NetBoxModelFilterSet
 from tenancy.models import Tenant
@@ -45,7 +45,8 @@ class ComplianceTestFilterSet(SearchMixin, NetBoxModelFilterSet):
         search_fields = ("name", "description", "expression")
 
 
-class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
+class ComplianceTestResultFilterSet(SearchMixin, ChangeLoggedModelFilterSet):
+    q = CharFilter(method="search", label="Search")
     test_id = ModelMultipleChoiceFilter(field_name="test", queryset=models.ComplianceTest.objects.all())
     device_id = ModelMultipleChoiceFilter(field_name="device", queryset=Device.objects.all())
     report_id = ModelMultipleChoiceFilter(field_name="report", queryset=models.ComplianceReport.objects.all())
@@ -61,7 +62,6 @@ class ComplianceTestResultFilterSet(SearchMixin, NetBoxModelFilterSet):
     location_id = ModelMultipleChoiceFilter(field_name="device__location", queryset=Location.objects.all())
     site_id = ModelMultipleChoiceFilter(field_name="device__site", queryset=Site.objects.all())
     test_tag_id = ModelMultipleChoiceFilter(field_name="test__tags", queryset=Tag.objects.all())
-    tag = None
 
     class Meta:
         model = models.ComplianceTestResult
