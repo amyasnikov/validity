@@ -120,7 +120,7 @@ def test_backup_datasources_fail(timezone_now, di):
 @pytest.mark.parametrize("device_num", [2])
 @pytest.mark.django_db(transaction=True, reset_sequences=True)
 def test_call(selectors, devices, runtests_params, monkeypatch):
-    time = timezone.datetime(year=2000, month=1, day=1)
+    time = timezone.datetime(year=2000, month=1, day=1, tzinfo=datetime.timezone.utc)
     monkeypatch.setattr(timezone, "now", lambda: time)
     job = RunTestsJobFactory()
     runtests_params = runtests_params.with_job_info(job)
@@ -134,17 +134,17 @@ def test_call(selectors, devices, runtests_params, monkeypatch):
             Message(
                 status="warning",
                 message="No bound Data Sources found. Sync skipped",
-                time=datetime.datetime(2000, 1, 1, 0, 0),
+                time=datetime.datetime(2000, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
             ),
             Message(
                 status="info",
                 message="Running the tests for *2 devices*",
-                time=datetime.datetime(2000, 1, 1, 0, 0),
+                time=datetime.datetime(2000, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
             ),
             Message(
                 status="info",
                 message="Distributing the work among 2 workers. Each worker handles 1 device(s) in average",
-                time=datetime.datetime(2000, 1, 1, 0, 0),
+                time=datetime.datetime(2000, 1, 1, 0, 0, tzinfo=datetime.timezone.utc),
             ),
         ],
         slices=[{1: [1]}, {2: [2]}],

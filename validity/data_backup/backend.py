@@ -21,7 +21,7 @@ class BackupBackend:
                 if not backup_point.ignore_file(file.path):
                     filepath = datasource_dir / file.path
                     filepath.parent.mkdir(exist_ok=True, parents=True)
-                    file.write_to_disk(datasource_dir / file.path)
+                    filepath.write_bytes(file.data)
             yield datasource_dir
 
     def __call__(self, backup_point: "BackupPoint") -> None:

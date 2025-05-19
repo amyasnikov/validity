@@ -8,6 +8,7 @@ netmiko>=4.0.0,<5
 pydantic>=2.0.0,<3
 scrapli_netconf==2024.1.30
 simpleeval==0.9.13
+strawberry-graphql>=0.268.1 # fix strawberry-graphql/strawberry#3807 for netbox < 4.3
 textfsm>=1.1.3,<2
 ttp==0.9.*
 xmltodict<1

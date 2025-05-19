@@ -10,11 +10,10 @@ from core.models import Job
 from dimi import Singleton
 from django.db.models import QuerySet
 from django.urls import reverse
-from extras.events import flush_events
+from extras.events import enqueue_event, flush_events
 
 from validity import di
 from validity.models import ComplianceReport, ComplianceTestResult
-from validity.netbox_changes import QUEUE_CREATE_ACTION, enqueue_event
 from validity.utils.logger import Logger, Message
 from ..data_models import FullRunTestsParams, RequestInfo, TestResultRatio
 from ..exceptions import AbortScript
@@ -25,7 +24,7 @@ from ..parent_jobs import JobExtractor
 
 def enqueue(report: ComplianceReport, request: RequestInfo):
     queue = {}
-    enqueue_event(queue, report, request.get_user(), request.id, QUEUE_CREATE_ACTION)
+    enqueue_event(queue, report, request.get_user(), request.id, "object_created")
     flush_events(queue.values())
 
 
