@@ -57,7 +57,17 @@ class ComplianceTestImportForm(DataSourceMixin, NetBoxModelImportForm):
 
     class Meta:
         model = models.ComplianceTest
-        fields = ("name", "severity", "description", "selectors", "expression", "data_source", "data_file", "tags")
+        fields = (
+            "name",
+            "enabled",
+            "severity",
+            "description",
+            "selectors",
+            "expression",
+            "data_source",
+            "data_file",
+            "tags",
+        )
 
 
 class NameSetImportForm(DataSourceMixin, NetBoxModelImportForm):

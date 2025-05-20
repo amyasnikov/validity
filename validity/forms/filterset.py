@@ -156,6 +156,7 @@ class SerializerFilterForm(NetBoxModelFilterSetForm):
 class ComplianceTestFilterForm(NetBoxModelFilterSetForm):
     model = models.ComplianceTest
     name = CharField(required=False)
+    enabled = NullBooleanField(label=_("Enabled"), required=False, widget=Select(choices=BOOLEAN_WITH_BLANK_CHOICES))
     severity = PlaceholderChoiceField(required=False, label=_("Severity"), choices=SeverityChoices.choices)
     selector_id = DynamicModelMultipleChoiceField(
         label=_("Selector"), queryset=models.ComplianceSelector.objects.all(), required=False

@@ -89,14 +89,16 @@ class SplitWorker:
                 if (device_ids := [dev_id for _, dev_id in grouped_pairs])
             }
 
-    def _eliminate_leftover(self, slices):
-        leftover = slices.pop()
-        for slice in cycle(slices):
-            if not leftover:
-                break
-            selector, devices = leftover.popitem()
-            slice.setdefault(selector, [])
-            slice[selector].extend(devices)
+    def _eliminate_leftovers(self, slices, max_workers):
+        slices, leftovers = slices[:max_workers], slices[max_workers:]
+        cycl = iter(cycle(slices))
+        for leftover in leftovers:
+            while leftover:
+                slice = next(cycl)
+                selector, devices = leftover.popitem()
+                slice.setdefault(selector, [])
+                slice[selector].extend(devices)
+        return slices
 
     def distribute_work(
         self, params: FullRunTestsParams, logger: Logger, device_filter: Q
@@ -120,9 +122,9 @@ class SplitWorker:
 
         slices = [*self._work_slices(params.selector_qs, params.devices, devices_per_worker)]
 
-        # distribute the leftover among other slices
+        # distribute leftovers among other slices
         if len(slices) > params.workers_num:
-            self._eliminate_leftover(slices)
+            slices = self._eliminate_leftovers(slices, params.workers_num)
         return slices
 
     def __call__(self, params: FullRunTestsParams) -> SplitResult:

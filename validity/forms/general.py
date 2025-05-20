@@ -24,14 +24,24 @@ class ComplianceTestForm(SyncedDataMixin, NetBoxModelForm):
     expression = CharField(required=False, widget=Textarea(attrs={"style": "font-family:monospace"}))
 
     fieldsets = (
-        FieldSet("name", "severity", "description", "selectors", "tags", name=_("Compliance Test")),
+        FieldSet("name", "enabled", "severity", "description", "selectors", "tags", name=_("Compliance Test")),
         FieldSet("data_source", "data_file", name=_("Expression from Data Source")),
         FieldSet("expression", name=_("Expression from DB")),
     )
 
     class Meta:
         model = models.ComplianceTest
-        fields = ("name", "severity", "description", "expression", "selectors", "data_source", "data_file", "tags")
+        fields = (
+            "name",
+            "enabled",
+            "severity",
+            "description",
+            "expression",
+            "selectors",
+            "data_source",
+            "data_file",
+            "tags",
+        )
 
 
 class ComplianceSelectorForm(NetBoxModelForm):

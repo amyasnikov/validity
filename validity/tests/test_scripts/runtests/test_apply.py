@@ -124,6 +124,21 @@ def test_devicetest_iterator():
     assert iter_values[::-1] == [(devices[:2], tests[:2]), (devices[2:], tests[2:])]
 
 
+@pytest.mark.django_db
+def test_devicetest_iterator_excluded_devices():
+    device = DeviceFactory()
+    selector = SelectorFactory()
+    tests = [CompTestDBFactory(name=f"t{i}", enabled=bool(i // 2)) for i in range(5)]
+    selector.tests.set(tests)
+    selector_devices = {selector.pk: [device.pk]}
+    iterator = DeviceTestIterator(selector_devices, [], None)
+    iter_result = list(iterator)
+    assert len(iter_result) == 1
+    device_qs, test_qs = iter_result[0]
+    assert list(device_qs) == [device]
+    assert list(test_qs.order_by("name")) == tests[2:]
+
+
 @pytest.fixture
 def apply_worker():
     test_results = CompTestResultFactory.build_batch(size=3)

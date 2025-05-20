@@ -20,6 +20,9 @@ class ComplianceTest(DataSourceMixin, BaseModel):
     )
     expression = models.TextField(_("Expression"), blank=True)
     selectors = models.ManyToManyField(to="ComplianceSelector", related_name="tests", verbose_name=_("Selectors"))
+    enabled = models.BooleanField(
+        _("Enabled"), default=True, help_text=_("Uncheck the box to prevent this test from running")
+    )
 
     clone_fields = ("expression", "selectors", "severity", "data_source", "data_file")
     text_db_field_name = "expression"

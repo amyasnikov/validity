@@ -1,4 +1,5 @@
 import datetime
+from itertools import chain
 from unittest.mock import Mock
 
 import factory
@@ -51,18 +52,40 @@ def split_worker():
         (1, 6, [{1: [1, 2, 3], 2: [4, 5, 6]}]),
         (2, 6, [{1: [1, 2, 3]}, {2: [4, 5, 6]}]),
         (3, 6, [{1: [1, 2]}, {1: [3], 2: [4]}, {2: [5, 6]}]),
-        (4, 6, [{1: [1], 2: [6]}, {1: [2]}, {1: [3]}, {2: [4]}, {2: [5]}]),
         (2, 3, [{1: [1], 2: [3]}, {2: [2]}]),
-        (5, 9, [{1: [1], 2: [9]}, {1: [2]}, {1: [3]}, {1: [4]}, {2: [5]}, {2: [6]}, {2: [7]}, {2: [8]}]),
+        (5, 9, [{1: [1], 2: [6]}, {1: [2], 2: [7]}, {1: [3], 2: [8]}, {1: [4], 2: [9]}, {2: [5]}]),
     ],
 )
 @pytest.mark.django_db(transaction=True, reset_sequences=True)
 @factory.django.mute_signals(post_save)
 def test_distribute_work(split_worker, selectors, worker_num, runtests_params, expected_result, devices):
+    # this test is unstable due to unpredictable db obj extraction order
     runtests_params.workers_num = worker_num
     runtests_params.selectors = [s.pk for s in selectors]
     result = split_worker.distribute_work(runtests_params, Logger(), runtests_params.get_device_filter())
     assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "worker_num, device_num",
+    [
+        (2, 5),
+        (3, 5),
+        (4, 5),
+        (5, 5),
+    ],
+)
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+@factory.django.mute_signals(post_save)
+def test_distribute_work_2(split_worker, selectors, worker_num, runtests_params, devices, device_num):
+    runtests_params.workers_num = worker_num
+    runtests_params.selectors = [s.pk for s in selectors]
+    result = split_worker.distribute_work(runtests_params, Logger(), runtests_params.get_device_filter())
+    assert len(result) <= worker_num
+    all_devices = list(chain.from_iterable([v for dictt in result for _, v in dictt.items()]))
+    all_selectors = {k for dictt in result for k, _ in dictt.items()}
+    assert len(all_devices) == device_num and set(all_devices) == {*range(1, device_num + 1)}
+    assert all_selectors == {1, 2}
 
 
 @pytest.mark.parametrize("overriding_datasource", [None, DataSourceFactory])

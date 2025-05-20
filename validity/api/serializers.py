@@ -120,6 +120,7 @@ class ComplianceTestSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
+            "enabled",
             "severity",
             "description",
             "effective_expression",
