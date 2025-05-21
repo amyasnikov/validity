@@ -135,6 +135,9 @@ In test expressions you **CANNOT USE**:
 #### Name
 The name of the test. Must be unique.
 
+#### Enabled
+If the test is disabled, it will be ignored during tests execution.
+
 #### Severity
 One of the `LOW`, `MIDDLE` or `HIGH`. This param influences the future analysis of the [Test Results](results_and_reports.md#test-results) and the appearance of [Reports](results_and_reports.md#reports) (test results inside the report will be grouped by test severity).
 
