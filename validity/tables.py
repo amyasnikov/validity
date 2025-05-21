@@ -62,7 +62,7 @@ class ComplianceTestTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = models.ComplianceTest
-        fields = ("name", "severity", "selectors", "passed", "failed")
+        fields = ("name", "enabled", "severity", "selectors", "passed", "failed")
         default_columns = fields
 
 

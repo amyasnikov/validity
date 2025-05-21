@@ -18,6 +18,10 @@
               <td>{{ object.name }}</td>
             </tr>
             <tr>
+              <th scope="row">Enabled</th>
+              <td>{{ object.enabled | checkmark }}</td>
+            </tr>
+            <tr>
               <th scope="row">Severity</th>
               <td>{{ object | colored_choice:"severity" }}</td>
             </tr>

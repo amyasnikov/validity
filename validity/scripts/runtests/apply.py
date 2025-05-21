@@ -113,7 +113,7 @@ class DeviceTestIterator:
 
     def _get_selectors(self):
         selectors = ComplianceSelector.objects.all()
-        test_qs = ComplianceTest.objects.all()
+        test_qs = ComplianceTest.objects.filter(enabled=True)
         if self.test_tags:
             test_qs = test_qs.filter(tags__pk__in=self.test_tags).distinct()
         return selectors.prefetch_related(Prefetch("tests", test_qs.prefetch_related("namesets")))
