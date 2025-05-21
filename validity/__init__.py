@@ -16,10 +16,10 @@ class NetBoxValidityConfig(PluginConfig):
     description = "Write and run auto tests for network devices"
     author = "Anton Miasnikov"
     author_email = "anton2008m@gmail.com"
-    version = "3.1.3"
+    version = "3.2.0"
     base_url = "validity"
     django_apps = ["django_bootstrap5"]
-    min_version = "4.0.0"
+    min_version = "4.1.0"
 
     # custom field
     netbox_version = NetboxVersion(VERSION)
