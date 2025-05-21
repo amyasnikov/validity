@@ -6,7 +6,7 @@ from contextlib import nullcontext
 import pytest
 from deepdiff.serialization import json_dumps
 
-from validity.compliance.eval import EvalWithCompoundTypes, ExplanationalEval, default_nameset, eval_defaults
+from validity.compliance.eval import ExplanationalEval, default_nameset, eval_defaults
 from validity.compliance.exceptions import EvalError
 
 
@@ -98,7 +98,7 @@ def test_load_defaults(init_kwargs, expected_names, expected_functions, expected
     ],
 )
 def test_dict_comp(expression, result):
-    ev = EvalWithCompoundTypes(functions={"range": range, "str": str})
+    ev = ExplanationalEval(functions={"range": range, "str": str})
     assert ev.eval(expression) == result
 
 
@@ -111,5 +111,5 @@ def test_dict_comp(expression, result):
     ],
 )
 def test_set_comp(expression, result):
-    ev = EvalWithCompoundTypes(functions={"range": range})
+    ev = ExplanationalEval(functions={"range": range})
     assert ev.eval(expression) == result

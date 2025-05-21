@@ -10,24 +10,14 @@ from ..exceptions import EvalError
 from . import eval_defaults
 
 
-class DictCompWithElt(ast.DictComp):
-    @property
-    def elt(self):
-        return ast.Tuple(elts=[self.key, self.value])
-
-
 class EvalWithCompoundTypes(simpleeval.EvalWithCompoundTypes):
     """
-    This class provides support for DictComp and SetComp
+    This class provides support for SetComp
     """
 
     def __init__(self, operators=None, functions=None, names=None):
         super().__init__(operators, functions, names)
-        self.nodes |= {ast.DictComp: self._eval_dictcomp, ast.SetComp: lambda node: set(self._eval_comprehension(node))}
-
-    def _eval_dictcomp(self, node):
-        node = DictCompWithElt(**node.__dict__)
-        return dict(self._eval_comprehension(node))
+        self.nodes |= {ast.SetComp: lambda node: set(self._eval_comprehension(node))}
 
 
 class ExplanationalEval(EvalWithCompoundTypes):
