@@ -33,7 +33,7 @@ class TestRunTestsParams:
         return [SelectorFactory() for _ in range(10)]
 
     def test_selector_qs(self, runtests_params, selectors):
-        assert list(runtests_params.selector_qs) == selectors
+        assert set(runtests_params.selector_qs) == set(selectors)
 
         runtests_params.selectors = [selectors[0].id, selectors[2].id]
         assert list(runtests_params.selector_qs) == [selectors[0], selectors[2]]

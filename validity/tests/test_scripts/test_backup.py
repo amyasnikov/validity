@@ -7,6 +7,7 @@ from factories import DSBackupJobFactory
 
 from validity.data_backup import BackupBackend
 from validity.integrations.errors import IntegrationError
+from validity.netbox_changes import get_logs
 from validity.scripts.backup import perform_backup
 from validity.scripts.data_models import FullBackUpParams
 
@@ -34,7 +35,7 @@ def test_backup_success(di, params):
     assert bp.last_status == "completed"
     assert bp.last_uploaded < timezone.now()
     assert job.status == "completed"
-    assert job.data["log"]
+    assert get_logs(job)
 
 
 @pytest.mark.django_db

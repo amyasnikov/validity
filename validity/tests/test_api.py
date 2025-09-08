@@ -228,7 +228,7 @@ def test_get_serialized_state(admin_client, params, monkeypatch):
 def test_report_devices(admin_client):
     report = ReportFactory(passed_results=2, failed_results=1)
     resp = admin_client.get(f"/api/plugins/validity/reports/{report.pk}/devices/")
-    assert resp.status_code == HTTPStatus.OK
+    assert resp.status_code == HTTPStatus.OK, resp.content
     results = resp.json()["results"]
     assert len(results) == 3
     for device in results:
