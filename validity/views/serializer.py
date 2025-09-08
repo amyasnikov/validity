@@ -6,6 +6,7 @@ from netbox.views import generic
 from utilities.views import register_model_view
 
 from validity import filtersets, forms, models, tables
+from validity.templatetags import RelatedObj
 from .base import TableMixin
 
 
@@ -26,11 +27,11 @@ class SerializerView(TableMixin, generic.ObjectView):
     def get_extra_context(self, request, instance):
         cf_filter = Q(custom_field_data__serializer=instance.pk)
         related_models = [
-            (model.objects.restrict(request.user, "view").filter(cf_filter), "cf_serializer")
-            for model in (Device, DeviceType, Manufacturer)
+            RelatedObj(model=m, orm_filter=cf_filter, api_filter="cf_serializer")
+            for m in (Device, DeviceType, Manufacturer)
         ]
         related_models.append(
-            (models.Command.objects.restrict(request.user, "view").filter(serializer=instance), "serializer_id")
+            RelatedObj(model=models.Command, orm_filter=Q(serializer=instance), api_filter="serializer_id")
         )
         return super().get_extra_context(request, instance) | {"related_models": related_models}
 

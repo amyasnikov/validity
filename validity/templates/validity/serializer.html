@@ -26,7 +26,7 @@
         {% include 'validity/inc/parameters.html' with title='Parameters' form=object.get_subform only %}
       </div>
       <div class="row mb-3">
-        {% include 'inc/panels/related_objects.html' %}
+        {% related_objects %}
       </div>
       <div class="row">
         {% include 'inc/panels/tags.html' %}

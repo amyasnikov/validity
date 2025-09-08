@@ -5,6 +5,7 @@ from core.choices import JobStatusChoices
 from core.models import Job
 
 from validity import di
+from validity.netbox_changes import set_logs
 from validity.utils.logger import Logger
 from .exceptions import AbortScript
 
@@ -47,7 +48,7 @@ class JobKeeper:
         self, status: str = JobStatusChoices.STATUS_COMPLETED, error: str | None = None, output=None
     ) -> None:
         self.job.data = self.job.data or {}
-        self.job.data["log"] = [log.serialized for log in self.logger.messages]
+        set_logs(self.job, [log.serialized for log in self.logger.messages])
         output = output or self.job.data.get("output")
         self.job.data["output"] = output
         self.job.terminate(status, error)

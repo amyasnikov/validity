@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 from django.utils import timezone
 
+from validity.netbox_changes import get_logs
 from validity.scripts.data_models import ExecutionResult, Message
 from validity.scripts.data_models import TestResultRatio as ResultRatio
 from validity.scripts.runtests.combine import CombineWorker
@@ -58,15 +59,12 @@ def test_call_abort(worker, full_runtests_params, job_extractor, monkeypatch):
     worker(full_runtests_params)
     job = full_runtests_params.get_job()
     assert job.status == "errored"
-    assert job.data == {
-        "log": [
-            {"message": "m-3", "status": "info", "time": "2000-01-01T00:00:00"},
-            {"message": "m-4", "status": "info", "time": "2000-01-01T00:00:00"},
-            {"message": "ApplyWorkerError", "status": "failure", "time": "2020-01-01T00:00:00"},
-            {"message": "Database changes have been reverted", "status": "info", "time": "2020-01-01T00:00:00"},
-        ],
-        "output": None,
-    }
+    assert get_logs(job) == [
+        {"message": "m-3", "status": "info", "time": "2000-01-01T00:00:00"},
+        {"message": "m-4", "status": "info", "time": "2000-01-01T00:00:00"},
+        {"message": "ApplyWorkerError", "status": "failure", "time": "2020-01-01T00:00:00"},
+        {"message": "Database changes have been reverted", "status": "info", "time": "2020-01-01T00:00:00"},
+    ]
     assert job.error == "AbortScript('ApplyWorkerError')"
 
 
@@ -79,16 +77,14 @@ def test_successful_call(worker, full_runtests_params, job_extractor, monkeypatc
     worker(full_runtests_params)
     job.refresh_from_db()
     assert job.status == "completed"
-    assert job.data == {
-        "log": [
-            *[m.serialized for m in messages],
-            {
-                "time": "2020-01-01T00:00:00",
-                "status": "success",
-                "message": "Job succeeded. See [Compliance Report](/plugins/validity/reports/1/) for detailed statistics",
-            },
-        ],
-        "output": {"statistics": {"total": 7, "passed": 3}},
-    }
+    assert job.data["output"] == {"statistics": {"total": 7, "passed": 3}}
+    assert get_logs(job) == [
+        *[m.serialized for m in messages],
+        {
+            "time": "2020-01-01T00:00:00",
+            "status": "success",
+            "message": "Job succeeded. See [Compliance Report](/plugins/validity/reports/1/) for detailed statistics",
+        },
+    ]
     assert job.error == ""
     worker.enqueue_func.assert_called_once_with(job.object, full_runtests_params.request)

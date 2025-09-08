@@ -1,5 +1,2 @@
-# NetBox 4.2
+# NetBox 4.3
 from .oldest import *
-
-
-DEVICE_NAME_ORDER = "name"

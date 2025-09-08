@@ -3,6 +3,7 @@ import datetime
 import pytest
 from factories import DSBackupJobFactory
 
+from validity.netbox_changes import get_logs
 from validity.scripts.exceptions import AbortScript
 from validity.scripts.keeper import JobKeeper
 from validity.utils.logger import Logger, Message
@@ -16,7 +17,7 @@ def test_keeper_noerror(timezone_now):
         keeper.logger.info("msg")
     keeper.job.refresh_from_db()
     assert keeper.job.status == "completed"
-    assert keeper.job.data["log"] == [{"time": "2000-01-01T01:00:00+00:00", "status": "info", "message": "msg"}]
+    assert get_logs(keeper.job) == [{"time": "2000-01-01T01:00:00+00:00", "status": "info", "message": "msg"}]
     assert keeper.logger.messages == []
 
 
@@ -28,7 +29,7 @@ def test_keeper_abort(timezone_now):
         raise AbortScript("abort_msg", logs=[Message("warning", "extra_msg")])
     keeper.job.refresh_from_db()
     assert keeper.job.status == "failed"
-    assert keeper.job.data["log"] == [
+    assert get_logs(keeper.job) == [
         {"time": "2000-01-01T01:00:00+00:00", "status": "info", "message": "msg1"},
         {"time": "2000-01-01T01:00:00+00:00", "status": "warning", "message": "extra_msg"},
         {"time": "2000-01-01T01:00:00+00:00", "status": "failure", "message": "abort_msg"},
@@ -45,7 +46,7 @@ def test_keeper_exception(timezone_now):
             raise ValueError("unexpected")
     keeper.job.refresh_from_db()
     assert keeper.job.status == "errored"
-    logs = keeper.job.data["log"]
+    logs = get_logs(keeper.job)
     assert len(logs) == 2
     assert logs[0] == {"time": "2000-01-01T01:00:00+00:00", "status": "info", "message": "msg1"}
     assert logs[1]["status"] == "failure"

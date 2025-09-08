@@ -1,6 +1,7 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
+import factory
 import pytest
 from core.models import DataSource
 from dcim.models import Device, DeviceType, Manufacturer
@@ -8,6 +9,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.db import connection
+from django.db.models.signals import post_migrate
 from django.test.utils import setup_databases, teardown_databases
 from django.utils import timezone
 from extras.models import CustomField
@@ -122,11 +124,14 @@ def _setup_migrations(use_test_migrations):
         def __getitem__(self, item):
             return self.getitem_fn(item)
 
+    mute_post_migrate = nullcontext()
     if use_test_migrations:
         settings.MIGRATION_MODULES = UseTestMigrations(
             lambda app: "migrations.apply" if app == "validity" else "migrations.dont_apply"
         )
-    yield
+        mute_post_migrate = factory.django.mute_signals(post_migrate)
+    with mute_post_migrate:
+        yield
     if use_test_migrations:
         settings.MIGRATION_MODULES = UseTestMigrations(
             lambda app: None

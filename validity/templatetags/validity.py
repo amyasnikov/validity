@@ -87,3 +87,24 @@ def filler(value, fill_with="—"):
     Like placeholder, but with arbitrary fill_with value
     """
     return value if value else mark_safe(fill_with)
+
+
+@register.inclusion_tag("validity/inc/related_objects.html", takes_context=True)
+def related_objects(context):
+    """
+    Renders "Related Objects" card
+    Required Context:
+    - related_models: list[RelatedObj]
+    - request: HttpRequest
+    - title: str
+    - object: Model
+    """
+    request = context["request"]
+    return {
+        "related_models": [
+            (obj.model.objects.restrict(request.user, "view").filter(obj.orm_filter).count(), obj.model, obj.api_filter)
+            for obj in context["related_models"]
+        ],
+        "title": context.get("title", "Related Objects"),
+        "object": context["object"],
+    }

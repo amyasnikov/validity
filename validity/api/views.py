@@ -82,7 +82,7 @@ class NameSetViewSet(NetBoxModelViewSet):
 
 
 class ComplianceReportViewSet(NetBoxReadOnlyModelViewSet):
-    queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests()
+    queryset = models.ComplianceReport.objects.annotate_result_stats().count_devices_and_tests().order_by("-created")
     serializer_class = serializers.ComplianceReportSerializer
     filterset_class = filtersets.ComplianceReportFilterSet
 
@@ -120,7 +120,7 @@ class CommandViewSet(NetBoxModelViewSet):
 class DeviceReportView(ListAPIView):
     serializer_class = serializers.DeviceReportSerializer
     filterset_class = filtersets.DeviceReportFilterSet
-    queryset = models.VDevice.objects.all()
+    queryset = models.VDevice.objects.order_by("name", "pk")
 
     def get_queryset(self):
         severity_ge = SeverityChoices.from_request(self.request)

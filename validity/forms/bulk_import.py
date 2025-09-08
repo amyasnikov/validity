@@ -16,7 +16,8 @@ from .mixins import PollerCleanMixin
 
 class SubFormMixin(SubformValidationMixin):
     def clean(self):
-        validated_data = {k: v for k, v in self.cleaned_data.items() if not k.startswith("_")}
+        model_fields = {field.name for field in self.Meta.model._meta.get_fields()}
+        validated_data = {k: v for k, v in self.cleaned_data.items() if k in model_fields}
         attrs = self.validate(validated_data)
         return self.cleaned_data | attrs
 

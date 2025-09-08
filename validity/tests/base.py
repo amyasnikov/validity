@@ -12,7 +12,7 @@ class ApiBaseTest:
 
     def _test_get(self, client, pk=None):
         resp = client.get(self.url(pk))
-        assert resp.status_code == HTTPStatus.OK, resp.data
+        assert resp.status_code == HTTPStatus.OK, resp.content
         if pk:
             self.get_extra_checks(resp.json(), pk)
 
