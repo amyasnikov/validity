@@ -1,5 +1,5 @@
 boto3<2
-deepdiff>=6.2.0,<7
+deepdiff>=8.6.1,<9
 dimi >=1.3.0,< 2
 django-bootstrap5 >=24.2,<25
 dulwich # Core NetBox "optional" requirement
