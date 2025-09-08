@@ -7,7 +7,7 @@ Validity is the [NetBox](https://netboxlabs.com/oss/netbox/) plugin. So, before 
 
 | **Python** | **NetBox**      |
 |------------|-----------------|
-| >=3.10     | 4.1 &#124; 4.2 &#124; 4.3 |
+| >=3.10     | 4.2 &#124; 4.3 &#124; 4.4 |
 
 ## Installation steps
 Once you have installed NetBox, you should follow these steps
@@ -36,9 +36,6 @@ CUSTOM_VALIDATORS = {
 }
 
 ```
-!!! warning
-    According to [this NetBox bug](https://github.com/netbox-community/netbox/issues/14349) custom validation for Data Source **does not work** prior to NetBox v3.6.6
-
 
 * Create DB tables
 ```console

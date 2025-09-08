@@ -5,7 +5,7 @@
         <img src="https://github.com/amyasnikov/validity/actions/workflows/ci.yml/badge.svg" alt="CI">
         <img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/amyasnikov/9e518ae8babd18b7edd8ee5aad58146b/raw/cov.json" alt="Coverage">
         <img src="https://img.shields.io/badge/Python-3.10+-blue.svg" alt="Python version">
-        <img src="https://img.shields.io/badge/NetBox-4.1|4.2|4.3-blue.svg" alt="NetBox version">
+        <img src="https://img.shields.io/badge/NetBox-4.2|4.3|4.4-blue.svg" alt="NetBox version">
     </p>
 </div>
 
