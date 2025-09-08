@@ -7,5 +7,5 @@ def get_logs(job):
 
 def set_logs(job, logs):
     if not isinstance(logs.data, dict):
-        logs.data = {}
+        job.data = {}
     job.data["log"] = logs
