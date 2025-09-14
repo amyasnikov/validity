@@ -12,6 +12,7 @@ from utilities.htmx import htmx_partial
 
 from validity import di
 from validity.forms import RunTestsForm
+from validity.netbox_changes import get_logs
 from validity.scripts import Launcher, RunTestsParams, ScriptParams
 from validity.tables import ScriptResultTable
 from .base import LauncherMixin
@@ -50,7 +51,7 @@ class ScriptResultView(PermissionRequiredMixin, TableMixin, ObjectView):
     permission_required = "core.view_job"
 
     def get_table(self, job, request, bulk_actions=False):
-        logs = [entry | {"index": i} for i, entry in enumerate(job.data["log"], start=1)]
+        logs = [entry | {"index": i} for i, entry in enumerate(get_logs(job), start=1)]
         table = self.table_class(logs, user=request.user)
         table.configure(request)
         return table

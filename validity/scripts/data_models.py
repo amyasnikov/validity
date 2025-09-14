@@ -2,13 +2,14 @@ import datetime
 import operator
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
-from functools import reduce
+from functools import cached_property, reduce
 from typing import Callable, ClassVar
 from uuid import UUID
 
 from core.models import Job
 from django.contrib.auth import get_user_model
 from django.db.models import Q, QuerySet
+from django.http.request import HttpRequest
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass as py_dataclass
 from rq import Callback
@@ -30,15 +31,25 @@ class RequestInfo:
 
     id: UUID
     user_id: int
+    path: str
+    method: str
 
     user_queryset: ClassVar[QuerySet] = get_user_model().objects.all()
 
     @classmethod
-    def from_http_request(cls, request):
-        return cls(id=request.id, user_id=request.user.pk)
+    def from_http_request(cls, request: HttpRequest):
+        return cls(id=request.id, user_id=request.user.pk, method=request.method, path=request.path)
 
     def get_user(self):
         return self.user_queryset.get(pk=self.user_id)
+
+    # mimic NetBoxFakeRequest
+
+    @cached_property
+    def user(self):
+        return self.get_user()
+
+    COOKIES = GET = POST = META = FILES = property(lambda self: {})
 
 
 @dataclass

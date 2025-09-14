@@ -16,7 +16,7 @@ from validity.scripts.data_models import FullBackUpParams
 def params(db):
     job = DSBackupJobFactory()
     return FullBackUpParams(
-        request={"id": uuid.uuid4(), "user_id": 10},
+        request={"id": uuid.uuid4(), "user_id": 10, "path": "", "method": "POST"},
         backuppoint_id=job.object.pk,
         job_id=job.pk,
         object_id=job.object.pk,

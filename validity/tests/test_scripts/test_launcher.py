@@ -40,7 +40,9 @@ def launcher(db):
 @pytest.fixture
 def params(db):
     user = UserFactory()
-    return ConcreteScriptParams(request=RequestInfo(id=uuid.uuid4(), user_id=user.pk), workers_num=1)
+    return ConcreteScriptParams(
+        request=RequestInfo(id=uuid.uuid4(), user_id=user.pk, path="", method="POST"), workers_num=1
+    )
 
 
 @pytest.mark.parametrize("schedule_at", [None, timezone.now()])

@@ -290,7 +290,7 @@ class TestRunTests:
 
 @pytest.mark.parametrize("job_factory", [RunTestsJobFactory, DSBackupJobFactory])
 def test_scriptresult(admin_client, job_factory):
-    job = job_factory()
+    job = job_factory(status="completed")
     resp = admin_client.get(f"/plugins/validity/scripts/results/{job.pk}/")
     assert resp.status_code == HTTPStatus.OK
 

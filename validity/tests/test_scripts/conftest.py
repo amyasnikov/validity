@@ -8,7 +8,7 @@ from validity.scripts.data_models import RequestInfo, RunTestsParams
 
 @pytest.fixture
 def runtests_params():
-    return RunTestsParams(request=RequestInfo(id=uuid.uuid4(), user_id=1))
+    return RunTestsParams(request=RequestInfo(id=uuid.uuid4(), user_id=1, path="", method="GET"))
 
 
 @pytest.fixture

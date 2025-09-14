@@ -66,7 +66,7 @@ class Launcher:
             status=status,
             scheduled=params.schedule_at,
             interval=params.schedule_interval,
-            user=params.request.get_user(),
+            user_id=params.request.user_id,
             job_id=uuid.uuid4(),
         )
 
