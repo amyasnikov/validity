@@ -24,6 +24,9 @@ class NetBoxValidityConfig(PluginConfig):
     # custom field
     netbox_version = NetboxVersion(VERSION)
 
+    if netbox_version >= "4.3.0":
+        graphql_schema = "graphql.schema"
+
     def _setup_queues(self):
         django_settings = di["django_settings"]
         for _, queue_name in di["validity_settings"].custom_queues:

@@ -13,7 +13,7 @@ from django.db.models.signals import post_migrate
 from django.test.utils import setup_databases, teardown_databases
 from django.utils import timezone
 from extras.models import CustomField
-from graphene_django.utils.testing import graphql_query
+from strawberry.django.test.client import GraphQLTestClient
 from tenancy.models import Tenant
 
 import validity
@@ -88,8 +88,10 @@ def create_custom_fields(db):
 
 @pytest.fixture
 def gql_query(admin_client):
-    def func(*args, **kwargs):
-        return graphql_query(*args, **kwargs, client=admin_client, graphql_url="/graphql/")
+    gql_client = GraphQLTestClient(admin_client)
+
+    def func(query, variables=None, headers=None):
+        return gql_client.query(query=query, variables=variables, headers=headers or {})
 
     return func
 
