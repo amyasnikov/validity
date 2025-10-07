@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 import requests
-from dcim.models import Device
 from pydantic import BaseModel, Field
 
 from validity.j2_env import Environment
@@ -20,12 +19,12 @@ class RequestParams(BaseModel, extra="allow"):
     verify: bool | str = False
     auth: tuple[str, ...] | None = None
 
-    def rendered_url(self, device: "Device", command: "Command") -> str:
+    def rendered_url(self, device: "VDevice", command: "Command") -> str:
         return Environment().from_string(self.url).render(device=device, command=command)
 
 
 class HttpDriver:
-    def __init__(self, device: Device, **poller_credentials) -> None:
+    def __init__(self, device: "VDevice", **poller_credentials) -> None:
         self.device = device
         self.request_params = RequestParams.model_validate(poller_credentials)
 

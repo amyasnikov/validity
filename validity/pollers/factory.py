@@ -22,7 +22,7 @@ class PollerChoices:
 
         for info in pollers_info:
             self.choices.append((info.name, info.verbose_name))
-            self.classes[info.name] = info.klass
+            self.classes[info.name] = info.poller_class
             self.colors[info.name] = info.color
             self.command_types[info.name] = info.command_types
 
