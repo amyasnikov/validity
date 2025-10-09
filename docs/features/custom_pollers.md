@@ -19,6 +19,8 @@ Here is the minimal viable example of a custom poller class. It uses `scrapli` l
 Place the following code anywhere within your [PYTHONPATH](https://docs.python.org/3.13/using/cmdline.html#envvar-PYTHONPATH)
 
 ```python
+# scrapli_poller.py
+
 from scrapli import Scrapli
 from validity.pollers import CustomPoller
 from validity.models import Command
@@ -62,7 +64,7 @@ PLUGIN_SETTINGS = {
     'validity': {
         'custom_pollers' : [
             {
-                'class': 'path.to.mypoller.MyPoller',
+                'class': 'path.to.scrapli_poller.ScrapliPoller',
                 'name': 'scrapli',
                 'color': 'pink',
                 'command_types': ['CLI'],
