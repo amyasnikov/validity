@@ -6,7 +6,8 @@ function fillTextArea(public_creds, private_creds) {
 function fillCredentials(valueExtracter, connectionTypeInfo) {
     try {
         const connectionType = valueExtracter(connectionTypeInfo)
-        const defaultCredentials = JSON.parse(document.getElementById('default_credentials').textContent)[connectionType];
+        const emptyCreds = {'public': {}, 'private': {}}
+        const defaultCredentials = JSON.parse(document.getElementById('default_credentials').textContent)[connectionType] ?? emptyCreds;
         if (defaultCredentials !== undefined) {
             fillTextArea(defaultCredentials.public, defaultCredentials.private);
         }
@@ -17,8 +18,5 @@ function fillCredentials(valueExtracter, connectionTypeInfo) {
 
 window.onload = () => {
     const select = document.getElementById('connection_type_select');
-    if ("tomselect" in select) // NetBox 4.x
-        select.tomselect.on("change", fillCredentials.bind(undefined, (value) => value))
-    else // NetBox 3.x
-        select.slim.onChange = fillCredentials.bind(undefined, (value) => value.value)
+    select.tomselect.on("change", fillCredentials.bind(undefined, (value) => value))
 }

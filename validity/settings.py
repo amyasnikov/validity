@@ -1,3 +1,4 @@
+import pydoc
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -20,7 +21,7 @@ class ScriptTimeouts(BaseModel):
 class PollerInfo(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
-    klass: type[BasePoller] = Field(validation_alias="class")
+    klass: str | type[BasePoller] = Field(validation_alias="class")
     name: str = Field(pattern="[a-z_]+")
     verbose_name: str = Field(default="", validate_default=True)
     color: str = Field(pattern="[a-z-]+")
@@ -32,6 +33,12 @@ class PollerInfo(BaseModel):
         if value:
             return value
         return " ".join(part.title() for part in info.data["name"].split("_"))
+
+    @property
+    def poller_class(self) -> type[BasePoller]:
+        if isinstance(self.klass, str):
+            return pydoc.locate(self.klass)
+        return self.klass
 
 
 class GitSettings(BaseModel):

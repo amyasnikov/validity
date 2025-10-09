@@ -23,7 +23,9 @@ class MyCustomPoller(CustomPoller):
 @pytest.fixture
 def custom_poller(db, di):
     settings = ValiditySettings(
-        custom_pollers=[PollerInfo(klass=MyCustomPoller, name="cupo", color="red", command_types=["custom"])]
+        custom_pollers=[
+            PollerInfo(klass="test_custom_pollers.MyCustomPoller", name="cupo", color="red", command_types=["custom"])
+        ]
     )
     with di.override({validity_settings: lambda: settings}):
         yield PollerFactory(connection_type="cupo")

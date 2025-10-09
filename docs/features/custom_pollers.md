@@ -58,44 +58,24 @@ Here is the example of the plugin settings:
 ```python
 # configuration.py
 
-from validity.settings import PollerInfo
-from my_awesome_poller import ScrapliPoller
-
 PLUGIN_SETTINGS = {
     'validity': {
         'custom_pollers' : [
-            PollerInfo(klass=ScrapliPoller, name='scrapli', color='pink', command_types=['CLI'])
+            {
+                'class': 'path.to.mypoller.MyPoller',
+                'name': 'scrapli',
+                'color': 'pink',
+                'command_types': ['CLI'],
+            }
         ]
     }
 }
 ```
 
-??? info
-    The same setting may be defined via dict as well
-    ```python
-    # configuration.py
+Available parameters:
 
-    from my_awesome_poller import ScrapliPoller
-
-    PLUGIN_SETTINGS = {
-        'validity': {
-            'custom_pollers' : [
-                {
-                    'class': ScrapliPoller,
-                    'name':'scrapli',
-                    'color':'pink',
-                    'command_types'=['CLI'],
-                }
-            ]
-        }
-    }
-    ```
-
-
-PollerInfo parameters:
-
-* **klass/class** - class inherited from `CustomPoller`
-* **name** - system name of the poller, must contain lowercase letters only
+* **class** - python path to class inherited from `CustomPoller`
+* **name** - system name of the poller, must be unique and contain lowercase letters only
 * **verbose_name** - optional verbose name of the poller. Will be used in NetBox GUI
 * **color** - badge color used for "Connection Type" field in the GUI
 * **command_types** - list of acceptable [Command](../entities/commands.md) types for this kind of Poller. Available choices are `CLI`, `netconf`, `json_api` and `custom`
