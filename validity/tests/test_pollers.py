@@ -3,24 +3,10 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from validity.models.polling import Command
-from validity.pollers import CustomPoller, NetmikoPoller, RequestsPoller
+from validity.pollers import NetmikoPoller, RequestsPoller
 from validity.pollers.factory import PollerChoices
 from validity.pollers.http import HttpDriver
 from validity.settings import PollerInfo
-
-
-@pytest.fixture
-def custom_poller():
-    class MyCustomPoller(CustomPoller):
-        driver_factory = Mock(name="driver_factory")
-        driver_connect_method = "con"
-        driver_disconnect_method = "dis"
-
-        def poll_one_command(self, driver: time.Any, command: Command) -> str:
-            return super().poll_one_command(driver, command)
-
-    return MyCustomPoller
 
 
 class TestNetmikoPoller:
