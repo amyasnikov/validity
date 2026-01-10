@@ -6,9 +6,9 @@ different versions of NetBox together
 from validity import config
 
 
-if config.netbox_version >= "4.4.0":
+if config.netbox_version >= "4.5.0":
     from .current import *
-elif config.netbox_version >= "4.3.0":
+elif config.netbox_version >= "4.4.0":
     from .old import *
 else:
     from .oldest import *

@@ -6,25 +6,25 @@ from core.graphql.filters import DataSourceFilter
 from core.models import Job
 from dcim.graphql.filters import DeviceFilter
 from django.db.models import Q, QuerySet
-from netbox.graphql.filter_mixins import BaseFilterMixin, NetBoxModelFilterMixin
 from strawberry.scalars import ID
 from strawberry_django import FilterLookup
 
 from validity import models
+from validity.netbox_changes import BaseModelFilter, NetBoxModelFilter
 
 
 @strawberry_django.filter_type(Job, lookups=True)
-class JobFilter(NetBoxModelFilterMixin):
+class JobFilter(NetBoxModelFilter):
     pass
 
 
 @strawberry_django.filter_type(models.ComplianceSelector, lookups=True)
-class ComplianceSelectorFilter(NetBoxModelFilterMixin):
+class ComplianceSelectorFilter(NetBoxModelFilter):
     name: FilterLookup[str] | None = strawberry_django.filter_field()
 
 
 @strawberry_django.filter_type(models.ComplianceTest, lookups=True)
-class ComplianceTestFilter(NetBoxModelFilterMixin):
+class ComplianceTestFilter(NetBoxModelFilter):
     id: FilterLookup[ID] | None = strawberry_django.filter_field()
     name: FilterLookup[str] | None = strawberry_django.filter_field()
     selectors: Annotated["ComplianceSelectorFilter", strawberry.lazy("validity.graphql.filters")] | None = (
@@ -33,7 +33,7 @@ class ComplianceTestFilter(NetBoxModelFilterMixin):
 
 
 @strawberry_django.filter_type(models.ComplianceTestResult, lookups=True)
-class ComplianceTestResultFilter(BaseFilterMixin):
+class ComplianceTestResultFilter(BaseModelFilter):
     test: Annotated["ComplianceTestFilter", strawberry.lazy("validity.graphql.filters")] | None = (
         strawberry_django.filter_field()
     )
@@ -52,28 +52,28 @@ class ComplianceTestResultFilter(BaseFilterMixin):
 
 
 @strawberry_django.filter_type(models.Serializer, lookups=True)
-class SerializerFilter(NetBoxModelFilterMixin):
+class SerializerFilter(NetBoxModelFilter):
     name: FilterLookup[str] | None = strawberry_django.filter_field()
 
 
 @strawberry_django.filter_type(models.NameSet, lookups=True)
-class NameSetFilter(NetBoxModelFilterMixin):
+class NameSetFilter(NetBoxModelFilter):
     name: FilterLookup[str] | None = strawberry_django.filter_field()
     _global: Annotated["bool", strawberry.lazy("builtins")] | None = strawberry_django.filter_field(name="global")
 
 
 @strawberry_django.filter_type(models.ComplianceReport, lookups=True)
-class ComplianceReportFilter(BaseFilterMixin):
+class ComplianceReportFilter(BaseModelFilter):
     jobs: list[Annotated["JobFilter", strawberry.lazy("validity.graphql.filters")]] = strawberry_django.filter_field()
 
 
 @strawberry_django.filter_type(models.Poller, lookups=True)
-class PollerFilter(NetBoxModelFilterMixin):
+class PollerFilter(NetBoxModelFilter):
     name: FilterLookup[str] | None = strawberry_django.filter_field()
 
 
 @strawberry_django.filter_type(models.Command, lookups=True)
-class CommandFilter(NetBoxModelFilterMixin):
+class CommandFilter(NetBoxModelFilter):
     name: FilterLookup[str] | None = strawberry_django.filter_field()
     serializer: Annotated["SerializerFilter", strawberry.lazy("validity.graphql.filters")] | None = (
         strawberry_django.filter_field()
@@ -85,7 +85,7 @@ class CommandFilter(NetBoxModelFilterMixin):
 
 
 @strawberry_django.filter_type(models.BackupPoint, lookups=True)
-class BackupPointFilter(NetBoxModelFilterMixin):
+class BackupPointFilter(NetBoxModelFilter):
     name: FilterLookup[str] | None = strawberry_django.filter_field()
     data_source: Annotated["DataSourceFilter", strawberry.lazy("core.graphql.filters")] | None = (
         strawberry_django.filter_field()
