@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        netbox_version: &nb_versions [v4.3.9, v4.4.10, v4.5.0]
+        netbox_version: &nb_versions [v4.3.7, v4.4.10, v4.5.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
