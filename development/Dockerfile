@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.12-slim
 
 ARG NETBOX_VERSION=develop
 

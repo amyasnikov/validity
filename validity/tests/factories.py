@@ -259,7 +259,6 @@ class UserFactory(DjangoModelFactory):
     password = factory.PostGenerationMethodCall("set_password", "admin")
 
     is_superuser = True
-    is_staff = True
     is_active = True
 
     class Meta:

@@ -1,4 +1,5 @@
-# NetBox 4.2
+# NetBox 4.3
+from pydoc import locate
 from typing import TYPE_CHECKING
 
 from extras.events import enqueue_event, flush_events
@@ -7,6 +8,10 @@ from extras.events import enqueue_event, flush_events
 if TYPE_CHECKING:
     from validity.models import ComplianceReport
     from validity.scripts.data_models import RequestInfo
+
+
+BaseModelFilter = locate("netbox.graphql.filter_mixins.BaseFilterMixin")
+NetBoxModelFilter = locate("netbox.graphql.filter_mixins.NetBoxModelFilterMixin")
 
 
 def get_logs(job):

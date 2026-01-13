@@ -29,7 +29,8 @@ class GraphQLTest:
 
     @pytest.mark.django_db
     def test_query(self, gql_query):
-        factories = self.factory if isinstance(self.factory, list) else [self.factory]
+        selftype = type(self)
+        factories = selftype.factory if isinstance(selftype.factory, list) else [selftype.factory]
         for factory in factories:
             factory()
         resp = gql_query(self.query)
