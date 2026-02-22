@@ -78,7 +78,7 @@ class DulwichGitClient(GitClient):
     def unstage_all(self, local_path: str) -> None:
         repo = Repo(local_path)
         staged_files = chain.from_iterable(porcelain.status(local_path).staged.values())
-        repo.unstage(filename.decode() for filename in staged_files)
+        repo.get_worktree().unstage(filename.decode() for filename in staged_files)
 
     def commit(self, local_path: str, username: str, email: str, message: str) -> str:
         author = f"{username} <{email}>".encode()
