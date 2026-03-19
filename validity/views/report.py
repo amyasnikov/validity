@@ -8,7 +8,7 @@ from django_tables2 import SingleTableMixin
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 
-from validity import filtersets, forms, models, tables
+from validity import config, filtersets, forms, models, tables
 from validity.choices import DeviceGroupByChoices, SeverityChoices
 from .base import FilterViewWithForm, ObjectPermissionRequiredMixin, TestResultBaseView
 
@@ -103,7 +103,7 @@ class ReportDeviceView(ObjectPermissionRequiredMixin, SingleTableMixin, FilterVi
         return table
 
     def get_table_kwargs(self):
-        return {"user": self.request.user}
+        return {"user": self.request.user} if config.netbox_version < "4.5.4" else {}
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         return super().get_context_data(**kwargs) | {
