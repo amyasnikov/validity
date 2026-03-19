@@ -2,6 +2,7 @@ from typing import Annotated
 
 import strawberry
 import strawberry_django
+from strawberry.types import Info
 
 from validity import models
 from .filters import NameSetFilter
@@ -42,7 +43,7 @@ class Query:
     @strawberry.field
     def validity_nameset_list(
         self,
-        info,
+        info: Info,
         filters: NameSetFilter | None = None,
         global_filter: Annotated[bool | None, strawberry.argument(name="global")] = None,
     ) -> list[NameSetType]:
