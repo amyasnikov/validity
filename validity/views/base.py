@@ -13,7 +13,7 @@ from django_tables2 import SingleTableMixin, Table
 from utilities.views import ObjectPermissionRequiredMixin as _ObjectPermissionRequiredMixin
 from utilities.views import ViewTab
 
-from validity import filtersets, forms, models, scripts, tables
+from validity import filtersets, forms, models, netbox_changes, scripts, tables
 from validity.utils.misc import partialcls
 
 
@@ -100,8 +100,7 @@ class TestResultBaseView(ObjectPermissionRequiredMixin, SingleTableMixin, Filter
         table.exclude = (self.result_relation,)
         return table
 
-    def get_table_kwargs(self):
-        return {"user": self.request.user}
+    get_table_kwargs = netbox_changes.get_base_table_kwargs
 
     def get_queryset(self):
         return self.queryset.filter(**{self.result_relation: self.kwargs["pk"]})

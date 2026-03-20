@@ -10,6 +10,10 @@ from strawberry_django import FilterLookup
 from validity import config
 
 
+def get_base_table_kwargs(self):
+    return {"user": self.request.user} if config.netbox_version < "4.5.4" else {}
+
+
 StrFilterLookup = locate("strawberry_django.StrFilterLookup") if config.netbox_version >= "4.5.5" else FilterLookup[str]
 
 if config.netbox_version >= "4.5.0":
