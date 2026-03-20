@@ -1,3 +1,4 @@
+import datetime
 import textwrap
 from functools import partial
 from http import HTTPStatus
@@ -7,6 +8,7 @@ from unittest.mock import Mock
 import pytest
 from base import ViewTest
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import classproperty
 from factories import (
     BackupPointFactory,
@@ -167,6 +169,15 @@ def test_get_serialized_state(admin_client, item, monkeypatch):
     assert resp.status_code == HTTPStatus.OK
 
 
+@pytest.mark.parametrize("query_params", [{}, {"sort": "test"}, {"sort": "-created"}])
+@pytest.mark.django_db
+def test_device_results(admin_client, query_params):
+    device = DeviceFactory()
+    CompTestResultFactory(device=device)
+    resp = admin_client.get(f"/dcim/devices/{device.pk}/results/", query_params)
+    assert resp.status_code == HTTPStatus.OK
+
+
 @pytest.mark.parametrize("query_params", [{}, {"sort": "device"}, {"sort": "-device"}])
 @pytest.mark.django_db
 def test_report_devices(admin_client, query_params):
@@ -263,11 +274,15 @@ def test_datasource_devices(admin_client):
     assert resp.status_code == HTTPStatus.OK
 
 
-class TestRunTests:
-    url = "/plugins/validity/tests/run/"
+class TestRunTestsView:
+    """Covers RunTestsView (validity.views.script.RunTestsView)."""
+
+    @staticmethod
+    def _url():
+        return reverse("plugins:validity:compliancetest_run")
 
     def test_get(self, admin_client):
-        resp = admin_client.get(self.url)
+        resp = admin_client.get(self._url())
         assert resp.status_code == HTTPStatus.OK
 
     @pytest.mark.parametrize(
@@ -275,23 +290,59 @@ class TestRunTests:
         [
             ({}, HTTPStatus.FOUND, True),
             ({}, HTTPStatus.OK, False),
-            ({"devices": [1, 2]}, HTTPStatus.OK, True),  # devices do not exist
+            ({"devices": [1, 2]}, HTTPStatus.OK, True),  # devices do not exist — invalid choices
         ],
     )
     def test_post(self, admin_client, di, form_data, status_code, has_workers):
         launcher = Mock(**{"has_workers": has_workers, "return_value.pk": 1})
         with di.override({dependencies.runtests_launcher: lambda: launcher}):
-            result = admin_client.post(self.url, form_data)
+            result = admin_client.post(self._url(), form_data)
             assert result.status_code == status_code
             if status_code == HTTPStatus.FOUND:  # if form is valid
                 launcher.assert_called_once()
                 assert isinstance(launcher.call_args.args[0], RunTestsParams)
 
+    @pytest.mark.django_db
+    def test_post_with_valid_devices(self, admin_client, di):
+        d1, d2 = DeviceFactory(), DeviceFactory()
+        launcher = Mock(has_workers=True, return_value=Mock(pk=1))
+        with di.override({dependencies.runtests_launcher: lambda: launcher}):
+            resp = admin_client.post(self._url(), {"devices": [d1.pk, d2.pk]})
+        assert resp.status_code == HTTPStatus.FOUND
+        launcher.assert_called_once()
+        assert isinstance(launcher.call_args.args[0], RunTestsParams)
+
 
 @pytest.mark.parametrize("job_factory", [RunTestsJobFactory, DSBackupJobFactory])
-def test_scriptresult(admin_client, job_factory):
-    job = job_factory(status="completed")
-    resp = admin_client.get(f"/plugins/validity/scripts/results/{job.pk}/")
+@pytest.mark.django_db
+def test_script_result_view_completed_job(admin_client, job_factory):
+    """
+    Full GET for a finished job: ScriptResultView only builds the log table when ``job.completed``
+    (the *timestamp* field) is set — same as real jobs after ``terminate()``. ``status`` alone is not enough.
+    """
+    completed_at = timezone.now()
+    job = job_factory(
+        status="completed",
+        started=completed_at - datetime.timedelta(minutes=1),
+        completed=completed_at,
+        data={"output": "test output", "log": []},
+    )
+    assert job.completed, "need completion timestamp set or get_table is skipped (differs from browser)"
+
+    url = reverse("plugins:validity:script_result", kwargs={"pk": job.pk})
+    resp = admin_client.get(url)
+    assert resp.status_code == HTTPStatus.OK, getattr(resp, "content", b"")[:2000]
+
+
+@pytest.mark.parametrize("job_factory", [RunTestsJobFactory, DSBackupJobFactory])
+@pytest.mark.django_db
+def test_script_result_view_incomplete_job(admin_client, job_factory):
+    """Running job has no completion timestamp, so get_table is not used."""
+    job = job_factory(status="running", started=timezone.now())
+    assert not job.completed
+
+    url = reverse("plugins:validity:script_result", kwargs={"pk": job.pk})
+    resp = admin_client.get(url)
     assert resp.status_code == HTTPStatus.OK
 
 
