@@ -48,3 +48,8 @@ CUSTOM_VALIDATORS = {
 ```
 
 * Change plugin settings according to your needs via **PLUGINS_CONFIG** variable. Read more: [Plugin Settings](plugin_settings.md)
+
+* Restart your NetBox app
+
+!!! note
+    Make sure you've restarted both parts of NetBox - web app and rqworker app
