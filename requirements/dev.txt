@@ -2,9 +2,9 @@ debugpy==1.8.19
 factory_boy==3.3.3
 ipython
 pre-commit==4.5.1
-pytest==9.0.2
-pytest-cov==7.0.0
-pytest-django==4.11.1
+pytest==9.0.3
+pytest-cov==7.1.0
+pytest-django==4.12.0
 pytest-subtests==0.15.0
 ruff==0.14.11
 tomli==2.4.0
