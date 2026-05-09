@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-from django.db.models import ManyToManyField
 from rest_framework.permissions import BasePermission
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import HyperlinkedIdentityField, JSONField, ModelSerializer
@@ -82,7 +81,7 @@ class SubformValidationMixin:
     def _validate(self, attrs):
         instance = self.instance or self.Meta.model()
         for field, field_value in attrs.items():
-            if not isinstance(instance._meta.get_field(field), ManyToManyField):
+            if not instance._meta.get_field(field).many_to_many:
                 setattr(instance, field, field_value)
         if not instance.subform_type:
             return
