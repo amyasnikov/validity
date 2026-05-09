@@ -16,9 +16,9 @@ def get_base_table_kwargs(self):
 
 StrFilterLookup = locate("strawberry_django.StrFilterLookup") if config.netbox_version >= "4.5.5" else FilterLookup[str]
 
-if config.netbox_version >= "4.5.0":
+if config.netbox_version >= "4.6.0":
     from .current import *
-elif config.netbox_version >= "4.4.0":
+elif config.netbox_version >= "4.5.0":
     from .old import *
 else:
     from .oldest import *

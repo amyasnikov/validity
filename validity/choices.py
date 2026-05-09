@@ -1,11 +1,12 @@
 from typing import Optional, TypeVar
 
 from django.db.models import IntegerChoices, TextChoices
-from django.db.models.enums import ChoicesMeta
 from django.utils.translation import gettext_lazy as _
 
+from validity.netbox_changes import ChoicesType
 
-class ColoredChoiceMeta(ChoicesMeta):
+
+class ColoredChoiceMeta(ChoicesType):
     """
     Allows to write choice fields with a color like that:
         option1 = 'red'

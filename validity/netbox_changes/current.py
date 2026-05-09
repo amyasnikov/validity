@@ -1,8 +1,4 @@
-# NetBox 4.5
-from pydoc import locate
+# NetBox 4.6
+
 
 from .old import *
-
-
-BaseModelFilter = locate("netbox.graphql.filters.BaseModelFilter")
-NetBoxModelFilter = locate("netbox.graphql.filters.NetBoxModelFilter")
