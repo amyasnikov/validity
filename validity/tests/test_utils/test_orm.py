@@ -1,14 +1,16 @@
 import pytest
-from dcim.models import Device
+from dcim.models import Device, DeviceType
+from django.contrib.contenttypes.models import ContentType
 from django.db import connection
 from django.db.models import BigIntegerField
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast
+from extras.models import CustomField
 from factories import DeviceFactory, NameSetDBFactory, SerializerDBFactory
 
 from validity.models import NameSet
 from validity.models.serializer import Serializer
-from validity.utils.orm import CustomPrefetchMixin, QuerySetMap
+from validity.utils.orm import CustomFieldBuilder, CustomPrefetchMixin, QuerySetMap
 
 
 @pytest.mark.parametrize("attrib", ["pk", "name"])
@@ -55,3 +57,53 @@ def test_custom_postfetch(monkeypatch):
         NameSetDBFactory(name=f"ns{i}")
     for device in custom_qs:
         assert device.name.replace("dev", "ns") == device.nameset.name
+
+
+@pytest.mark.django_db
+def test_custom_field_builder_creates_object_field():
+    serializer_ct = ContentType.objects.get_for_model(Serializer)
+    device_ct = ContentType.objects.get_for_model(Device)
+    cf_builder = CustomFieldBuilder(cf_model=CustomField, content_type_model=ContentType)
+
+    custom_field = cf_builder.create(
+        name="validity_test_serializer",
+        label="Validity Test Serializer",
+        type="object",
+        required=False,
+        object_type=serializer_ct,
+        bind_to=[Device],
+    )
+
+    custom_field.refresh_from_db()
+    assert custom_field.name == "validity_test_serializer"
+    assert custom_field.related_object_type == serializer_ct
+    assert list(custom_field.object_types.all()) == [device_ct]
+
+
+@pytest.mark.django_db
+def test_custom_field_builder_reuses_existing_field():
+    cf_builder = CustomFieldBuilder(cf_model=CustomField, content_type_model=ContentType)
+    device_type_ct = ContentType.objects.get_for_model(DeviceType)
+
+    original = cf_builder.create(
+        name="validity_test_reused",
+        label="Original Label",
+        type="text",
+        required=False,
+        bind_to=[Device],
+    )
+    reused = cf_builder.create(
+        name="validity_test_reused",
+        label="Changed Label",
+        type="boolean",
+        required=True,
+        bind_to=[DeviceType],
+    )
+
+    original.refresh_from_db()
+    assert reused == original
+    assert CustomField.objects.filter(name="validity_test_reused").count() == 1
+    assert original.label == "Changed Label"
+    assert original.type == "boolean"
+    assert original.required is True
+    assert list(original.object_types.all()) == [device_type_ct]

@@ -206,10 +206,15 @@ class CustomFieldBuilder:
     content_type_model: type
     db_alias: str = ""
 
-    def create(self, *, bind_to, object_type=None, **cf_params):
+    def create(self, *, bind_to, name, object_type=None, **cf_params):
         db = self.db_alias or self.cf_model.objects.db
-        if object_type is not None:
-            cf_params["related_object_type"] = object_type
-        custom_field = self.cf_model.objects.using(db).create(**cf_params)
+        cf_params["related_object_type"] = object_type
+
+        # get_or_create handles #182 - compatibility with netbox-branching weird behaviour
+        custom_field, created = self.cf_model.objects.using(db).get_or_create(name=name, defaults=cf_params)
+        if not created:
+            for field, value in cf_params.items():
+                setattr(custom_field, field, value)
+            custom_field.save(force_update=True, update_fields=cf_params.keys())
         custom_field.object_types.set(self.content_type_model.objects.get_for_model(model).pk for model in bind_to)
         return custom_field
