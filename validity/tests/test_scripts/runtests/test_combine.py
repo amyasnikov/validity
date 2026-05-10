@@ -5,7 +5,6 @@ from unittest.mock import Mock
 import pytest
 from django.utils import timezone
 
-from validity.netbox_changes import get_logs
 from validity.scripts.data_models import ExecutionResult, Message
 from validity.scripts.data_models import TestResultRatio as ResultRatio
 from validity.scripts.runtests.combine import CombineWorker
@@ -59,7 +58,7 @@ def test_call_abort(worker, full_runtests_params, job_extractor, monkeypatch):
     worker(full_runtests_params)
     job = full_runtests_params.get_job()
     assert job.status == "errored"
-    assert get_logs(job) == [
+    assert job.log_entries == [
         {"message": "m-3", "status": "info", "time": "2000-01-01T00:00:00"},
         {"message": "m-4", "status": "info", "time": "2000-01-01T00:00:00"},
         {"message": "ApplyWorkerError", "status": "failure", "time": "2020-01-01T00:00:00"},
@@ -78,7 +77,7 @@ def test_successful_call(worker, full_runtests_params, job_extractor, monkeypatc
     job.refresh_from_db()
     assert job.status == "completed"
     assert job.data["output"] == {"statistics": {"total": 7, "passed": 3}}
-    assert get_logs(job) == [
+    assert job.log_entries == [
         *[m.serialized for m in messages],
         {
             "time": "2020-01-01T00:00:00",
