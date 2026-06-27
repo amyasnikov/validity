@@ -2,7 +2,16 @@ from dataclasses import dataclass, field
 from unittest.mock import Mock
 
 import pytest
-from factories import CompTestDBFactory, CompTestResultFactory, DeviceFactory, NameSetDBFactory, SelectorFactory
+from factories import (
+    CompTestDBFactory,
+    CompTestResultFactory,
+    DataFileFactory,
+    DataSourceFactory,
+    DeviceFactory,
+    NameSetDBFactory,
+    SelectorFactory,
+    SerializerDBFactory,
+)
 
 from validity.compliance.eval.eval_defaults import DEFAULT_NAMESET
 from validity.compliance.exceptions import EvalError
@@ -109,6 +118,34 @@ def test_run_tests_for_device():
         test.run.assert_called_once_with(device, {}, verbosity=2)
     assert executor.results_passed == 1
     assert executor.results_count == 3
+
+
+@pytest.mark.django_db
+def test_run_tests_for_device_with_dynamic_pair_config(create_custom_fields):
+    data_source = DataSourceFactory(
+        custom_field_data={"default": True, "device_config_path": "configs/{{ device.name }}.yaml"}
+    )
+    serializer = SerializerDBFactory(extraction_method="YAML", template="")
+    device = DeviceFactory(name="leaf01-a", custom_field_data={"serializer": serializer.pk})
+    dynamic_pair = DeviceFactory(name="leaf01-b", custom_field_data={"serializer": serializer.pk})
+    DataFileFactory(source=data_source, path="configs/leaf01-a.yaml", data=b"interfaces: {}\n")
+    DataFileFactory(
+        source=data_source,
+        path="configs/leaf01-b.yaml",
+        data=b"interfaces:\n  ae10:\n    description: peer-link\n",
+    )
+    selector = SelectorFactory(name_filter=r"leaf01-([ab])", dynamic_pairs="NAME")
+    test = CompTestDBFactory(expression="device.dynamic_pair.config['interfaces']['ae10']")
+    test.selectors.set([selector])
+    device_qs, test_qs = next(DeviceTestIterator({selector.pk: [device.pk]}, [], None))
+    executor = TExecutor(Logger(), explanation_verbosity=2, report_id=30)
+
+    [result] = list(executor(device_qs, test_qs))
+
+    assert result.passed is True
+    assert result.dynamic_pair == dynamic_pair
+    assert executor.results_passed == 1
+    assert executor.results_count == 1
 
 
 @pytest.mark.django_db
