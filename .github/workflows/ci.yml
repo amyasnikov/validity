@@ -1,8 +1,10 @@
 name: CI
 on:
   push:
-    branches: ["**"]
+    branches: [master, devel]
     tags-ignore: ["**"]
+  pull_request:
+    branches: [master, devel]
   workflow_dispatch:
 
 jobs:
