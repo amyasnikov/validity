@@ -14,7 +14,7 @@ from validity.netbox_changes import BaseModelFilter, NetBoxModelFilter, StrFilte
 
 
 @strawberry_django.filter_type(Job, lookups=True)
-class JobFilter(NetBoxModelFilter):
+class VJobFilter(NetBoxModelFilter):
     pass
 
 
@@ -64,7 +64,7 @@ class NameSetFilter(NetBoxModelFilter):
 
 @strawberry_django.filter_type(models.ComplianceReport, lookups=True)
 class ComplianceReportFilter(BaseModelFilter):
-    jobs: list[Annotated["JobFilter", strawberry.lazy("validity.graphql.filters")]] = strawberry_django.filter_field()
+    jobs: list[Annotated["VJobFilter", strawberry.lazy("validity.graphql.filters")]] = strawberry_django.filter_field()
 
 
 @strawberry_django.filter_type(models.Poller, lookups=True)

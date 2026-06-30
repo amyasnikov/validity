@@ -27,7 +27,7 @@ from .filters import (
     Job,
     fields="__all__",
 )
-class JobType(BaseObjectType):
+class VJobType(BaseObjectType):
     pass
 
 
@@ -118,7 +118,7 @@ class ComplianceReportType(BaseObjectType):
     results: list[Annotated[ComplianceTestResultType, strawberry.lazy("validity.graphql.types")]] = (
         strawberry_django.field()
     )
-    jobs: list[Annotated["JobType", strawberry.lazy("validity.graphql.types")]] = strawberry_django.field()
+    jobs: list[Annotated["VJobType", strawberry.lazy("validity.graphql.types")]] = strawberry_django.field()
 
     device_count: int = strawberry_django.field(annotate=Count("results__device", distinct=True))
     test_count: int = strawberry_django.field(annotate=Count("results__test", distinct=True))
