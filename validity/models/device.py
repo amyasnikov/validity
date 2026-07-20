@@ -32,7 +32,10 @@ class VDevice(Device):
             data_file = self.data_source.datafiles.filter(path=config_path).first()
             return Serializable(self.serializer, data_file=data_file)
         except AttributeError as exc:
-            if exc.obj is not None:
+            # data_source may be None or, when the device is fetched without
+            # .prefetch_datasource()/.set_datasource(), missing altogether
+            missing_data_source = exc.obj is self and exc.name == "data_source"
+            if exc.obj is not None and not missing_data_source:
                 raise
             return Serializable(self.serializer, data_file=None)
 

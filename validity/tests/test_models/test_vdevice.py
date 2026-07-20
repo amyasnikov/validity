@@ -80,6 +80,12 @@ def test_config_item(create_custom_fields):
     assert device._config_item() == Serializable(device.serializer, None)
 
 
+def test_config_item_without_data_source(create_custom_fields):
+    device = DeviceFactory(name="d1")
+    device.serializer = SerializerDBFactory()
+    assert device._config_item() == Serializable(device.serializer, None)
+
+
 @pytest.mark.django_db
 def test_primary_ip():
     vdevice = DeviceFactory()
