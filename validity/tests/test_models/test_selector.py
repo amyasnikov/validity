@@ -9,6 +9,7 @@ from factories import (
     LocationFactory,
     ManufacturerFactory,
     PlatformFactory,
+    RegionFactory,
     SelectorFactory,
     SiteFactory,
     TagFactory,
@@ -34,6 +35,12 @@ from validity.models import VDevice, selector
         ("status_filter", "ACTIVE", "OR", "(AND: ('status', 'ACTIVE'))"),
         ("location_filter", [LocationFactory], "AND", "(AND: ('location', <Location: location-0>))"),
         ("site_filter", [SiteFactory], "AND", "(AND: ('site', <Site: site-0>))"),
+        (
+            "region_filter",
+            [RegionFactory],
+            "AND",
+            "(AND: ('site__region', <Region: region-0>))",
+        ),
     ],
 )
 @pytest.mark.django_db(transaction=True, reset_sequences=True)
@@ -47,6 +54,17 @@ def test_filter(attr, attr_value, filter_operation, expected_filter):
         setattr(model, attr, attr_value)
         model.save()
     assert str(model.filter) == expected_filter
+
+
+@pytest.mark.django_db
+def test_region_filter():
+    reg1 = RegionFactory()
+    reg2 = RegionFactory()
+    sel = SelectorFactory()
+    sel.region_filter.set([reg1])
+    d1 = DeviceFactory(name="d1", site__region=reg1)
+    DeviceFactory(name="d2", site__region=reg2)
+    assert list(sel.devices) == [d1]
 
 
 @pytest.mark.django_db

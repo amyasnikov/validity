@@ -4,7 +4,7 @@ from functools import reduce
 from typing import Generator
 
 from dcim.choices import DeviceStatusChoices
-from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Region, Site
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -38,6 +38,7 @@ class ComplianceSelector(BaseModel):
     status_filter = models.CharField(max_length=50, choices=DeviceStatusChoices, blank=True)
     location_filter = models.ManyToManyField(Location, verbose_name=_("Location Filter"), blank=True, related_name="+")
     site_filter = models.ManyToManyField(Site, verbose_name=_("Site Filter"), blank=True, related_name="+")
+    region_filter = models.ManyToManyField(Region, verbose_name=_("Region Filter"), blank=True, related_name="+")
     tenant_filter = models.ManyToManyField(Tenant, verbose_name=_("Tenant Filter"), blank=True, related_name="+")
     dynamic_pairs = models.CharField(
         _("Dynamic Pairs"), max_length=20, choices=DynamicPairsChoices.choices, default="NO"
@@ -57,6 +58,7 @@ class ComplianceSelector(BaseModel):
         "status_filter",
         "location_filter",
         "site_filter",
+        "region_filter",
         "tenant_filter",
         "dynamic_pairs",
     )
@@ -71,6 +73,7 @@ class ComplianceSelector(BaseModel):
         "status_filter": "status",
         "location_filter": "location",
         "site_filter": "site",
+        "region_filter": "site__region",
         "tenant_filter": "tenant",
     }
 

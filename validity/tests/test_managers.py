@@ -56,5 +56,6 @@ def test_prefetch_filters(monkeypatch):
         "platform_filter",
         "location_filter",
         "site_filter",
+        "region_filter",
         "tenant_filter",
     }
