@@ -1,8 +1,7 @@
-# NetBox 4.5
+# NetBox 4.6
 from pydoc import locate
 
 from .oldest import *
 
 
-BaseModelFilter = locate("netbox.graphql.filters.BaseModelFilter")
-NetBoxModelFilter = locate("netbox.graphql.filters.NetBoxModelFilter")
+ChoicesType = locate("django.db.models.enums.ChoicesType")

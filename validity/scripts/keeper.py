@@ -27,11 +27,11 @@ class JobKeeper:
     def __exit__(self, exc_type, exc, tb):
         with self.logger:
             if exc_type:
-                return self.terminate_errored_job(exc)
+                self.terminate_errored_job(exc)
             elif self.job.status == JobStatusChoices.STATUS_RUNNING and self.auto_terminate:
                 self.terminate_job()
 
-    def terminate_errored_job(self, error: Exception) -> bool:
+    def terminate_errored_job(self, error: Exception) -> None:
         if isinstance(error, AbortScript):
             self.logger.messages.extend(error.logs)
             self.logger.failure(str(error))
@@ -41,7 +41,6 @@ class JobKeeper:
             status = JobStatusChoices.STATUS_ERRORED
         self.error_callback(self, error)
         self.terminate_job(status=status, error=repr(error))
-        return isinstance(error, AbortScript)
 
     def terminate_job(
         self, status: str = JobStatusChoices.STATUS_COMPLETED, error: str | None = None, output=None

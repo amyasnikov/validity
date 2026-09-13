@@ -6,11 +6,12 @@ from core.graphql.filters import DataSourceFilter
 from core.models import Job
 from dcim.graphql.filters import DeviceFilter
 from django.db.models import Q, QuerySet
+from netbox.graphql.filters import BaseModelFilter, NetBoxModelFilter
 from strawberry.scalars import ID
 from strawberry_django import FilterLookup
 
 from validity import models
-from validity.netbox_changes import BaseModelFilter, NetBoxModelFilter, StrFilterLookup
+from validity.netbox_changes import StrFilterLookup
 
 
 @strawberry_django.filter_type(Job, lookups=True)

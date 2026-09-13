@@ -1,8 +1,4 @@
-# NetBox 4.6
+# NetBox 4.7
 
-from pydoc import locate
 
 from .old import *
-
-
-ChoicesType = locate("django.db.models.enums.ChoicesType")

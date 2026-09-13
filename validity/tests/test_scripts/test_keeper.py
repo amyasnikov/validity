@@ -23,9 +23,10 @@ def test_keeper_noerror(timezone_now):
 @pytest.mark.django_db
 def test_keeper_abort(timezone_now):
     timezone_now(datetime.datetime(2000, 1, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc))
-    with JobKeeper(job=DSBackupJobFactory(), logger=Logger()) as keeper:
-        keeper.logger.info("msg1")
-        raise AbortScript("abort_msg", logs=[Message("warning", "extra_msg")])
+    with pytest.raises(AbortScript):
+        with JobKeeper(job=DSBackupJobFactory(), logger=Logger()) as keeper:
+            keeper.logger.info("msg1")
+            raise AbortScript("abort_msg", logs=[Message("warning", "extra_msg")])
     keeper.job.refresh_from_db()
     assert keeper.job.status == "failed"
     assert keeper.job.log_entries == [

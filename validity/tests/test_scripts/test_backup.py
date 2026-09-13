@@ -9,6 +9,7 @@ from validity.data_backup import BackupBackend
 from validity.integrations.errors import IntegrationError
 from validity.scripts.backup import perform_backup
 from validity.scripts.data_models import FullBackUpParams
+from validity.scripts.exceptions import AbortScript
 
 
 @pytest.fixture
@@ -41,7 +42,7 @@ def test_backup_success(di, params):
 def test_backup_failure(di, params):
     job = params.get_job()
     backend = Mock(side_effect=IntegrationError("ERROR!!!"))
-    with di.override({BackupBackend: lambda: backend}):
+    with pytest.raises(AbortScript), di.override({BackupBackend: lambda: backend}):
         perform_backup(params)
     backend.assert_called_once_with(job.object)
     job.refresh_from_db()
