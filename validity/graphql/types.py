@@ -25,7 +25,7 @@ from .filters import (
 
 @strawberry_django.type(
     Job,
-    fields="__all__",
+    exclude=["execution_time"],
 )
 class VJobType(BaseObjectType):
     pass
