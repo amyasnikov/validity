@@ -9,9 +9,10 @@ from dcim.api.serializers import (
     LocationSerializer,
     ManufacturerSerializer,
     PlatformSerializer,
+    RegionSerializer,
     SiteSerializer,
 )
-from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import Device, DeviceType, Location, Manufacturer, Platform, Region, Site
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from extras.api.serializers import TagSerializer
@@ -67,6 +68,9 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
     site_filter = SerializedPKRelatedField(
         serializer=SiteSerializer, many=True, nested=True, required=False, queryset=Site.objects.all()
     )
+    region_filter = SerializedPKRelatedField(
+        serializer=RegionSerializer, many=True, nested=True, required=False, queryset=Region.objects.all()
+    )
     tenant_filter = SerializedPKRelatedField(
         serializer=TenantSerializer, many=True, nested=True, required=False, queryset=Tenant.objects.all()
     )
@@ -88,6 +92,7 @@ class ComplianceSelectorSerializer(NetBoxModelSerializer):
             "status_filter",
             "location_filter",
             "site_filter",
+            "region_filter",
             "tenant_filter",
             "dynamic_pairs",
             "dp_tag_prefix",

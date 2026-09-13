@@ -64,6 +64,11 @@
               <td>{{ object.site_filter.all | linkify_list }}</td>
             </tr>
             <tr>
+            <tr>
+              <th scope="row">Region Filter</th>
+              <td>{{ object.region_filter.all | linkify_list }}</td>
+            </tr>
+            <tr>
               <th scope="row">Status Filter</th>
               <td>{{ object | colored_choice:"status_filter" | placeholder }}</td>
             </tr>

@@ -4,7 +4,7 @@ import uuid
 import django
 import factory
 from core.models import Job
-from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import DeviceRole, DeviceType, Location, Manufacturer, Platform, Region, Site
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from extras.models import Tag
@@ -166,6 +166,14 @@ class SiteFactory(DjangoModelFactory):
 
     class Meta:
         model = Site
+
+
+class RegionFactory(DjangoModelFactory):
+    name = factory.Sequence(lambda n: f"region-{n}")
+    slug = factory.Sequence(lambda n: f"region-{n}")
+
+    class Meta:
+        model = Region
 
 
 class TenantFactory(DjangoModelFactory):

@@ -1,6 +1,6 @@
 from core.forms.mixins import SyncedDataMixin
 from core.models import DataSource
-from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Site
+from dcim.models import Device, DeviceRole, DeviceType, Location, Manufacturer, Platform, Region, Site
 from django.forms import BooleanField, CharField, ChoiceField, IntegerField, Select, Textarea, ValidationError
 from django.utils.translation import gettext_lazy as _
 from extras.forms import ScriptForm
@@ -56,6 +56,7 @@ class ComplianceSelectorForm(NetBoxModelForm):
     platform_filter = DynamicModelMultipleChoiceField(queryset=Platform.objects.all(), required=False)
     location_filter = DynamicModelMultipleChoiceField(queryset=Location.objects.all(), required=False)
     site_filter = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False)
+    region_filter = DynamicModelMultipleChoiceField(queryset=Region.objects.all(), required=False)
     tenant_filter = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), required=False)
 
     fieldsets = (
@@ -70,6 +71,7 @@ class ComplianceSelectorForm(NetBoxModelForm):
             "manufacturer_filter",
             "platform_filter",
             "site_filter",
+            "region_filter",
             "status_filter",
             "tag_filter",
             "tenant_filter",
