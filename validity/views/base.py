@@ -52,6 +52,20 @@ class TableMixin:
         return {"table": table, "search_value": request.GET.get("q", "")}
 
 
+class ListTableMixin:
+    table_class = None
+
+    def get_table(self, **kwargs):
+        table = self.table_class(data=self.object_list, **kwargs)
+        table.configure(self.request)
+        return table
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["table"] = self.get_table()
+        return context
+
+
 class FilterViewWithForm(FilterView):
     filterform_class: type[Form]
     exclude_form_fields: tuple[str, ...] = ()

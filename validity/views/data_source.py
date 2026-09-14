@@ -5,17 +5,16 @@ from dcim.filtersets import DeviceFilterSet
 from dcim.tables import DeviceTable
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import get_object_or_404
-from django_tables2 import SingleTableMixin
 from utilities.views import ViewTab, register_model_view
 
 from validity.forms import DataSourceDevicesFilterForm
 from validity.models import VDataSource
 from validity.utils.orm import model_to_proxy
-from .base import FilterViewWithForm
+from .base import FilterViewWithForm, ListTableMixin
 
 
 @register_model_view(DataSource, "devices")
-class DataSourceBoundDevicesView(PermissionRequiredMixin, SingleTableMixin, FilterViewWithForm):
+class DataSourceBoundDevicesView(PermissionRequiredMixin, ListTableMixin, FilterViewWithForm):
     template_name = "validity/aux_tab_table.html"
     tab = ViewTab("Bound Devices", badge=lambda obj: model_to_proxy(obj, VDataSource).bound_devices.count())
     model = DataSource
