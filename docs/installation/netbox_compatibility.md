@@ -26,7 +26,7 @@ In the table below you can find appropriate Validity version according to your N
 <table class="tg"><thead>
   <tr>
     <th class="tg-r82u" colspan="2" rowspan="2"></th>
-    <th class="tg-c6ba" colspan="11">NetBox<br></th>
+    <th class="tg-c6ba" colspan="12">NetBox<br></th>
   </tr>
   <tr>
     <th class="tg-5gjp">v3.4</th>
@@ -40,14 +40,16 @@ In the table below you can find appropriate Validity version according to your N
     <th class="tg-5gjp">v4.4</th>
     <th class="tg-5gjp">v4.5</th>
     <th class="tg-5gjp">v4.6</th>
+    <th class="tg-5gjp">v4.7</th>
   </tr></thead>
 <tbody>
   <tr>
-    <td class="tg-5iin" rowspan="9">Validity<br><br></td>
+    <td class="tg-5iin" rowspan="10">Validity<br><br></td>
     <td class="tg-c6ba">v1.4</td>
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
+    <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
@@ -70,6 +72,7 @@ In the table below you can find appropriate Validity version according to your N
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
   </tr>
   <tr>
     <td class="tg-c6ba">v2.3</td>
@@ -78,6 +81,7 @@ In the table below you can find appropriate Validity version according to your N
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
+    <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
@@ -98,6 +102,7 @@ In the table below you can find appropriate Validity version according to your N
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
   </tr>
   <tr>
     <td class="tg-c6ba">v3.1</td>
@@ -108,6 +113,7 @@ In the table below you can find appropriate Validity version according to your N
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
+    <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
@@ -126,6 +132,7 @@ In the table below you can find appropriate Validity version according to your N
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
   </tr>
   <tr>
     <td class="tg-c6ba">v3.3</td>
@@ -138,6 +145,7 @@ In the table below you can find appropriate Validity version according to your N
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
+    <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
   </tr>
@@ -154,9 +162,26 @@ In the table below you can find appropriate Validity version according to your N
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55">✅</td>
     <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
   </tr>
   <tr>
     <td class="tg-c6ba">v3.5</td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55"></td>
+    <td class="tg-8g55">✅</td>
+    <td class="tg-8g55">✅</td>
+    <td class="tg-8g55">✅</td>
+    <td class="tg-8g55"></td>
+  </tr>
+  <tr>
+    <td class="tg-c6ba">v3.6</td>
+    <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
     <td class="tg-8g55"></td>
